@@ -1,7 +1,10 @@
-/** @file macro.h
-* Contains common macro helpers.
-*/
-
+/*****************************************************************//**
+ * @file   macros.h
+ * @brief  Contains helper macros.
+ * 
+ * @author RPC
+ * @date   January 2024
+ *********************************************************************/
 #ifndef HG_COLT_MACROS
 #define HG_COLT_MACROS
 

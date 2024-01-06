@@ -1,3 +1,10 @@
+/*****************************************************************//**
+ * @file   config_type.h
+ * @brief  Contains `isDebugBuild` function.
+ * 
+ * @author RPC
+ * @date   January 2024
+ *********************************************************************/
 #ifndef HG_COLT_CONFIG_TYPE
 #define HG_COLT_CONFIG_TYPE
 
