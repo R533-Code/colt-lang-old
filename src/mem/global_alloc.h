@@ -1,7 +1,10 @@
-/** @file global_alloc.h
-* Contains the global allocator, and descriptions helpers.
-*/
-
+/*****************************************************************//**
+ * @file   global_alloc.h
+ * @brief  Contains the global allocator, and descriptions helpers.
+ * 
+ * @author RPC
+ * @date   January 2024
+ *********************************************************************/
 #ifndef HG_COLT_GLOBAL_ALLOC
 #define HG_COLT_GLOBAL_ALLOC
 

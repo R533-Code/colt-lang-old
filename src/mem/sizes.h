@@ -201,7 +201,7 @@ struct scn::scanner<clt::ByteSize<clt::B>>
     u64 count;
     std::string_view str;
     auto r = scn::scan(ctx.range(), "{}{}", count, str);
-    ON_SCOPE_EXIT{
+    ON_SCOPE_EXIT {
       ctx.range() = std::move(r.range());
     };
 
@@ -211,7 +211,7 @@ struct scn::scanner<clt::ByteSize<clt::B>>
         return r.error();
       return { r.error().code(), "Expected an integer followed by 'B', 'KiB', 'MiB', or 'GiB'." };
     }
-    StringView strv = str;
+
     if (strv.iequal("B"))
     {
       val = ByteSize<B>{ count };
