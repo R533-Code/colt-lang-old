@@ -148,7 +148,7 @@ namespace clt::io
   /// @param ...args The arguments to format
   constexpr void print_fatal(fmt::format_string<Args...> fmt, Args&&... args)
   {
-    print_fatal<endl>(stdout, fmt, std::forward<Args>(args)...);
+    print_fatal<endl>(stderr, fmt, std::forward<Args>(args)...);
   }
 }
 
