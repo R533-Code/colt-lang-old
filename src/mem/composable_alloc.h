@@ -307,7 +307,7 @@ namespace clt::mem
     /// @param blk The block to reallocate
     /// @param n The new size of the block
     /// @return True if reallocation was successful
-    constexpr bool realloc(MemBlock& blk, byte_size<Byte> n) noexcept
+    constexpr bool realloc(MemBlock& blk, ByteSize<Byte> n) noexcept
       requires meta::ReallocatableAllocator<allocator>
     {
       if (blk.size() == n)
@@ -351,7 +351,7 @@ namespace clt::mem
     /// @param blk The block to expand
     /// @param delta The new size
     /// @return True if expansion was done successfully
-    constexpr bool expand(MemBlock& blk, byte_size<Byte> delta) noexcept
+    constexpr bool expand(MemBlock& blk, ByteSize<Byte> delta) noexcept
       requires meta::ExpandingAllocator<allocator>
     {
       if (delta == 0_B)
@@ -507,7 +507,7 @@ namespace clt::mem
     {
       if (auto index = register_count.fetch_add(1, std::memory_order_acq_rel) < register_size)
       {
-        reg_array[index] = func;
+        reg_array[index - 1] = func;
         return true;
       }
       register_count.fetch_sub(1, std::memory_order_acq_rel);
@@ -549,7 +549,7 @@ namespace clt::mem
     /// @param blk The block to reallocate
     /// @param n The new size of the block
     /// @return True if reallocation was successful
-    constexpr bool realloc(MemBlock& blk, byte_size<Byte> n) noexcept
+    constexpr bool realloc(MemBlock& blk, ByteSize<Byte> n) noexcept
       requires meta::ReallocatableAllocator<allocator>
     {
       return allocator::realloc(blk, n);
@@ -559,7 +559,7 @@ namespace clt::mem
     /// @param blk The block to expand
     /// @param delta The new size
     /// @return True if expansion was done successfully
-    constexpr bool expand(MemBlock& blk, byte_size<Byte> delta) noexcept
+    constexpr bool expand(MemBlock& blk, ByteSize<Byte> delta) noexcept
       requires meta::ExpandingAllocator<allocator>
     {
       return allocator::expand(blk, delta);
@@ -594,7 +594,7 @@ namespace clt::mem
     /// @brief Allocates a MemBlock
     /// @param size The size of the allocation
     /// @return Allocated MemBlock or empty MemBlock
-    constexpr void* alloc(byte_size<Byte> size) noexcept
+    constexpr void* alloc(ByteSize<Byte> size) noexcept
     {
       if constexpr (is_mallocator)
         return Allocator::alloc(size).ptr();
@@ -602,7 +602,7 @@ namespace clt::mem
       if (auto blk = Allocator::alloc(size))
       {
         Allocator::create_prefix(blk, size.to_bytes());
-        if constexpr (is_debug())
+        if constexpr (isDebugBuild())
           Allocator::create_suffix(blk, size.to_bytes());
         return blk.ptr();
       }
@@ -616,7 +616,7 @@ namespace clt::mem
       if constexpr (is_mallocator)
         Allocator::dealloc(to_free);
       
-      if constexpr (is_debug())
+      if constexpr (isDebugBuild())
         assert_true("Size information was corrupted!", !is_corrupted());
       if (to_free != nullptr)
         Allocator::dealloc({ to_free, Allocator::get_prefix(MemBlock{ to_free }) });
@@ -635,7 +635,7 @@ namespace clt::mem
     /// @param blk The block to reallocate
     /// @param n The new size of the block
     /// @return True if reallocation was successful
-    constexpr bool realloc(MemBlock& blk, byte_size<Byte> n) noexcept
+    constexpr bool realloc(MemBlock& blk, ByteSize<Byte> n) noexcept
       requires meta::ReallocatableAllocator<Allocator>
     {
       return Allocator::realloc(blk, n);
@@ -645,7 +645,7 @@ namespace clt::mem
     /// @param blk The block to expand
     /// @param delta The new size
     /// @return True if expansion was done successfully
-    constexpr bool expand(MemBlock& blk, byte_size<Byte> delta) noexcept
+    constexpr bool expand(MemBlock& blk, ByteSize<Byte> delta) noexcept
       requires meta::ExpandingAllocator<Allocator>
     {
       return Allocator::expand(blk, delta);
