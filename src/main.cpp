@@ -1,5 +1,6 @@
 #include <util/colt_pch.h>
 #include "args.h"
+#include "mem/global_alloc.h"
 
 using namespace clt;
 
