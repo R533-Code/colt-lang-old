@@ -29,11 +29,6 @@ else()
   )
 endif()
 
-# Add ColtCpp
-#add_subdirectory("${PROJECT_SOURCE_DIR}/libraries/colt-cpp")
-
-#target_link_libraries(${COLT_EXECUTABLE_NAME} PUBLIC ColtCpp)
-
 # Add precompiled header
 target_precompile_headers(${COLT_EXECUTABLE_NAME} PUBLIC 
   "$<$<COMPILE_LANGUAGE:CXX>:${PROJECT_SOURCE_DIR}/src/util/colt_pch.h>")
@@ -100,16 +95,26 @@ endif()
 # message(STATUS "Finished LLVM set up!")
 
 #########################################
-# FMT SETUP
+# LIBRARIES SETUP
 #########################################
 
-# include {fmt}
 message(STATUS "Setting up libraries...")
+
+# Add {fmt}
+add_subdirectory("${PROJECT_SOURCE_DIR}/libraries/fmt")
+target_link_libraries(${COLT_EXECUTABLE_NAME} PUBLIC fmt::fmt)
+
+# Add scnlib
+add_subdirectory("${PROJECT_SOURCE_DIR}/libraries/scnlib")
+target_link_libraries(${COLT_EXECUTABLE_NAME} PUBLIC scn::scn)
+
 
 # Directories for '#include <...>'
 target_include_directories(${COLT_EXECUTABLE_NAME} PUBLIC 
   "${CMAKE_SOURCE_DIR}/src"
-  #SYSTEM # So no warning is shown
+  SYSTEM # So no warning is shown
+  "${CMAKE_SOURCE_DIR}/libraries/fmt/include"
+  "${CMAKE_SOURCE_DIR}/libraries/scnlib/include"
   #"${CMAKE_SOURCE_DIR}/libraries/llvm-project/llvm/include"
   #"${CMAKE_BINARY_DIR}/libraries/llvm-project/llvm/include"
 )
