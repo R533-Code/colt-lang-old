@@ -14,6 +14,7 @@
 
 #include "meta/meta_traits.h"
 #include "util/types.h"
+#include "lex/ascii.h"
 
 namespace clt
 {
@@ -212,26 +213,26 @@ struct scn::scanner<clt::ByteSize<clt::B>>
       return { r.error().code(), "Expected an integer followed by 'B', 'KiB', 'MiB', or 'GiB'." };
     }
 
-    if (strv.iequal("B"))
+    if (is_iequal(str, "B"))
     {
       val = ByteSize<B>{ count };
       return { error::good, nullptr };
     }
-    if (strv.iequal("KiB"))
+    if (is_iequal(str, "KiB"))
     {
       if (count > 18'014'398'509'481'984)
         return { error::value_out_of_range, "Value too great to be representable as bytes!" };
       val = ByteSize<KiB>{ count };
       return { error::good, nullptr };
     }
-    if (strv.iequal("MiB"))
+    if (is_iequal(str, "MiB"))
     {
       if (count > 17'592'186'044'416)
         return { error::value_out_of_range, "Value too great to be representable as bytes!" };
       val = ByteSize<MiB>{ count };
       return { error::good, nullptr };
     }
-    if (strv.iequal("GiB"))
+    if (is_iequal(str, "GiB"))
     {
       if (count > 17'179'869'184)
         return { error::value_out_of_range, "Value too great to be representable as bytes!" };
