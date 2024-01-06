@@ -593,16 +593,8 @@ template<typename T>
   requires clt::meta::is_reflectable_v<T>
   && (clt::reflect<T>::kind() == clt::meta::IS_CLASS) && (!fmt::is_formattable<T>::value)
 struct fmt::formatter<T>
+  : public clt::meta::DefaultParserFMT
 {
-  template<typename ParseContext>
-  constexpr auto parse(ParseContext& ctx)
-  {
-    auto it = ctx.begin();
-    auto end = ctx.end();
-    assert_true("Possible format for custom type is: {}!", it == end);
-    return it;
-  }
-
   template<typename FormatContext>
   auto format(const T& obj, FormatContext& ctx)
   {
