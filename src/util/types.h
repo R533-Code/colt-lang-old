@@ -27,31 +27,31 @@
 #include "config_type.h"
 #include "assertions.h"
 
+ /// @brief 8-bit signed integer
+using u8 = uint8_t;
+/// @brief 16-bit signed integer
+using u16 = uint16_t;
+/// @brief 32-bit signed integer
+using u32 = uint32_t;
+/// @brief 64-bit unsigned integer
+using u64 = uint64_t;
+
+/// @brief 8-bit signed integer
+using i8 = int8_t;
+/// @brief 16-bit signed integer
+using i16 = int16_t;
+/// @brief 32-bit signed integer
+using i32 = int32_t;
+/// @brief 64-bit signed integer
+using i64 = int64_t;
+
+/// @brief single precision floating point
+using f32 = float;
+/// @brief double precision floating point
+using f64 = double;
+
 namespace clt
 {
-  /// @brief 8-bit signed integer
-  using u8 = uint8_t;
-  /// @brief 16-bit signed integer
-  using u16 = uint16_t;
-  /// @brief 32-bit signed integer
-  using u32 = uint32_t;
-  /// @brief 64-bit unsigned integer
-  using u64 = uint64_t;
-
-  /// @brief 8-bit signed integer
-  using i8 = int8_t;
-  /// @brief 16-bit signed integer
-  using i16 = int16_t;
-  /// @brief 32-bit signed integer
-  using i32 = int32_t;
-  /// @brief 64-bit signed integer
-  using i64 = int64_t;
-
-  /// @brief single precision floating point
-  using f32 = float;
-  /// @brief double precision floating point
-  using f64 = double;
-
   namespace details
   {
     template<typename T> requires (!std::is_reference_v<T>) && (!std::is_const_v<T>)
@@ -158,10 +158,10 @@ namespace clt
       ErrorDebug operator=(const ErrorDebug&) = delete;
 
       // Move Constructor (steals the state of 'move')
-      constexpr ErrorDebug(ErrorDebug&& move) noexcept
+      ErrorDebug(ErrorDebug&& move) noexcept
         : iserror(move.iserror), is_checked(std::exchange(move.is_checked, true)) {}
       // Move assignment operator
-      constexpr ErrorDebug& operator=(ErrorDebug&& move) noexcept
+      ErrorDebug& operator=(ErrorDebug&& move) noexcept
       {
         assert_checked();
         iserror = move.iserror;
@@ -264,7 +264,33 @@ namespace clt
   using out = std::add_const_t<std::conditional_t<isDebugBuild(), details::OutDebug<T>, details::OutRelease<T>>>&;
 
   /// @brief Boolean that represents a success/failure state that must be checked.
-  using Error = std::conditional_t<isDebugBuild(), details::ErrorDebug, details::ErrorRelease>;  
+  using Error = std::conditional_t<isDebugBuild(), details::ErrorDebug, details::ErrorRelease>;
+
+  namespace meta
+  {
+    template<typename T>
+    /// @brief Unsigned integral
+    concept UnsignedIntegral = std::same_as<std::remove_cv_t<T>, u8>
+      || std::same_as<std::remove_cv_t<T>, u16>
+      || std::same_as<std::remove_cv_t<T>, u32>
+      || std::same_as<std::remove_cv_t<T>, u64>;
+
+    template<typename T>
+    /// @brief Signed integral
+    concept SignedIntegral = std::same_as<std::remove_cv_t<T>, i8>
+      || std::same_as<std::remove_cv_t<T>, i16>
+      || std::same_as<std::remove_cv_t<T>, i32>
+      || std::same_as<std::remove_cv_t<T>, i64>;
+
+    template<typename T>
+    /// @brief Signed/Unsigned integral
+    concept Integral = UnsignedIntegral<T> || SignedIntegral<T>;
+
+    template<typename T>
+    /// @brief Floating point (f32, f64)
+    concept FloatingPoint = std::same_as<std::remove_cv_t<T>, f32>
+      || std::same_as<std::remove_cv_t<T>, f64>;
+  }
 }
 
 #endif // !HG_COLT_TYPES
