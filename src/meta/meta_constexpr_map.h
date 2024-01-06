@@ -5,8 +5,8 @@
  * @author RPC
  * @date   January 2024
  *********************************************************************/
-#ifndef HG_COLT_CONSTEXPR_MAP
-#define HG_COLT_CONSTEXPR_MAP
+#ifndef HG_META_CONSTEXPR_MAP
+#define HG_META_CONSTEXPR_MAP
 
 #include <algorithm>
 #include <utility>
@@ -69,4 +69,4 @@ namespace clt::meta
   };
 }
 
-#endif //!HG_COLT_CONSTEXPR_MAP
+#endif //!HG_META_CONSTEXPR_MAP
