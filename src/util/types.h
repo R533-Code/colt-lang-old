@@ -86,6 +86,7 @@ namespace clt
 
       /// @brief Returns the object (validating that it is constructed)
       /// @return Reference to the object
+      [[nodiscard]]
       constexpr T& get() const noexcept
       {
         if (is_constructed)
@@ -123,6 +124,7 @@ namespace clt
 
       /// @brief Returns the object (validating that it is constructed)
       /// @return Reference to the object
+      [[nodiscard]]
       constexpr T& get() const noexcept { return obj; }
     };
 
@@ -167,25 +169,26 @@ namespace clt
 
       /// @brief Constructs a success
       /// @return State representing a success
+      [[nodiscard]]
       static auto success(std::source_location src = std::source_location::current()) noexcept { return ErrorDebug(false, src); }
       /// @brief Constructs an error
       /// @return State representing an error
+      [[nodiscard]]
       static auto error(std::source_location src = std::source_location::current()) noexcept { return ErrorDebug(true, src); }
 
       /// @brief Check if the state represents an error
+      [[nodiscard]]
       constexpr bool is_error() const noexcept
       {
         is_checked = true;
         return iserror;
-      }
-      
+      }      
       /// @brief Check if the state represents a success
-      constexpr bool is_success() const noexcept
-      {
-        return !is_error();
-      }
+      [[nodiscard]]
+      constexpr bool is_success() const noexcept { return !is_error(); }
 
       /// @brief Check if the state represents a success
+      [[nodiscard]]
       explicit constexpr operator bool() const noexcept { return is_success(); }
 
       /// @brief Ensures the state was at least read once
@@ -219,17 +222,22 @@ namespace clt
 
       /// @brief Constructs a success
       /// @return State representing a success
+      [[nodiscard]]
       constexpr static auto success() noexcept { return ErrorRelease(false); }
       /// @brief Constructs an error
       /// @return State representing an error
+      [[nodiscard]]
       constexpr static auto error() noexcept { return ErrorRelease(true); }
 
       /// @brief Check if the state represents an error
+      [[nodiscard]]
       constexpr bool is_error() const noexcept { return iserror; }
       /// @brief Check if the state represents a success
+      [[nodiscard]]
       constexpr bool is_success() const noexcept { return !iserror; }
 
       /// @brief Check if the state represents a success
+      [[nodiscard]]
       explicit constexpr operator bool() const noexcept { return is_success(); }
     };
   }
