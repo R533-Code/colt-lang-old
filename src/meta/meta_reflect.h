@@ -1,7 +1,10 @@
-/** @file refl.h
-* Adds reflection for built-in types.
-*/
-
+/*****************************************************************//**
+ * @file   meta_reflect.h
+ * @brief  Contains necessary code for reflection (on enums and more).
+ * 
+ * @author RPC
+ * @date   January 2024
+ *********************************************************************/
 #ifndef HG_COLT_REFL
 #define HG_COLT_REFL
 
