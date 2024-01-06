@@ -1,0 +1,8 @@
+//A loop named '.*' already exists!
+fn test()
+{
+OUTER
+  while true:
+    OUTER while false:
+      pass;
+}

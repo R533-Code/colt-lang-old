@@ -1,0 +1,6 @@
+//Expected an identifier or 'module'!
+fn test()->void
+{
+  pass;
+  using 10;
+}

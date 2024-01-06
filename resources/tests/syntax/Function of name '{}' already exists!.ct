@@ -1,0 +1,10 @@
+//Function of name '.*' already exists!
+fn test()->void
+{
+  pass;
+}
+
+fn test()->void
+{
+  pass;
+}

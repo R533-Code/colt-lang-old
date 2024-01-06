@@ -1,0 +1,4 @@
+//Unclosed curly bracket delimiter!
+fn test()->void
+{
+  pass;

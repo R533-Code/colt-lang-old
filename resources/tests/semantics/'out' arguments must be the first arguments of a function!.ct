@@ -1,0 +1,2 @@
+//'out' arguments must be the first arguments of a function!
+fn test(in i64 a, out i64 b)->void: pass;

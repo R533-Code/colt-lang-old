@@ -1,0 +1,8 @@
+//Function 'test' expects argument '.*' to be of type '.*', not '.*'!
+fn test(out i64 a)->void: pass;
+
+fn test2()->void
+{
+  var a: f32;
+  test(&a);
+}

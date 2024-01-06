@@ -1,0 +1,2 @@
+//Cannot have parameters of same name
+fn test(i64 a, i64 a)->void;

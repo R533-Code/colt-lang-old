@@ -1,0 +1,12 @@
+//Cannot read from a variable that may be uninitialized!
+fn test()->void
+{
+  var mut a: i64;
+  if 10 == 10:
+    pass;
+  elif 11 == 11:
+    a = 10;
+  else:
+    pass;
+  a += 1;
+}

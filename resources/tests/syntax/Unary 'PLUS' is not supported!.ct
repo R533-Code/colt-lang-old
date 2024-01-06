@@ -1,0 +1,2 @@
+//`Unary '+' is not supported!
+fn test()->void: +10;

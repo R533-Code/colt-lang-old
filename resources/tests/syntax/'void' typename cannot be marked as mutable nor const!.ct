@@ -1,0 +1,5 @@
+//'void' typename cannot be marked as mutable nor const!
+fn test()->mut void
+{
+
+}

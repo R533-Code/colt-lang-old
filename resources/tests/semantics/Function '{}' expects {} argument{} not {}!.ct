@@ -1,0 +1,8 @@
+//Function '.*' expects 2 arguments, not 1!
+fn test(in i64 a, in i64 b)->void: pass;
+
+fn test2()->void
+{
+  var a: i64;
+  test(&a);
+}

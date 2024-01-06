@@ -1,0 +1,2 @@
+//Type of return value \([^)]*\) does not match function return type \([^)]*\)!
+fn test()->i64: return 10.0;

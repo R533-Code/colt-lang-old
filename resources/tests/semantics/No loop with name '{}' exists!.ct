@@ -1,0 +1,6 @@
+//No loop with name '.*' exists!
+fn test()
+{
+  while true:
+    break OUTER;
+}

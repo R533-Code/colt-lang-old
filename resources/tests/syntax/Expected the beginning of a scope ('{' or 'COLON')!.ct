@@ -1,0 +1,5 @@
+//Expected the beginning of a scope
+fn test()->void
+{
+  if 10 == 10 module
+}

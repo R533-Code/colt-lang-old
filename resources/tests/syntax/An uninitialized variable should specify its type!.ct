@@ -1,0 +1,2 @@
+//An uninitialized variable should specify its type!
+fn test()->void: var a;

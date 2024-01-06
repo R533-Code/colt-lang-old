@@ -1,0 +1,17 @@
+OUTPUT_DIRECTORY       	= @CMAKE_SOURCE_DIR@/docs/
+INPUT                  	= @CMAKE_SOURCE_DIR@/resources/doxygen/main.md @CMAKE_SOURCE_DIR@/src/
+EXCLUDE_PATTERNS	   		= */colt_config.h
+RECURSIVE			   				= YES
+
+CREATE_SUBDIRS		   		= YES
+
+PROJECT_NUMBER		   		= @PROJECT_VERSION@
+PROJECT_NAME		   			= Colt
+PROJECT_BRIEF		   			= The compiler for the Colt language
+
+HTML_COLORSTYLE_GAMMA  	= 150
+
+MARKDOWN_SUPPORT       	= YES
+USE_MDFILE_AS_MAINPAGE 	= @CMAKE_SOURCE_DIR@/resources/doxygen/main.md
+
+PROJECT_LOGO						= @CMAKE_SOURCE_DIR@/resources/icon/Colt Logo.svg

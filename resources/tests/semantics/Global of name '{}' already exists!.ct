@@ -1,0 +1,4 @@
+//Global of name '.*' already exists!
+fn test()->void: pass;
+
+using test = test;

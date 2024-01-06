@@ -1,0 +1,6 @@
+//Expression should be of type 'bool'!
+fn test()->void
+{
+  if 10:
+    return;
+}

@@ -1,0 +1,2 @@
+//Variable of name '[^']*' does not exist!
+fn test()->void: a;

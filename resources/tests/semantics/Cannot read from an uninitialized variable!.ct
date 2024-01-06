@@ -1,0 +1,8 @@
+//Cannot read from an uninitialized variable!
+fn test()->void
+{
+  var mut a: i64;
+  if 10 == 10:
+    pass;
+  a += 1;
+}

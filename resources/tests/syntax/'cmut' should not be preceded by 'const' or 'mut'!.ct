@@ -1,0 +1,5 @@
+//'cmut' should not be preceded by 'const' or 'mut'!
+fn test()->void
+{
+  var const mut cmut a;
+}

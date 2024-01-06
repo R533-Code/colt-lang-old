@@ -1,0 +1,2 @@
+//Expected a '='!
+fn test()->void: var a a

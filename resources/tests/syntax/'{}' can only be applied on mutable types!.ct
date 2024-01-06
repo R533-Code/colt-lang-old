@@ -1,0 +1,6 @@
+//'[^']*' can only be applied on mutable types!
+fn test()->void
+{
+  var i : i64;
+  ++i;
+}

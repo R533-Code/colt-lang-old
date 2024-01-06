@@ -1,0 +1,7 @@
+//Cannot deduce return type of function because of ambiguity!
+fn test()
+{
+  if true:
+    return 10;
+  return 1.0f;
+}

@@ -1,0 +1,3 @@
+//'global' module does not support private/public blocks!
+public:
+fn test()->void: pass;

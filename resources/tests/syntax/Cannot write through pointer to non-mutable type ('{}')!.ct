@@ -1,0 +1,6 @@
+//Cannot write through pointer to non-mutable type \('.*'\)!
+fn test()->void
+{
+  var i: PTR<i64>;
+  *i = 10;
+}

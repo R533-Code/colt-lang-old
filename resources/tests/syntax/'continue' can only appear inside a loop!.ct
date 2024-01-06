@@ -1,0 +1,2 @@
+//'continue' can only appear inside a loop!
+fn test()->void: continue;

@@ -1,0 +1,2 @@
+//'break' can only appear inside a loop!
+fn test()->void: break;

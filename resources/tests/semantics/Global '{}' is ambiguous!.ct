@@ -1,0 +1,18 @@
+//Global '.*' is ambiguous!
+module a
+{
+public:
+  fn hello()->void: pass;
+
+  module b
+  {
+    fn hello()->void: pass;
+  }
+}
+
+fn test()->void
+{
+  using module a::b;
+  using module a;
+  hello();
+}

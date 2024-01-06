@@ -1,0 +1,2 @@
+//An extern function cannot have a body!
+extern fn test()->void: return;

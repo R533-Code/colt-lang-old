@@ -1,0 +1,10 @@
+//Global '.*' is private!
+module a
+{
+  fn hello()->void: pass
+}
+
+fn test()->void
+{
+  a::hello();
+}

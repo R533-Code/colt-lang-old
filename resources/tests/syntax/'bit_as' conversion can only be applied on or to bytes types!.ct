@@ -1,0 +1,5 @@
+//'bit_as' conversion can only be applied on/to bytes types!
+fn test()->void
+{
+  10 bit_as i64;
+}

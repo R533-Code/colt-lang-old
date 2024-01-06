@@ -1,0 +1,2 @@
+//Expected a typename!
+fn test()->10;

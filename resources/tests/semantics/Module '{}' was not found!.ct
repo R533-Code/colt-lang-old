@@ -1,0 +1,10 @@
+//Module '.*' was not found!
+module a
+{
+  fn hello()->void: pass
+}
+
+fn test()->void
+{
+  ab::hello();
+}

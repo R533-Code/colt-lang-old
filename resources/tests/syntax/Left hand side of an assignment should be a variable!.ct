@@ -1,0 +1,2 @@
+//Left hand side of an assignment should be a variable!
+fn test()->void: 10 = 10;

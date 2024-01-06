@@ -1,0 +1,14 @@
+//Ambiguous module name!
+module a
+{
+  fn test()->void: pass;
+
+  module a
+  {
+    fn test()->void: pass;
+  }
+}
+
+using module a;
+
+fn test()->void: a::test();

@@ -1,0 +1,6 @@
+//'[^']*' does not support '[^']*' operator!
+fn test()->void
+{
+  var a : PTR<i64>;
+  -a;
+}

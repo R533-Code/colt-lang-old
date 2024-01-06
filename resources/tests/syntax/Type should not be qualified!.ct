@@ -1,0 +1,5 @@
+//Type should not be qualified!
+fn test()->void
+{
+  var a: mut i64;
+}

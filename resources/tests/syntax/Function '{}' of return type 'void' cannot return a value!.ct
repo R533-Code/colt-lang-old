@@ -1,0 +1,2 @@
+//Function '.*' of return type 'void' cannot return a value!
+fn test()->void: return 10;

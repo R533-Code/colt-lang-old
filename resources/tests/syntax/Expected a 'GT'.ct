@@ -1,0 +1,2 @@
+//Expected a '>'
+fn test()->PTR<i64 :

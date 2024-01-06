@@ -1,0 +1,10 @@
+//Global '.*' does not exist!
+module a
+{
+  fn hello()->void: pass
+}
+
+fn test()->void
+{
+  a::hell();
+}

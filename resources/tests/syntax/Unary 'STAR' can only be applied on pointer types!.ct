@@ -1,0 +1,2 @@
+//`Unary '*' can only be applied on pointer types!
+fn test()->void: *10;
