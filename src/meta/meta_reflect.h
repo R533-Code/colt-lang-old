@@ -167,28 +167,28 @@ namespace clt
   /// @tparam T The type on which to reflect
   struct reflect<T>
   {
-    static constexpr refl::EntityKind kind() noexcept
+    static constexpr meta::EntityKind kind() noexcept
     {
-      return refl::entity_kind_v<T>;
+      return meta::entity_kind_v<T>;
     }
 
     static constexpr std::string_view str() noexcept
     {
-      return refl::unqualified_name_v<T>;
+      return meta::unqualified_name_v<T>;
     }
 
-    using members_type = refl::members_type_t<T>;
+    using members_type = meta::members_type_t<T>;
 
     template<typename On, typename F> requires std::same_as<On, std::decay_t<T>>
     static constexpr void apply_on_members(On&& obj, F&& fn)
     {
-      refl::apply_on_members<T>{}(std::forward<On>(obj), std::forward<F>(fn));
+      meta::apply_on_members<T>{}(std::forward<On>(obj), std::forward<F>(fn));
     }
 
     template<typename On, typename F> requires std::same_as<On, std::decay_t<T>>
     static constexpr void apply_on_methods(On&& obj, F&& fn)
     {
-      refl::apply_on_methods<T>{}(std::forward<On>(obj), std::forward<F>(fn));
+      meta::apply_on_methods<T>{}(std::forward<On>(obj), std::forward<F>(fn));
     }
   };
   
@@ -203,12 +203,12 @@ namespace clt
     static constexpr std::string_view _NAME = reflect<std::remove_pointer_t<T>>::str();
 
   public:
-    static constexpr refl::EntityKind kind() noexcept
+    static constexpr meta::EntityKind kind() noexcept
     {
-      return refl::IS_BUILTIN;
+      return meta::IS_BUILTIN;
     }
 
-    static constexpr clt::std::string_view str() noexcept
+    static constexpr std::string_view str() noexcept
     {
       return meta::join_strv_v<details::PTR_STR_START,
         _NAME,
@@ -216,7 +216,7 @@ namespace clt
       >;
     }
 
-    using members_type = typename refl::members_type_t<std::remove_pointer_t<T>>::template apply<std::add_pointer>;
+    using members_type = typename meta::members_type_t<std::remove_pointer_t<T>>::template apply<std::add_pointer>;
 
     template<typename On, typename F> requires std::same_as<On, std::decay_t<T>>
     static constexpr void apply_on_members(On&&, F&&) noexcept
@@ -242,12 +242,12 @@ namespace clt
     static constexpr std::string_view _NAME = reflect<std::remove_reference_t<T>>::str();
 
   public:
-    static constexpr refl::EntityKind kind() noexcept
+    static constexpr meta::EntityKind kind() noexcept
     {
-      return refl::IS_BUILTIN;
+      return meta::IS_BUILTIN;
     }
 
-    static constexpr clt::std::string_view str() noexcept
+    static constexpr std::string_view str() noexcept
     {
       return meta::join_strv_v<
         _NAME,
@@ -255,7 +255,7 @@ namespace clt
       >;
     }
     
-    using members_type = typename refl::members_type_t<std::remove_reference_t<T>>::template apply<std::add_lvalue_reference>;
+    using members_type = typename meta::members_type_t<std::remove_reference_t<T>>::template apply<std::add_lvalue_reference>;
 
     template<typename On, typename F> requires std::same_as<On, std::decay_t<T>>
     static constexpr void apply_on_members(On&&, F&&) noexcept
@@ -281,12 +281,12 @@ namespace clt
     static constexpr std::string_view _NAME = reflect<std::remove_reference_t<T>>::str();
 
   public:
-    static constexpr refl::EntityKind kind() noexcept
+    static constexpr meta::EntityKind kind() noexcept
     {
-      return refl::IS_BUILTIN;
+      return meta::IS_BUILTIN;
     }
 
-    static constexpr clt::std::string_view str() noexcept
+    static constexpr std::string_view str() noexcept
     {
       return meta::join_strv_v<
         _NAME,
@@ -294,7 +294,7 @@ namespace clt
       >;
     }
 
-    using members_type = typename refl::members_type_t<std::remove_reference_t<T>>::template apply<std::add_rvalue_reference>;
+    using members_type = typename meta::members_type_t<std::remove_reference_t<T>>::template apply<std::add_rvalue_reference>;
 
     template<typename On, typename F> requires std::same_as<On, std::decay_t<T>>
     static constexpr void apply_on_members(On&&, F&&) noexcept
@@ -320,12 +320,12 @@ namespace clt
     static constexpr std::string_view _NAME = reflect<std::remove_cv_t<T>>::str();
   
   public:
-    static constexpr refl::EntityKind kind() noexcept
+    static constexpr meta::EntityKind kind() noexcept
     {
-      return refl::entity_kind_v<std::remove_cv_t<T>>;
+      return meta::entity_kind_v<std::remove_cv_t<T>>;
     }
 
-    static constexpr clt::std::string_view str() noexcept
+    static constexpr std::string_view str() noexcept
     {
       return meta::join_strv_v<
         details::CONST_STR,
@@ -333,7 +333,7 @@ namespace clt
       >;
     }
 
-    using members_type = typename refl::members_type_t<std::remove_cv_t<T>>::template apply<std::add_const>;
+    using members_type = typename meta::members_type_t<std::remove_cv_t<T>>::template apply<std::add_const>;
 
     template<typename On, typename F> requires std::same_as<On, std::decay_t<T>>
     static constexpr void apply_on_members(On&& obj, F&& fn)
@@ -363,12 +363,12 @@ namespace clt
     static constexpr std::string_view _NAME = reflect<std::remove_cv_t<T>>::str();
 
   public:
-    static constexpr refl::EntityKind kind() noexcept
+    static constexpr meta::EntityKind kind() noexcept
     {
-      return refl::entity_kind_v<std::remove_cv_t<T>>;
+      return meta::entity_kind_v<std::remove_cv_t<T>>;
     }
 
-    static constexpr clt::std::string_view str() noexcept
+    static constexpr std::string_view str() noexcept
     {
       return meta::join_strv_v<
         details::VOLATILE_STR,
@@ -376,7 +376,7 @@ namespace clt
       >;
     }
 
-    using members_type = typename refl::members_type_t<std::remove_cv_t<T>>::template apply<std::add_volatile>;
+    using members_type = typename meta::members_type_t<std::remove_cv_t<T>>::template apply<std::add_volatile>;
 
     template<typename On, typename F> requires std::same_as<On, std::decay_t<T>>
     static constexpr void apply_on_members(On&& obj, F&& fn)
@@ -406,12 +406,12 @@ namespace clt
     static constexpr std::string_view _NAME = reflect<std::remove_cv_t<T>>::str();
 
   public:
-    static constexpr refl::EntityKind kind() noexcept
+    static constexpr meta::EntityKind kind() noexcept
     {
-      return refl::entity_kind_v<std::remove_cv_t<T>>;
+      return meta::entity_kind_v<std::remove_cv_t<T>>;
     }
 
-    static constexpr clt::std::string_view str() noexcept
+    static constexpr std::string_view str() noexcept
     {
       return meta::join_strv_v<
         details::CONST_STR,
@@ -420,7 +420,7 @@ namespace clt
       >;
     }
 
-    using members_type = typename refl::members_type_t<std::remove_cv_t<T>>::template apply<std::add_cv>;
+    using members_type = typename meta::members_type_t<std::remove_cv_t<T>>::template apply<std::add_cv>;
 
     template<typename On, typename F> requires std::same_as<On, std::decay_t<T>>    
     static constexpr void apply_on_members(On&& obj, F&& fn)
@@ -568,7 +568,7 @@ DECLARE_BUILTIN_TYPE(f64);
   template<> \
   struct clt::metaect<TYPE> { \
     static constexpr clt::meta::EntityKind kind() noexcept { return clt::meta::IS_CLASS; } \
-    static constexpr clt::std::string_view str() noexcept { return #TYPE; } \
+    static constexpr std::string_view str() noexcept { return #TYPE; } \
     using members_type = typename clt::meta::type_list<decltype(&TYPE::member) COLT_FOR_EACH_1ARG(COLT_DETAILS_MEMBER_TO_MEMBER_PTR, TYPE, __VA_ARGS__)> \
       ::template remove_if<std::is_member_function_pointer>; \
     using methods_type = typename clt::meta::type_list<decltype(&TYPE::member) COLT_FOR_EACH_1ARG(COLT_DETAILS_MEMBER_TO_MEMBER_PTR, TYPE, __VA_ARGS__)> \

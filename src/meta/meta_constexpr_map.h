@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <utility>
+#include <numeric>
 
 #include "structs/option.h"
 

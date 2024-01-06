@@ -57,7 +57,7 @@ namespace clt
   /// @return The absolute value
   constexpr std::make_unsigned_t<Int> abs(Int value) noexcept
   {
-    assert_true("Invalid argument for 'abs'!", value != std::numeric_limits<Int>::min())
+    assert_true("Invalid argument for 'abs'!", value != std::numeric_limits<Int>::min());
     if (std::is_constant_evaluated())
     {
       if (value < 0)

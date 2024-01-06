@@ -131,7 +131,7 @@ namespace clt
       noexcept(std::is_nothrow_destructible_v<T>
         && std::is_nothrow_move_constructible_v<T>)
     {
-      assert_true("Self assignment is prohibited!", &to_copy != this);
+      assert_true("Self assignment is prohibited!", &to_move != this);
       reset();
       if (to_move.is_value())
         new(opt_buffer) T(std::move(*details::ptr_to<T*>(to_move.opt_buffer)));
@@ -288,7 +288,7 @@ struct fmt::formatter<clt::Option<T>>
     none_str = it;
     none_size = 0;
     while (*it != '}')
-      ++count, ++it;
+      ++none_size, ++it;
     
     return it;
   }

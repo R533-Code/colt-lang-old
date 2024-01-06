@@ -340,7 +340,7 @@ namespace clt::cl
       //For now only return the size of the list.
       //When categories are implemented, we need to
       //recurse into each category, skipping positional arguments.
-      return sizeof...(Args) + (!Args::alias.is_empty() + ...);
+      return sizeof...(Args) + (!Args::alias.empty() + ...);
     }
 
     template<typename... Args>
@@ -354,7 +354,7 @@ namespace clt::cl
       // 4ULL for "help"
       // + 3ULL is for ", -" between name and alias
       // + 1ULL is for "-"
-      return clt::max({ (static_cast<size_t>(Args::name.size()) + static_cast<size_t>((!Args::alias.is_empty()) * (Args::alias.size() + 3))) ..., static_cast<size_t>(4) }) + 1;
+      return clt::max({ (static_cast<size_t>(Args::name.size()) + static_cast<size_t>((!Args::alias.empty()) * (Args::alias.size() + 3))) ..., static_cast<size_t>(4) }) + 1;
     }
 
     template<typename... Args>
@@ -450,17 +450,17 @@ namespace clt::cl
     template<typename Arg>
     void print_help_for_arg(u64 max_size, u64 max_desc) noexcept
     {
-      if constexpr (Arg::alias.is_empty())
+      if constexpr (Arg::alias.empty())
         io::print<"">("   -{}{: <{}}{}", io::BrightCyanF, Arg::name.data(), max_size, io::Reset);
       else
         io::print<"">("   -{}{}{}, -{}{}{}{: <{}}", io::BrightCyanF, Arg::name.data(), io::Reset, io::BrightCyanF, Arg::alias.data(), io::Reset, "", max_size - Arg::name.size() - Arg::alias.size() - 3);
 
-      if constexpr (Arg::value_desc.is_empty())
+      if constexpr (Arg::value_desc.empty())
         io::print<"">("{: <{}}", "", max_desc);
       else
         io::print<"">("{}<{}>{}{: <{}}", io::BrightMagentaF, Arg::value_desc.data(), io::Reset, "", max_desc - Arg::value_desc.size() - 2);
 
-      if constexpr (Arg::desc.is_empty())
+      if constexpr (Arg::desc.empty())
         io::print("");
       else
         io::print("  - {}", Arg::desc);
@@ -485,7 +485,7 @@ namespace clt::cl
       constexpr u64 max_size = max_name_size(list);
       constexpr u64 max_desc = max_desc_size(list);
 
-      if (name.is_empty())
+      if (name.empty())
         io::print<"">("USAGE: {}[OPTIONS] {}", io::BrightCyanF, io::BrightBlueF);
       else
         io::print<"">("USAGE: {} {}[OPTIONS] {}", name, io::BrightCyanF, io::BrightBlueF);
@@ -502,7 +502,7 @@ namespace clt::cl
 
     void handle_non_positional(std::string_view arg, u64& i, u64 argc, char** argv, auto& CONST_MAP) noexcept
     {
-      std::string_view to_parse = arg; to_parse.pop_front();
+      std::string_view to_parse = arg; to_parse.remove_prefix(1);
       u64 equal_index = to_parse.find('=');
       to_parse = to_parse.substr(0, equal_index);
       if (auto opt = CONST_MAP.find(to_parse))
@@ -571,7 +571,7 @@ namespace clt::cl
     for (u64 i = 1; i < static_cast<u64>(argc); i++)
     {
       std::string_view arg = argv[i];
-      if (arg.is_empty() || arg.front() != '-' || is_parsing_pos)
+      if (arg.empty() || arg.front() != '-' || is_parsing_pos)
         details::handle_positional(arg, pos_id, POS_TABLE);
       else
       {
