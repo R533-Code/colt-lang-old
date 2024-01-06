@@ -8,6 +8,7 @@
 #ifndef HG_COLT_ASCII
 #define HG_COLT_ASCII
 
+#include <string_view>
 #include "util/types.h"
 
 namespace clt
@@ -307,6 +308,21 @@ namespace clt
     //if we made use of an 'if' statement, but do it anyway...
     //To see explanation, look at: 'clt::toupper'.
     return chr | (0b00100000 * static_cast<u8>(isupper(chr)));
+  }
+
+  /// @brief Insensitive-case string comparison
+  /// @param a The first string
+  /// @param b The second string
+  /// @return True if both strings are equal (without regard to case)
+  constexpr bool is_iequal(std::string_view a, std::string_view b) noexcept
+  {
+    if (a.size() != b.size())
+      return false;
+    for (size_t i = 0; i < a.size(); i++)
+      if (clt::tolower(a[i]) != clt::tolower(b[i]))
+        return false;
+
+    return true;
   }
 }
 
