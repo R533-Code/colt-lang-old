@@ -1,7 +1,10 @@
-/** @file print.h
-* Contains print() functions to output to the console.
-*/
-
+/*****************************************************************//**
+ * @file   print.h
+ * @brief  Contains utilities to write characters to the console.
+ * 
+ * @author RPC
+ * @date   January 2024
+ *********************************************************************/
 #ifndef HG_COLT_PRINT
 #define HG_COLT_PRINT
 

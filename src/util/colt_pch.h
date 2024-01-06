@@ -1,3 +1,10 @@
+/*****************************************************************//**
+ * @file   colt_pch.h
+ * @brief  Precompiled header containing the most useful includes.
+ * 
+ * @author RPC
+ * @date   January 2024
+ *********************************************************************/
 #ifndef HG_COLT_PCH
 #define HG_COLT_PCH
 
