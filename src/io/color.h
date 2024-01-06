@@ -1,7 +1,10 @@
-/** @file color.h
-* Contains helper for printing colored output to the console.
-*/
-
+/*****************************************************************//**
+ * @file   color.h
+ * @brief  Contains ANSI escape codes to alter the color of the console.
+ * 
+ * @author RPC
+ * @date   January 2024
+ *********************************************************************/
 #ifndef HG_COLT_CONSOLE_COLORS
 #define HG_COLT_CONSOLE_COLORS
 
@@ -14,6 +17,7 @@ namespace clt::io
 {
   namespace details
   {
+    /// @brief Array of colors
     static constexpr std::array CONSOLE_COLORS =
     {
       "", //EMPTY
@@ -67,7 +71,7 @@ namespace clt::io
   /// @brief Represents a Console Color
   struct Color
   {
-    /// @brief Index in CONSOLE_COLOR array
+    /// @brief Index into CONSOLE_COLOR array
     uint64_t index;
   };
 
@@ -169,6 +173,7 @@ struct fmt::formatter<clt::io::Color>
   /// @return context
   auto format(const clt::io::Color& op, FormatContext& ctx)
   {
+    // If OutputColor is false, we write an empty string "".
     return fmt::format_to(ctx.out(), "{}",
       clt::io::details::CONSOLE_COLORS[op.index * static_cast<uint64_t>(clt::io::OutputColor)]);
   }
