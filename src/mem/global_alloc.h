@@ -36,6 +36,14 @@ namespace clt::mem
       GlobalAllocator.dealloc(blk);
   }
 
+  /// @brief Registers a function to call if memory could not be allocated.
+  /// This function will be called before aborting the app.
+  /// @param fn The function to register
+  static void global_on_null(void(*fn)() noexcept) noexcept
+  {
+    GlobalAllocator.register_on_null(fn);
+  }
+
   /// @brief Function pointer to an allocation function
   using AllocFn   = MemBlock(*)(ByteSize<Byte>) noexcept;
   /// @brief Function pointer to a deallocation function
