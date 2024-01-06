@@ -158,8 +158,13 @@ namespace clt::io
 template<>
 /// @brief {fmt} specialization of Color
 struct fmt::formatter<clt::io::Color>
-  : public clt::meta::DefaultParserFMT
 {
+  template<typename ParseContext>
+  constexpr auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
+
   template<typename FormatContext>
   /// @brief fmt overload
   /// @tparam FormatContext The context to write 
