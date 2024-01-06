@@ -290,6 +290,18 @@ namespace clt
     /// @brief Floating point (f32, f64)
     concept FloatingPoint = std::same_as<std::remove_cv_t<T>, f32>
       || std::same_as<std::remove_cv_t<T>, f64>;
+
+    /// @brief Let fmt::formatter specialization inherit from this type if
+    /// they only accept an empty format specification.
+    struct DefaultParserFMT
+    {
+      template<typename ParseContext>
+      constexpr auto parse(ParseContext& ctx)
+      {
+        assert_true("Only accepted format is {}!", ctx.begin() == ctx.end());
+        return ctx.begin();
+      }
+    };
   }
 }
 
