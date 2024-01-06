@@ -292,20 +292,6 @@ struct fmt::formatter<clt::ByteSize<clt::MebiByte>>
 };
 
 template<>
-struct fmt::formatter<clt::ByteSize<clt::MebiByte>>
-  : public clt::meta::DefaultParserFMT
-{
-  template<typename FormatContext>
-  auto format(const clt::ByteSize<clt::MebiByte>& vec, FormatContext& ctx)
-  {
-    using namespace clt;
-    if (vec.count % GiB::num == 0)
-      return fmt::format_to(ctx.out(), "{}GiB", vec.count / GiB::num);
-    return fmt::format_to(ctx.out(), "{}MiB", vec.count / MiB::num);
-  }
-};
-
-template<>
 struct fmt::formatter<clt::ByteSize<clt::GibiByte>>
   : public clt::meta::DefaultParserFMT
 {
