@@ -23,6 +23,7 @@
 
 #include <cstdint>
 #include <type_traits>
+#include "meta/meta_traits.h"
 #include "config_type.h"
 #include "assertions.h"
 
@@ -240,6 +241,21 @@ namespace clt
       [[nodiscard]]
       explicit constexpr operator bool() const noexcept { return is_success(); }
     };
+
+    template<typename To, typename From>
+    /// @brief Helper to converts a pointer to a type to a pointer to another type
+    /// @tparam To The type to convert
+    /// @tparam From The type to convert from
+    /// @param frm The value to convert
+    /// @return Converted value
+    constexpr To ptr_to(From frm) noexcept
+      requires std::is_pointer_v<To> && std::is_pointer_v<From>
+    {
+      return static_cast<To>(
+        static_cast<
+        meta::match_cv_t<std::remove_pointer_t<From>, void>*
+        >(frm));
+    }
   }
 
   template<typename T> requires (!std::is_reference_v<T>) && (!std::is_const_v<T>)
@@ -248,7 +264,7 @@ namespace clt
   using out = std::add_const_t<std::conditional_t<isDebugBuild(), details::OutDebug<T>, details::OutRelease<T>>>&;
 
   /// @brief Boolean that represents a success/failure state that must be checked.
-  using Error = std::conditional_t<isDebugBuild(), details::ErrorDebug, details::ErrorRelease>;
+  using Error = std::conditional_t<isDebugBuild(), details::ErrorDebug, details::ErrorRelease>;  
 }
 
 #endif // !HG_COLT_TYPES
