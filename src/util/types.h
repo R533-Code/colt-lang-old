@@ -298,7 +298,11 @@ namespace clt
       template<typename ParseContext>
       constexpr auto parse(ParseContext& ctx)
       {
-        assert_true("Only accepted format is {}!", ctx.begin() == ctx.end());
+        if constexpr (isDebugBuild())
+        {
+          assert_true("Only accepted format is {}!",
+            ctx.begin() == ctx.end() || *ctx.begin() == '}');
+        }        
         return ctx.begin();
       }
     };
