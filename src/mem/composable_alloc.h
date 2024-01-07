@@ -507,7 +507,7 @@ namespace clt::mem
     {
       if (auto index = register_count.fetch_add(1, std::memory_order_acq_rel); index < REGISTER_SIZE)
       {
-        reg_array[index - 1] = func;
+        reg_array[index] = func;
         return true;
       }
       // We do not care that 'index' is always being incremented, no need to decrement.
