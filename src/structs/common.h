@@ -1,7 +1,10 @@
-/** @file helper.h
-* Contains common helpers for data-structures.
-*/
-
+/*****************************************************************//**
+ * @file   common.h
+ * @brief  Contains common helpers for data-structures.
+ * 
+ * @author RPC
+ * @date   January 2024
+ *********************************************************************/
 #ifndef HG_COLT_HELPER
 #define HG_COLT_HELPER
 
@@ -169,8 +172,8 @@ namespace clt::details
   }
 
   /// @brief Check if a hash and a sentinel are equal.
-  /// Precondition: is_sentinel_active(key).
-  /// The check performed checks the lower 7-bits of the hash.
+  /// The check performed only compares the lower 7-bits of the hash.
+  /// @pre is_sentinel_active(key).
   /// @param key The sentinel to check for
   /// @param hash The hash whose 7 lowest bits to compare with
   /// @return True if the lowest 7-bits of the hash matches the sentinel
