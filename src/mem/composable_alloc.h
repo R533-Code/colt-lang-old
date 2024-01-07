@@ -483,7 +483,7 @@ namespace clt::mem
     }
   };
 
-  template<meta::Allocator allocator, size_t register_size = 32>
+  template<meta::Allocator allocator, size_t REGISTER_SIZE = 32>
   class AbortOnNULLAllocator
     : private allocator
   {
@@ -491,7 +491,7 @@ namespace clt::mem
     using register_fn_t = void(*)(void) noexcept;
 
     /// @brief The array of registered function pointer
-    register_fn_t reg_array[register_size] = {};
+    register_fn_t reg_array[REGISTER_SIZE] = {};
     /// @brief The number of registered function.
     /// An atomic is used to protect the 'reg_array' from multiple threads accesses
     std::atomic<size_t> register_count = 0;
@@ -503,14 +503,14 @@ namespace clt::mem
     /// @brief Register function to call on exit
     /// @param func The function to register
     /// @return True if registering was successful, false if there is no more capacity for registering
-    constexpr bool register_on_null(void(*func)(void) noexcept) noexcept
+    constexpr bool register_on_null(void(*func)() noexcept) noexcept
     {
-      if (auto index = register_count.fetch_add(1, std::memory_order_acq_rel) < register_size)
+      if (auto index = register_count.fetch_add(1, std::memory_order_acq_rel); index < REGISTER_SIZE)
       {
         reg_array[index - 1] = func;
         return true;
       }
-      register_count.fetch_sub(1, std::memory_order_acq_rel);
+      // We do not care that 'index' is always being incremented, no need to decrement.
       return false;
     }
 
@@ -521,8 +521,14 @@ namespace clt::mem
     {
       if (auto blk = allocator::alloc(size))
         return blk;
+      // As 'register_on_null' will keep incrementing 'register_count'
+      // at each call, 'register_count' might be greater than the max number
+      // of registered functions
+      const size_t registered_count = clt::min(
+        register_count.load(std::memory_order_acquire), REGISTER_SIZE
+      );
+      
       //Call registered functions
-      const size_t registered_count = register_count.load(std::memory_order_acquire);
       for (size_t i = 0; i < registered_count; i++)
         reg_array[i]();
       std::abort();
