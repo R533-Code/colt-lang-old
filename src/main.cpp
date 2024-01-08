@@ -4,7 +4,7 @@
 
 using namespace clt;
 
-int main(int argc, char** argv)
+int main(int argc, const char** argv)
 {
   mem::global_on_null([]() noexcept { io::print_fatal("Could not allocate memory!"); });
   cl::parse_command_line_options<CMDs>(argc, argv);

@@ -500,7 +500,7 @@ namespace clt::cl
       std::exit(0);
     }
 
-    void handle_non_positional(std::string_view arg, u64& i, u64 argc, char** argv, auto& CONST_MAP) noexcept
+    void handle_non_positional(std::string_view arg, u64& i, u64 argc, const char** argv, auto& CONST_MAP) noexcept
     {
       std::string_view to_parse = arg; to_parse.remove_prefix(1);
       u64 equal_index = to_parse.find('=');
@@ -553,7 +553,7 @@ namespace clt::cl
   }
 
   template<meta::TypeList list>
-  void parse_command_line_options(int argc, char** argv, std::string_view name = {}, std::string_view description = {}) noexcept
+  void parse_command_line_options(int argc, const char** argv, std::string_view name = {}, std::string_view description = {}) noexcept
   {
     using OptList = typename list::template remove_if_not<details::is_opt>;
     using PosList = typename list::template remove_if_not<details::is_pos>;
