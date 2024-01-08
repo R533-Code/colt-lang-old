@@ -264,7 +264,7 @@ namespace clt
   using out = std::add_const_t<std::conditional_t<isDebugBuild(), details::OutDebug<T>, details::OutRelease<T>>>&;
 
   /// @brief Boolean that represents a success/failure state that must be checked.
-  using Error = std::conditional_t<isDebugBuild(), details::ErrorDebug, details::ErrorRelease>;
+  using ErrorFlag = std::conditional_t<isDebugBuild(), details::ErrorDebug, details::ErrorRelease>;
 
   namespace meta
   {
