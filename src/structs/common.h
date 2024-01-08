@@ -11,6 +11,7 @@
 #include <cstring>
 #include <type_traits>
 #include <fmt/format.h>
+#include <concepts>
 
 #include "meta/meta_traits.h"
 #include "meta/meta_maths.h"
@@ -197,6 +198,15 @@ namespace clt::details
 
 namespace clt
 {
+  namespace meta
+  {
+    /// @brief Tag struct for constructing an object in place
+    struct InPlaceT{};
+  }
+
+  /// @brief Tag object for construting an object in place
+  inline constexpr meta::InPlaceT InPlace;
+
   /// @brief Represents the result of an insert/insert_or_assign operation
   enum class InsertionResult
     : u8
