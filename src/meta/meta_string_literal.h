@@ -10,6 +10,7 @@
 #define HG_META_STRING_LITERAL
 
 #include <array>
+#include <algorithm>
 #include <string_view>
 
 namespace clt::meta
