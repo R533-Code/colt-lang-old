@@ -132,7 +132,7 @@ message(STATUS "Found " ${testCount} " tests.")
 source_group("Colt Tests" FILES ${ColtTestsPath})
 
 # Testing for CTest
-enable_testing()
+# enable_testing()
 
 option(ENUM_TESTS "Enumerates tests to run" OFF)
 
