@@ -11,6 +11,7 @@ set(CMAKE_BUILD_TYPE "Release")
 # Save all the files to compile
 file(GLOB_RECURSE ColtHeaders "src/*.h")
 file(GLOB_RECURSE ColtUnits "src/*.cpp")
+file(GLOB_RECURSE ColtGithubActions ".github/workflows/*.yml")
 # Save test files
 file(GLOB_RECURSE ColtTestsPath "resources/tests/*.ct")
 
@@ -22,10 +23,12 @@ if (WIN32)
   add_executable(${COLT_EXECUTABLE_NAME}
     ${ColtHeaders} ${ColtUnits} ${ColtTestsPath}
     "resources/icon/colt.rc"
+    ${ColtGithubActions}
   )
 else()
   add_executable(${COLT_EXECUTABLE_NAME}
     ${ColtHeaders} ${ColtUnits} ${ColtTestsPath}
+    ${ColtGithubActions}
   )
 endif()
 
@@ -130,6 +133,7 @@ message(STATUS "Found " ${testCount} " tests.")
 
 # For VS, group tests
 source_group("Colt Tests" FILES ${ColtTestsPath})
+source_group("Github Actions" FILES ${ColtGithubActions})
 
 # Testing for CTest
 # enable_testing()
