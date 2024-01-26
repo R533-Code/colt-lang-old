@@ -10,6 +10,7 @@
 
 #include "fmt/format.h"
 #include "util/types.h"
+#include "structs/common.h"
 
 namespace clt
 {
@@ -17,15 +18,10 @@ namespace clt
   {
     /// @brief Tag type for constructing an empty Option
     struct NoneT{};
-
-    /// @brief Tag type for constructing an object in place
-    struct InPlaceT{};
   }
 
   /// @brief Tag object for constructing an empty Option
   static constexpr details::NoneT None;
-
-  static constexpr details::InPlaceT InPlace;
 
   template<typename T>
   /// @brief Manages an optionally contained value.
@@ -84,7 +80,7 @@ namespace clt
     /// @tparam ...Args The parameter pack
     /// @param  InPlaceT, use InPlace
     /// @param ...args The argument pack
-    constexpr Option(details::InPlaceT, Args&&... args)
+    constexpr Option(meta::InPlaceT, Args&&... args)
       noexcept(std::is_nothrow_constructible_v<T, Args...>)
       : is_none_v(false)
     {
