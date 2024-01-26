@@ -17,6 +17,7 @@
 #include "meta/meta_maths.h"
 #include "util/assertions.h"
 #include "util/types.h"
+#include "util/parse.h"
 
 namespace clt::details
 {
