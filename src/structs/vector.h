@@ -1,7 +1,12 @@
-/** @file vector.h
-* Contains Vector<> template.
-*/
-
+/*****************************************************************//**
+ * @file   vector.h
+ * @brief  Contains a growable contiguous array.
+ * This Vector class uses the new allocators provided in 'mem'.
+ * To create a Vector that uses a local allocator, use make_local_vector.
+ * 
+ * @author RPC
+ * @date   January 2024
+ *********************************************************************/
 #ifndef HG_COLT_VECTOR
 #define HG_COLT_VECTOR
 
