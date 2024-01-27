@@ -20,6 +20,12 @@
 
 namespace clt
 {
+  template<typename T>
+  using View = std::span<const T, std::dynamic_extent>;
+
+  template<typename T>
+  using Span = std::span<T, std::dynamic_extent>;
+
   template<typename T, auto ALLOCATOR = mem::GlobalAllocatorDescription>
     requires meta::AllocatorScope<ALLOCATOR>
   /// @brief Dynamic size array, that can make use of a local allocator
@@ -400,30 +406,30 @@ namespace clt
     constexpr void _Unsafe_size(size_t size) noexcept
     {
       blk_size = size;
-    }
-
-    constexpr std::span<T, std::dynamic_extent> to_span() noexcept { return *this; }
-    constexpr std::span<const T, std::dynamic_extent> to_span() const noexcept { return *this; }
+    }    
 
     /// @brief Converts a Vector to a View
     /// @return View over the whole Vector
-    constexpr operator std::span<T, std::dynamic_extent>() const noexcept
+    constexpr operator View<T>() const noexcept
     {
       return { begin(), end() };
     }
 
     /// @brief Converts a Vector to a Span
     /// @return Span over the whole Vector
-    constexpr operator std::span<const T, std::dynamic_extent>() noexcept
+    constexpr operator Span<T>() noexcept
     {
       return { begin(), end() };
     }
+
+    constexpr Span<T> to_view() noexcept { return *this; }
+    constexpr View<T> to_view() const noexcept { return *this; }
 
     /// @brief Check if every object of v1 and v2 are equal
     /// @param v1 The first Vector
     /// @param v2 The second Vector
     /// @return True if both Vector are equal
-    friend constexpr bool operator==(const Vector& v1, std::span<const T, std::dynamic_extent> v2) noexcept
+    friend constexpr bool operator==(const Vector& v1, View<T> v2) noexcept
     {
       if (v1.size() != v2.size())
         return false;
@@ -437,7 +443,7 @@ namespace clt
     /// @param v1 The first vector
     /// @param v2 The second vector
     /// @return Result of comparison
-    friend constexpr auto operator<=>(const Vector& v1, std::span<const T, std::dynamic_extent> v2) noexcept
+    friend constexpr auto operator<=>(const Vector& v1, View<T> v2) noexcept
     {
       return std::lexicographical_compare_three_way(
         v1.begin(), v1.end(), v2.begin(), v2.end()
@@ -461,7 +467,7 @@ namespace clt
     /// @return Hash
     constexpr size_t operator()(const Vector<T, ALLOCATOR>& value) const noexcept
     {      
-      return hash<std::span<const T, std::dynamic_extent>>(value.to_span());
+      return hash_value(value.to_view());
     }
   };
 }
