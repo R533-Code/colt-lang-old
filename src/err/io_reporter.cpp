@@ -1,3 +1,10 @@
+/*****************************************************************//**
+ * @file   io_reporter.cpp
+ * @brief  Definitions of generate_* functions.
+ * 
+ * @author RPC
+ * @date   January 2024
+ *********************************************************************/
 #include "io_reporter.h"
 
 namespace clt::lng
