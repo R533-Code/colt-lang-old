@@ -21,4 +21,11 @@
 #include "macros.h"
 #include "assertions.h"
 
+#include "structs/unique_ptr.h"
+#include "structs/vector.h"
+#include "structs/static_vector.h"
+#include "structs/string.h"
+#include "structs/option.h"
+#include "structs/expect.h"
+
 #endif // !HG_COLT_PCH
