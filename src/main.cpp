@@ -7,10 +7,12 @@ int main(int argc, const char** argv)
 {
   mem::global_on_null([]() noexcept { io::print_fatal("Could not allocate memory!"); });
   cl::parse_command_line_options<CMDs>(argc, argv);
-
-  io::print_message("Hello COLT!\nv{} on {} ({})",
-    COLT_VERSION_STRING, COLT_OS_STRING, COLT_CONFIG_STRING);
   
+  if (InputFile.empty())
+    io::print_warn("REPL is not implemented...");
+  else
+    io::print_warn("Transpilation is not implemented...");
+
   if (WaitForUserInput)
     io::press_to_continue();
 }
