@@ -373,7 +373,11 @@ namespace clt::cl
       using ResultType = std::remove_cvref_t<std::remove_pointer_t<decltype(opt::location)>>;
 
       if constexpr (opt::location != nullptr)
-        return clt::parse(strv, *opt::location);
+      {        
+        auto res = clt::parse(strv, *opt::location);
+        if (!res)
+          return res;
+      }
 
       //Run callback if it exists.
       //The callback is only run if parsing was successful.
@@ -389,7 +393,11 @@ namespace clt::cl
       using ResultType = std::remove_cvref_t<std::remove_pointer_t<decltype(opt::location)>>;
 
       if constexpr (opt::location != nullptr)
-        return clt::parse(strv, *opt::location);
+      {
+        auto res = clt::parse(strv, *opt::location);
+        if (!res)
+          return res;
+      }
 
       //Run callback if it exists.
       //The callback is only run if parsing was successful.
