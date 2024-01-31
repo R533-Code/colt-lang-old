@@ -5,8 +5,8 @@
  * @author RPC
  * @date   January 2024
  *********************************************************************/
-#ifndef HG_COLT_HELPER
-#define HG_COLT_HELPER
+#ifndef HG_COLT_COMMON
+#define HG_COLT_COMMON
 
 #include <cstring>
 #include <type_traits>
@@ -18,6 +18,7 @@
 #include "util/assertions.h"
 #include "util/types.h"
 #include "util/parse.h"
+#include "lex/ascii.h"
 
 namespace clt::details
 {
@@ -199,14 +200,26 @@ namespace clt::details
 
 namespace clt
 {
-  namespace meta
-  {
-    /// @brief Tag struct for constructing an object in place
-    struct InPlaceT{};
-  }
+  using StringView = std::string_view;
 
-  /// @brief Tag object for construting an object in place
-  inline constexpr meta::InPlaceT InPlace;
+  /// @brief Possible String encoding provided by the library
+  enum class StringEncoding
+  {
+    ASCII, UTF8, UTF32
+  };
+
+  /// @brief Strips chars from the beginning and end of a StringView
+  /// @param strv The StringView to strip
+  /// @param fn The filter function (pops the character if it returns true)
+  /// @return Stripped StringView
+  constexpr StringView strip(StringView strv, bool(*fn)(char) = &clt::isspace) noexcept
+  {
+    while (!strv.empty() && fn(strv.front()))
+      strv.remove_prefix(1);
+    while (!strv.empty() && fn(strv.back()))
+      strv.remove_suffix(1);
+    return strv;
+  }
 
   /// @brief Represents the result of an insert/insert_or_assign operation
   enum class InsertionResult
@@ -221,4 +234,4 @@ namespace clt
   };
 }
 
-#endif //!HG_COLT_HELPER
+#endif //!HG_COLT_COMMON
