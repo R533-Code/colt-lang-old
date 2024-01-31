@@ -12,6 +12,9 @@
 
 namespace clt::lng
 {
+  /// @brief Filter function for FilterReporter (true to keep, false to remove)
+  using filter_reporter_t = bool(*)(StringView, const Option<SourceInfo>&, const Option<ReportNumber>&) noexcept;
+
   /// @brief Consumes all reports
   class SinkReporter
   {
@@ -62,6 +65,67 @@ namespace clt::lng
     void error(StringView str, const Option<SourceInfo>& info, const Option<ReportNumber>& nb) const noexcept
     {
       generate_error(str, info, nb);
+    }
+  };
+
+  template<Reporter Rep>
+  /// @brief Filters reports generated
+  /// @tparam Rep The reporter to forward reports to if not filtered
+  class FilterReporter
+    : public Rep
+  {
+    /// @brief Message filter or nullptr
+    filter_reporter_t message_filter;
+    /// @brief Warn filter or nullptr
+    filter_reporter_t warn_filter;
+    /// @brief Error filter or nullptr
+    filter_reporter_t error_filter;
+
+  public:
+    FilterReporter() = delete;
+    constexpr FilterReporter(FilterReporter&&)      noexcept = default;
+    constexpr FilterReporter(const FilterReporter&) noexcept = default;
+
+    template<typename... Args>
+    /// @brief Constructor
+    /// @param err The error filter (or nullptr)
+    /// @param wrn The warning filter (or nullptr)
+    /// @param msg The message filter (or nullptr)
+    /// @param args Arguments to forward to the constructor of 'Rep'
+    constexpr FilterReporter(filter_reporter_t err, filter_reporter_t wrn, filter_reporter_t msg, Args&&... args) noexcept(std::is_nothrow_constructible_v<Rep, Args...>)
+      : Rep(std::forward<Args>(args)...), message_filter(msg), warn_filter(wrn), error_filter(err) {}
+
+    /// @brief Forward the message to 'Rep' if there is no message filter
+    ///        or the filter returns true.
+    /// @param str The message
+    /// @param src_info The source information if it exist
+    /// @param msg_nb The report information if it exist
+    void message(StringView str, const Option<SourceInfo>& src_info = None, const Option<ReportNumber>& msg_nb = None) noexcept
+    {
+      if (message_filter == nullptr || message_filter(str, src_info, msg_nb))
+        Rep::message(str, src_info, msg_nb);
+    }
+
+    /// @brief Forward the warning to 'Rep' if there is no warning filter
+    ///        or the filter returns true.
+    /// @param str The warning
+    /// @param src_info The source information if it exist
+    /// @param msg_nb The report information if it exist
+    void warn(StringView str, const Option<SourceInfo>& src_info = None, const Option<ReportNumber>& msg_nb = None) noexcept
+    {
+      if (warn_filter == nullptr || warn_filter(str, src_info, msg_nb))
+        Rep::warn(str, src_info, msg_nb);
+    }
+
+    /// @brief Forward the error to 'Rep' if there is no error filter
+    ///        or the filter returns true.
+    /// @param str The error
+    /// @param src_info The source information if it exist
+    /// @param msg_nb The report information if it exist
+    void error(StringView str, const Option<SourceInfo>& src_info = None, const Option<ReportNumber>& msg_nb = None) noexcept
+    {
+      if (error_filter == nullptr || error_filter(str, src_info, msg_nb))
+        Rep::error(str, src_info, msg_nb);
     }
   };
 
