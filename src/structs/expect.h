@@ -1,7 +1,10 @@
-/** @file expect.h
-* Contains Expect<> template.
-*/
-
+/*****************************************************************//**
+ * @file   expect.h
+ * @brief  Contains the Expect template.
+ * 
+ * @author RPC
+ * @date   January 2024
+ *********************************************************************/
 #ifndef HG_COLT_EXPECT
 #define HG_COLT_EXPECT
 
