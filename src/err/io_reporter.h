@@ -1,7 +1,15 @@
+/*****************************************************************//**
+ * @file   io_reporter.h
+ * @brief  Helpers for error reporting from the compiler.
+ * 
+ * @author RPC
+ * @date   January 2024
+ *********************************************************************/
 #ifndef HG_COLT_IO_REPORTER
 #define HG_COLT_IO_REPORTER
 
 #include "util/types.h"
+#include "structs/string.h"
 
 namespace clt::lng
 {
