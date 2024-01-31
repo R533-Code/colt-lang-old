@@ -29,7 +29,7 @@ namespace clt
   /// @param strv The StringView to strip
   /// @param fn The filter function (pops the character if it returns true)
   /// @return Stripped StringView
-  StringView strip(StringView strv, bool(*fn)(char) = &clt::isspace) noexcept
+  constexpr StringView strip(StringView strv, bool(*fn)(char) = &clt::isspace) noexcept
   {
     while (!strv.empty() && fn(strv.front()))
       strv.remove_prefix(1);
