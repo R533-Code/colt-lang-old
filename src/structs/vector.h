@@ -26,6 +26,22 @@ namespace clt
   template<typename T>
   using Span = std::span<T, std::dynamic_extent>;
 
+  template<typename T> requires meta::is_hashable_v<T>
+  /// @brief clt::hash overload for Span
+  struct hash<Span<T>>
+  {
+    /// @brief Hashing operator
+    /// @param value The value to hash
+    /// @return Hash
+    constexpr size_t operator()(const Span<T>& value) const noexcept
+    {
+      uint64_t seed = 0xCBF29CE484222325;
+      for (auto& i : value)
+        seed = hash_combine(seed, hash_value(i));
+      return seed;
+    }
+  };
+
   template<typename T, auto ALLOCATOR = mem::GlobalAllocatorDescription>
     requires meta::AllocatorScope<ALLOCATOR>
   /// @brief Dynamic size array, that can make use of a local allocator
