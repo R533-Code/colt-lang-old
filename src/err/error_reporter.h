@@ -1,14 +1,33 @@
+/*****************************************************************//**
+ * @file   error_reporter.h
+ * @brief  Contains composable reporters.
+ * 
+ * @author RPC
+ * @date   January 2024
+ *********************************************************************/
 #ifndef HG_COLT_ERROR_REPORTER
 #define HG_COLT_ERROR_REPORTER
 
 #include "structs/string.h"
+#include "structs/unique_ptr.h"
+#include "structs/option.h"
 #include "io_reporter.h"
 
 namespace clt::lng
 {
+  template<typename T, typename... Args>
+  /// @brief A Reporter is any type supporting message(...), error(...), warn(...) methods
+  concept Reporter = requires (T reporter, StringView str, const Option<SourceInfo>& src_info, const Option<ReportNumber>& msg_nb)
+  {
+    { reporter.message(str, src_info, msg_nb) } -> std::same_as<void>;
+    { reporter.error(str, src_info, msg_nb)   } -> std::same_as<void>;
+    { reporter.warn(str, src_info, msg_nb)    } -> std::same_as<void>;
+  };
+
   /// @brief Base class for all error reporting mechanism
   class ErrorReporter
   {
+  public:
     /// @brief Reports a message
     /// @param str The message string
     /// @param src_info The source information
@@ -29,10 +48,41 @@ namespace clt::lng
     virtual ~ErrorReporter() noexcept = 0;
   };
 
-  class LimiterReporter
+  namespace details
   {
+    template<Reporter Rep>
+    /// @brief Helper to convert a 'Reporter' to an ErrorReporter
+    class ToErrorReporter
+      : public ErrorReporter, public Rep
+    {
+      template<typename... Args>
+      constexpr ToErrorReporter(Args&&... args) noexcept(std::is_nothrow_constructible_v<Rep, args...>)
+        : Rep(std::forward<Args>(args)...) {}
 
-  };
+      void message(StringView str, const Option<SourceInfo>& src_info = None, const Option<ReportNumber>& msg_nb = None) noexcept override
+      {
+        Rep::message(str, src_info, msg_nb);
+      }
+
+      void warn(StringView str, const Option<SourceInfo>& src_info = None, const Option<ReportNumber>& msg_nb = None) noexcept override
+      {
+        Rep::warn(str, src_info, msg_nb);
+      }
+
+      void error(StringView str, const Option<SourceInfo>& src_info = None, const Option<ReportNumber>& msg_nb = None) noexcept override
+      {
+        Rep::error(str, src_info, msg_nb);
+      }
+
+      ~ToErrorReporter() override = default;
+    };
+  }  
+
+  template<typename Reporter, auto ALLOCATOR = mem::GlobalAllocatorDescription, typename... Args>
+  UniquePtr<ErrorReporter> make_error_reporter(Args&&... args) noexcept(std::is_nothrow_constructible_v<Reporter, Args...>)
+  {
+    return make_unique<details::ToErrorReporter<Reporter>>(std::forward<Args>(args)...);
+  }  
 }
 
 #endif // !HG_COLT_ERROR_REPORTER
