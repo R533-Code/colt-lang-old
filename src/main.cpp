@@ -12,5 +12,5 @@ int main(int argc, const char** argv)
     COLT_VERSION_STRING, COLT_OS_STRING, COLT_CONFIG_STRING);
   
   if (WaitForUserInput)
-    (void)getchar();
+    io::press_to_continue();
 }
