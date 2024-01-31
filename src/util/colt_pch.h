@@ -22,6 +22,7 @@
 #include "macros.h"
 #include "assertions.h"
 
+#include "meta/meta_enum.h"
 #include "structs/unique_ptr.h"
 #include "structs/vector.h"
 #include "structs/static_vector.h"
