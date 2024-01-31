@@ -52,7 +52,7 @@ namespace clt
     constexpr StaticVector(size_t sz, meta::InPlaceT, Args&&... args)
       noexcept(std::is_nothrow_constructible_v<T, Args...>)
     {
-      assert_true("Not enough capacity!", to_copy.size() <= MAX_SIZE);
+      assert_true("Not enough capacity!", sz <= MAX_SIZE);
       details::contiguous_construct(ptr(), sz, std::forward<Args>(args)...);
       blk_size = sz;
     }
