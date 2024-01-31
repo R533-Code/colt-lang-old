@@ -15,6 +15,7 @@
 #include <mutex>
 
 #include "io/print.h"
+#include "io/input.h"
 
 #include "types.h"
 #include "config_type.h"
