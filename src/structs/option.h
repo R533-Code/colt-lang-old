@@ -10,10 +10,23 @@
 
 #include "fmt/format.h"
 #include "util/types.h"
-#include "structs/common.h"
+#include "lex/ascii.h"
 
 namespace clt
 {
+  namespace meta
+  {
+    template<typename T>
+    /// @brief Check if a type is parsable from a string
+    concept Parsable = requires (T a) { scn::scan_default("10", a); };
+    
+    /// @brief Tag struct for constructing an object in place
+    struct InPlaceT {};
+  }
+
+  /// @brief Tag object for construting an object in place
+  inline constexpr meta::InPlaceT InPlace;
+
   namespace details
   {
     /// @brief Tag type for constructing an empty Option
@@ -118,6 +131,7 @@ namespace clt
       reset();
       if (to_copy.is_value())
         new(opt_buffer) T(*details::ptr_to<const T*>(to_copy.opt_buffer));
+      return *this;
     }
 
     /// @brief Move assignment operator
@@ -131,6 +145,7 @@ namespace clt
       reset();
       if (to_move.is_value())
         new(opt_buffer) T(std::move(*details::ptr_to<T*>(to_move.opt_buffer)));
+      return *this;
     }
 
     /// @brief Resets the Option.
@@ -141,6 +156,7 @@ namespace clt
       noexcept(std::is_nothrow_destructible_v<T>)
     {
       reset();
+      return *this;
     }
 
     /// @brief Destructor, destructs the value if it exist.
@@ -262,6 +278,29 @@ namespace clt
     }
   };
 }
+
+template<clt::meta::Parsable T>
+struct scn::scanner<clt::Option<T>>
+  : scn::empty_parser
+{
+  template <typename Context>
+  error scan(clt::Option<T>& val, Context& ctx)
+  {
+    std::string_view strv;
+    auto r = scn::scan(ctx.range(), "{}", strv);
+    ON_SCOPE_EXIT {
+      ctx.range() = std::move(r.range());
+    };
+    if (r && clt::is_iequal("none", strv))
+    {
+      val = clt::None;
+      return r.error();
+    }
+    T value;
+    r = scn::scan(ctx.range(), "{}", value);
+    return r.error();
+  }
+};
 
 template<typename T>
   requires fmt::is_formattable<T>::value

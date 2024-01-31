@@ -24,10 +24,6 @@ namespace clt::meta
   /// @brief The count of characters required to convert the greatest value
   /// of integer 'T' to string
   inline constexpr u64 max_digits10_v = static_cast<u64>(clt::ceil(clt::log10(std::numeric_limits<T>::max()))) + std::is_signed_v<T>;
-
-  template<typename T>
-  /// @brief Check if a type is parsable from a string
-  concept Parsable = requires (T a) { scn::scan_default("10", a); };
 }
 
 DECLARE_ENUM_WITH_TYPE(u8, clt::io, IOError,
