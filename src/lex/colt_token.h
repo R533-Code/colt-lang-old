@@ -247,6 +247,8 @@ namespace clt::lng
 		TKN_KEYWORD_PTR,
 		/// @brief mut_ptr
 		TKN_KEYWORD_MUT_PTR,
+		/// @brief opaque
+		TKN_KEYWORD_OPAQUE,
 
 		/********* END OF BUILTIN TYPES *******/
 
