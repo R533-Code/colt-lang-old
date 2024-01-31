@@ -59,8 +59,8 @@ namespace clt::io
       return { Error, clt::details::IOError_to_ParsingResult(str.error()) };
 
     T ret;
-    StringView strv = *str;
-    auto result = scn::scan_default(strv.strip(), ret);
+    StringView strv = *str;    
+    auto result = scn::scan_default(strip(strv), ret);
     if (result)
     {
       if (!result.empty())
