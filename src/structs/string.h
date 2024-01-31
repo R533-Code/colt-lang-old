@@ -25,6 +25,19 @@ namespace clt
 
   using StringView = std::string_view;
 
+  /// @brief Strips chars from the beginning and end of a StringView
+  /// @param strv The StringView to strip
+  /// @param fn The filter function (pops the character if it returns true)
+  /// @return Stripped StringView
+  StringView strip(StringView strv, bool(*fn)(char) = &clt::isspace) noexcept
+  {
+    while (!strv.empty() && fn(strv.front()))
+      strv.remove_prefix(1);
+    while (!strv.empty() && fn(strv.back()))
+      strv.remove_suffix(1);
+    return strv;
+  }
+
   template<auto ALLOCATOR, StringEncoding ENCODING>
     requires meta::AllocatorScope<ALLOCATOR>
   /// @brief Unspecialized BasicString
