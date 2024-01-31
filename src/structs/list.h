@@ -1,3 +1,10 @@
+/*****************************************************************//**
+ * @file   list.h
+ * @brief  Contains a FlatList implementation.
+ * 
+ * @author RPC
+ * @date   January 2024
+ *********************************************************************/
 #ifndef HG_COLT_LIST
 #define HG_COLT_LIST
 
