@@ -1,5 +1,6 @@
 #include <util/colt_pch.h>
 #include "args.h"
+#include "err/error_reporter.h"
 
 using namespace clt;
 
