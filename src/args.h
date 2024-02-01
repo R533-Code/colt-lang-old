@@ -56,15 +56,15 @@ namespace clt
     
     cl::Opt<"max-error", cl::desc<"Chooses the maximum number of errors reported">,
       cl::value_desc<"[None|1-65536]">, cl::location<MaxErrors>,
-      cl::callback<[] { details::max_reporter_validator(MaxErrors, "max-error", 32); } >>,
+      cl::callback<[] { details::max_reporter_validator(MaxErrors, "-max-error", 32); } >>,
     
-    cl::Opt<"max-warn", cl::desc<"Chooses the maximum number of errors reported">,
+    cl::Opt<"max-warn", cl::desc<"Chooses the maximum number of warnings reported">,
       cl::value_desc<"[None|1-65536]">, cl::location<MaxWarnings>,
-      cl::callback<[] { details::max_reporter_validator(MaxWarnings, "max-warn", 64); } >>,
+      cl::callback<[] { details::max_reporter_validator(MaxWarnings, "-max-warn", 64); } >>,
 
-    cl::Opt<"max-msg", cl::desc<"Chooses the maximum number of errors reported">,
+    cl::Opt<"max-msg", cl::desc<"Chooses the maximum number of messages reported">,
       cl::value_desc<"[None|1-65536]">, cl::location<MaxMessages>,
-      cl::callback<[] { details::max_reporter_validator(MaxMessages, "max-msg", 128); } >>,
+      cl::callback<[] { details::max_reporter_validator(MaxMessages, "-max-msg", 128); } >>,
 
     cl::Opt<"o", cl::desc<"Output file name">,
       cl::location<OutputFile>>,
