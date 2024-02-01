@@ -31,6 +31,10 @@ namespace clt
 
   namespace details
   {
+    /// @brief Callback to validate arguments of Max* globals
+    /// @param to_validate The global to validate, as an example MaxErrors
+    /// @param flag The flag name, as an example "-max-error"
+    /// @param init The value to assign on invalid input
     constexpr void max_reporter_validator(Option<u16>& to_validate, const char* flag, const Option<u16>& init) noexcept
     {
       if (to_validate.is_none() || (to_validate.value() != 0))
