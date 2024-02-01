@@ -60,6 +60,11 @@ namespace clt
     constexpr ParsingResult(const ParsingResult&) noexcept = default;
     /// @brief Default move constructor
     constexpr ParsingResult(ParsingResult&&) noexcept = default;
+    /// @brief Default copy assignment operator 
+    constexpr ParsingResult& operator=(const ParsingResult&) noexcept = default;
+    /// @brief Default move assignment operator 
+    constexpr ParsingResult& operator=(ParsingResult&&) noexcept = default;
+    
     /// @brief Constructs a result with 'code' and 'msg'
     /// @param code The error code (ParsingCode::GOOD if no error)
     /// @param msg The message describing the error
