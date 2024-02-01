@@ -130,7 +130,10 @@ namespace clt
       assert_true("Self assignment is prohibited!", &to_copy != this);
       reset();
       if (to_copy.is_value())
+      {
+        is_none_v = false;
         new(opt_buffer) T(*details::ptr_to<const T*>(to_copy.opt_buffer));
+      }
       return *this;
     }
 
@@ -144,7 +147,36 @@ namespace clt
       assert_true("Self assignment is prohibited!", &to_move != this);
       reset();
       if (to_move.is_value())
+      {
+        is_none_v = false;
         new(opt_buffer) T(std::move(*details::ptr_to<T*>(to_move.opt_buffer)));
+      }
+      return *this;
+    }
+
+    /// @brief Copy a value to the optional
+    /// @param to_copy The value to copy
+    /// @return Self
+    constexpr Option& operator=(const T& to_copy)
+      noexcept(std::is_nothrow_destructible_v<T>
+        && std::is_nothrow_copy_constructible_v<T>)
+    {
+      reset();
+      is_none_v = false;
+      new(opt_buffer) T(to_copy);
+      return *this;
+    }
+
+    /// @brief Move a value to the optional
+    /// @param to_move The value to move
+    /// @return Self
+    constexpr Option& operator=(T&& to_move)
+      noexcept(std::is_nothrow_destructible_v<T>
+        && std::is_nothrow_move_constructible_v<T>)
+    {
+      reset();
+      is_none_v = false;
+      new(opt_buffer) T(std::move(to_move));
       return *this;
     }
 
@@ -298,6 +330,7 @@ struct scn::scanner<clt::Option<T>>
     }
     T value;
     r = scn::scan(ctx.range(), "{}", value);
+    val = value;
     return r.error();
   }
 };
