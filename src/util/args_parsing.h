@@ -510,7 +510,8 @@ namespace clt::cl
 
     void handle_non_positional(std::string_view arg, u64& i, u64 argc, const char** argv, auto& CONST_MAP) noexcept
     {
-      std::string_view to_parse = arg; to_parse.remove_prefix(1);
+      arg.remove_prefix(1); // pop '-'
+      std::string_view to_parse = arg;
       u64 equal_index = to_parse.find('=');
       to_parse = to_parse.substr(0, equal_index);
       if (auto opt = CONST_MAP.find(to_parse))
@@ -522,13 +523,18 @@ namespace clt::cl
         }
 
         //not enough arguments...
-        if (i == argc - 1)
+        if (equal_index == std::string_view::npos && i == argc - 1)
         {
           io::print_error("'{}' expects an argument!", arg);
           std::exit(1);
         }
         //invoke callback...
-        ParsingResult err = (*(*opt).second)(argv[++i]);
+        ParsingResult err;
+        if (equal_index == std::string_view::npos)
+          err = (*(*opt).second)(argv[++i]);
+        else
+          err = (*(*opt).second)(arg.substr(equal_index + 1));
+        
         if (err != ParsingCode::GOOD)
         {
           io::print_error("Invalid argument for '{}' option ({:h})!", arg, err);
