@@ -15,19 +15,19 @@
 namespace clt
 {
   /// @brief Flag to check if the application must wait for input before exiting.
-  inline bool WaitForUserInput = true;
+  inline bool               WaitForUserInput = true;
   /// @brief Number of spaces to use when transpiling code
-  inline u8 OutputSpace = 2;
+  inline u8                 OutputSpace = 2;
   /// @brief The output file name
-  inline std::string_view OutputFile = {};
+  inline std::string_view   OutputFile = {};
   /// @brief The input file name
-  inline std::string_view InputFile = {};
+  inline std::string_view   InputFile = {};
   /// @brief The maximum number of messages
-  inline Option<u16> MaxMessages = 128;
+  inline Option<u16>        MaxMessages = 128;
   /// @brief The maximum number of warnings
-  inline Option<u16> MaxWarnings = 64;
+  inline Option<u16>        MaxWarnings = 64;
   /// @brief The maximum number of errors
-  inline Option<u16> MaxErrors = 32;
+  inline Option<u16>        MaxErrors = 32;
 
   namespace details
   {
