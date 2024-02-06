@@ -1,13 +1,13 @@
 /*****************************************************************//**
- * @file   colt_token.h
+ * @file   colt_lexeme.h
  * @brief  Contains an enum for all valid tokens (representing a lexeme)
  *				 of the Colt language.
  * 
  * @author RPC
  * @date   January 2024
  *********************************************************************/
-#ifndef HG_COLT_TOKEN
-#define HG_COLT_TOKEN
+#ifndef HG_COLT_LEXEME
+#define HG_COLT_LEXEME
 
 #include "util/assertions.h"
 #include "util/types.h"
@@ -380,4 +380,4 @@ namespace clt::lng
 	}
 }
 
-#endif //!HG_COLT_TOKEN
+#endif //!HG_COLT_LEXEME
