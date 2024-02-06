@@ -15,20 +15,10 @@
 namespace clt::lng
 {
 	/// @brief Represents the lexeme of the Colt language.
-	/// To optimize switch and category checks, the Token
-	/// is a bit complex in its layout and order.
-	/// Comments explains how to add new Tokens without
-	/// causing problems with `is*Token` functions.
-	enum class Token
+	enum class Lexeme
 		: u8
 	{
 		/********* BEGINNING OF BINARY OPERATORS *******/
-		/// While not all symbols in this section are binary
-		/// operators, some are considered as such to simplify
-		/// Pratt's Parsing in the AST.
-
-		/// The TKN_PLUS is used as a delimiter for unary
-		/// operators: do not add anything before it.
 
 		/// @brief +
 		TKN_PLUS,
@@ -37,13 +27,11 @@ namespace clt::lng
 		/// @brief *
 		TKN_STAR,
 
-		/// The TKN_SLASH is used as a delimiter for unary
-		/// operators: do not add anything before it.
-
 		/// @brief /
 		TKN_SLASH,
 		/// @brief %
 		TKN_PERCENT,
+		
 		/// @brief &
 		TKN_AND,
 		/// @brief |
@@ -54,10 +42,6 @@ namespace clt::lng
 		TKN_LESS_LESS,
 		/// @brief >>
 		TKN_GREAT_GREAT,
-
-		/// The TKN_GREAT_GREAT is used as a delimiter for comparison
-		/// operators: do not add non comparison operators tokens
-		/// after it.
 
 		/// @brief &&
 		TKN_AND_AND,
@@ -318,81 +302,81 @@ namespace clt::lng
 
 namespace clt::lng
 {
-	/// @brief Check if a Token represents any assignment Token (=, +=, ...)
+	/// @brief Check if a Lexeme represents any assignment Lexeme (=, +=, ...)
 	/// @param tkn The token to check for
-	/// @return True if the Token is an assignment Token
-	constexpr bool isAssignmentToken(Token tkn) noexcept
+	/// @return True if the Lexeme is an assignment Lexeme
+	constexpr bool isAssignmentToken(Lexeme tkn) noexcept
 	{
-		return Token::TKN_EQUAL <= tkn
-			&& tkn <= Token::TKN_GREAT_GREAT_EQUAL;
+		return Lexeme::TKN_EQUAL <= tkn
+			&& tkn <= Lexeme::TKN_GREAT_GREAT_EQUAL;
 	}
 
-	/// @brief Check if Token represents any direct assignment (+=, -=, ...)
+	/// @brief Check if Lexeme represents any direct assignment (+=, -=, ...)
 	/// @param tkn The token to check for
-	/// @return True if the Token is an direct assignment Token
-	constexpr bool isDirectAssignmentToken(Token tkn) noexcept
+	/// @return True if the Lexeme is an direct assignment Lexeme
+	constexpr bool isDirectAssignmentToken(Lexeme tkn) noexcept
 	{
-		return Token::TKN_EQUAL < tkn
-			&& tkn <= Token::TKN_GREAT_GREAT_EQUAL;
+		return Lexeme::TKN_EQUAL < tkn
+			&& tkn <= Lexeme::TKN_GREAT_GREAT_EQUAL;
 	}
 
 	/// @brief Converts a direct assignment to its non-assigning equivalent.
 	/// Example: '+=' -> '+'
-	/// @param tkn The direct assignment Token
-	/// @return Non-assigning Token
+	/// @param tkn The direct assignment Lexeme
+	/// @return Non-assigning Lexeme
 	/// @pre isDirectAssignmentToken(tkn)
-	constexpr Token DirectAssignToNonAssignToken(Token tkn) noexcept
+	constexpr Lexeme DirectAssignToNonAssignToken(Lexeme tkn) noexcept
 	{
 		assert_true("Invalid token!", isDirectAssignmentToken(tkn));
-		return static_cast<Token>(static_cast<u8>(tkn) - 19);
+		return static_cast<Lexeme>(static_cast<u8>(tkn) - 19);
 	}
 
-	/// @brief Check if a Token represents any comparison Token (==, !=, ...)
+	/// @brief Check if a Lexeme represents any comparison Lexeme (==, !=, ...)
 	/// '||' and '&&' are considered comparison tokens.
 	/// @param tkn The token to check for
-	/// @return True if the Token is a comparison Token
-	constexpr bool isComparisonToken(Token tkn) noexcept
+	/// @return True if the Lexeme is a comparison Lexeme
+	constexpr bool isComparisonToken(Lexeme tkn) noexcept
 	{
-		return Token::TKN_AND_AND < tkn
-			&& tkn <= Token::TKN_EQUAL_EQUAL;
+		return Lexeme::TKN_AND_AND < tkn
+			&& tkn <= Lexeme::TKN_EQUAL_EQUAL;
 	}
 
-	/// @brief Check if a Token represents any literal token ('.', "...", ...)
+	/// @brief Check if a Lexeme represents any literal token ('.', "...", ...)
 	/// @param tkn The token to check for
-	/// @return True if the Token is a literal token
-	constexpr bool isLiteralToken(Token tkn) noexcept
+	/// @return True if the Lexeme is a literal token
+	constexpr bool isLiteralToken(Lexeme tkn) noexcept
 	{
-		return Token::TKN_BOOL_L < tkn
-			&& tkn < Token::TKN_STRING_L;
+		return Lexeme::TKN_BOOL_L < tkn
+			&& tkn < Lexeme::TKN_STRING_L;
 	}
 
-	/// @brief Check if a Token represents any unary operator (&, ++, ...)
+	/// @brief Check if a Lexeme represents any unary operator (&, ++, ...)
 	/// @param tkn The token to check for
-	/// @return True if the Token is a unary operator token
-	constexpr bool isUnaryToken(Token tkn) noexcept
+	/// @return True if the Lexeme is a unary operator token
+	constexpr bool isUnaryToken(Lexeme tkn) noexcept
 	{
-		return (Token::TKN_PLUS <= tkn && tkn <= Token::TKN_STAR)
-			|| tkn == Token::TKN_AND
-			|| tkn == Token::TKN_PLUS_PLUS
-			|| tkn == Token::TKN_MINUS_MINUS
-			|| tkn == Token::TKN_TILDE
-			|| tkn == Token::TKN_BANG;
+		return (Lexeme::TKN_PLUS <= tkn && tkn <= Lexeme::TKN_STAR)
+			|| tkn == Lexeme::TKN_AND
+			|| tkn == Lexeme::TKN_PLUS_PLUS
+			|| tkn == Lexeme::TKN_MINUS_MINUS
+			|| tkn == Lexeme::TKN_TILDE
+			|| tkn == Lexeme::TKN_BANG;
 	}
 
-	/// @brief Check if a Token represents any binary operator (+, -, ...)
+	/// @brief Check if a Lexeme represents any binary operator (+, -, ...)
 	/// @param tkn The token to check for
-	/// @return True if the Token is a binary operator token
-	constexpr bool isBinaryToken(Token tkn) noexcept
+	/// @return True if the Lexeme is a binary operator token
+	constexpr bool isBinaryToken(Lexeme tkn) noexcept
 	{
-		return tkn <= Token::TKN_GREAT_GREAT_EQUAL;
+		return tkn <= Lexeme::TKN_GREAT_GREAT_EQUAL;
 	}
 
-	/// @brief Check if a Token is a built-in type keyword (TKN_KEYWORD_VOID...)
+	/// @brief Check if a Lexeme is a built-in type keyword (TKN_KEYWORD_VOID...)
 	/// @param tkn The token to check for
 	/// @return True if any TKN_KEYWORD_* that represents a type (PTR is not a type)
-	constexpr bool isBuiltinToken(Token tkn) noexcept
+	constexpr bool isBuiltinToken(Lexeme tkn) noexcept
 	{
-		return Token::TKN_KEYWORD_VOID <= tkn && tkn <= Token::TKN_KEYWORD_QWORD;
+		return Lexeme::TKN_KEYWORD_VOID <= tkn && tkn <= Lexeme::TKN_KEYWORD_QWORD;
 	}
 }
 
