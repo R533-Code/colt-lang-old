@@ -106,6 +106,9 @@ namespace clt::details
 namespace clt
 {
   [[noreturn]]
+  /// @brief Marks a branch as unreachable, printing an error on Debug build
+  /// @param error The error message
+  /// @param src The source code information
   inline void unreachable(const char* error, std::source_location src = std::source_location::current())
   {
     if constexpr (isDebugBuild())
