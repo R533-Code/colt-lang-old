@@ -28,12 +28,8 @@ namespace clt::lng
     }
     // The last line ends at the end of the file.
     buffer.push_back(StringView{ front + start, static_cast<size_t>(size - start) });
-
-    // Add an extra blank line so that we never need to handle the special case
-    // of being on the last line inside the lexer and needing to not increment
-    // to the next line.
-    if (start != size)
-      buffer.push_back(StringView{ front + start, 0 });
+    /*if (start != size)
+      buffer.push_back(StringView{ front + start, 0 });*/
   }
 }
 
