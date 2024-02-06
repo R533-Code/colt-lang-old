@@ -21,9 +21,11 @@
 namespace clt
 {
   template<typename T>
+  /// @brief View over a contiguous array
   using View = std::span<const T, std::dynamic_extent>;
 
   template<typename T>
+  /// @brief Span over a contiguous array
   using Span = std::span<T, std::dynamic_extent>;
 
   template<typename T> requires meta::is_hashable_v<T>

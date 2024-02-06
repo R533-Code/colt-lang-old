@@ -177,6 +177,10 @@ namespace clt
   };
 
   template<typename T, auto ALLOCATOR = mem::GlobalAllocatorDescription, typename... Args>
+  /// @brief Constructs a UniquePtr using a global allocator
+  /// @tparam T The type to construct
+  /// @param args... The arguments to forward to the constructor
+  /// @return UniquePtr
   UniquePtr<T, ALLOCATOR> make_unique(Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Args...>)
   {
     using Allocator = mem::allocator_ref<ALLOCATOR>;
@@ -204,6 +208,10 @@ namespace clt
 
   template<typename T, meta::Allocator Alloc, typename... Args>
   /// @brief Constructs a UniquePtr using a local allocator
+  /// @tparam T The type to construct
+  /// @param ref The local allocator
+  /// @param args... The arguments to forward to the constructor
+  /// @return UniquePtr
   constexpr UniquePtr<T, mem::LocalAllocator<Alloc>> make_local_unique(Alloc& ref, Args&&... args) noexcept
   {
     auto blk = ref.alloc(sizeof(T));

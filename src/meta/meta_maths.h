@@ -85,30 +85,47 @@ namespace clt
   }
 
   template<meta::Integral Int>
+  /// @brief Returns the minimum of two values
+  /// @param a The first integer
+  /// @param b The second integer
+  /// @return The minimum of the two values
   constexpr Int min(Int a, Int b) noexcept
   {
     return (b < a) ? b : a;
   }
 
   template<typename T>
+  /// @brief Returns the minimum of a list
+  /// @param ilist The list whose minimum to return
+  /// @return The minimum of a list
   constexpr T min(std::initializer_list<T> ilist)
   {
     return *clt::min_element(ilist.begin(), ilist.end());
   }
 
   template<meta::Integral Int>
+  /// @brief Returns the maximum of two values
+  /// @param a The first integer
+  /// @param b The second integer
+  /// @return The maximum of the two values
   constexpr Int max(Int a, Int b) noexcept
   {
     return (a < b) ? b : a;
   }
 
   template<typename T>
+  /// @brief Returns the maximum of a list
+  /// @param ilist The list whose maximum to return
+  /// @return The maximum of a list
   constexpr T max(std::initializer_list<T> ilist) noexcept
   {
     return *clt::max_element(ilist.begin(), ilist.end());
   }
 
   template<meta::FloatingPoint Fp>
+  /// @brief Rounds a floating point value
+  /// @param x The float to round
+  /// @return The rounded float
   constexpr Fp round(Fp x) noexcept
   {
     if (std::is_constant_evaluated())
@@ -134,17 +151,14 @@ namespace clt
       return std::round(x);
   }
 
-  template<meta::FloatingPoint Fp = double, meta::Integral Int>
-  constexpr Fp round(Int x) noexcept
-  {
-    return clt::round(static_cast<Fp>(x));
-  }
-
   template<meta::FloatingPoint Fp>
   //Forward declaration as 'ceil' makes use of 'floor'
   constexpr Fp floor(Fp x) noexcept;
 
   template<meta::FloatingPoint Fp>
+  /// @brief Returns the ceiling of a floating point value
+  /// @param x The float value to ceil
+  /// @return The ceiled value
   constexpr Fp ceil(Fp x) noexcept
   {
     if (std::is_constant_evaluated())
@@ -165,13 +179,10 @@ namespace clt
       return std::ceil(x);
   }
 
-  template<meta::FloatingPoint Fp = double, meta::Integral Int>
-  constexpr Fp ceil(Int x) noexcept
-  {
-    return clt::ceil(static_cast<Fp>(x));
-  }
-
   template<meta::FloatingPoint Fp>
+  /// @brief Returns the flooring of a floating point value
+  /// @param x The float value to floor
+  /// @return The floored value
   constexpr Fp floor(Fp x) noexcept
   {
     if (std::is_constant_evaluated())
@@ -192,15 +203,13 @@ namespace clt
       return std::floor(x);
   }
 
-  template<meta::FloatingPoint Fp = double, meta::Integral Int>
-  constexpr Fp floor(Int x) noexcept
-  {
-    return clt::floor(static_cast<Fp>(x));
-  }
-
   namespace details
   {
     template<meta::FloatingPoint Fp>
+    /// @brief Computes the root of a floating point
+    /// @param A The base
+    /// @param n The root (greater than 1.0)
+    /// @return The n-th root of A
     constexpr Fp root(Fp A, Fp n) noexcept
     {
       Fp result;
@@ -222,6 +231,10 @@ namespace clt
   }
 
   template<meta::FloatingPoint Fp>
+  /// @brief Returns 'base' to the power 'power'
+  /// @param base The base
+  /// @param power The power
+  /// @return Power
   constexpr Fp pow(Fp base, Fp power) noexcept
   {
     if (std::is_constant_evaluated())
@@ -249,12 +262,19 @@ namespace clt
   }
 
   template<meta::FloatingPoint Fp = double, meta::Integral Int>
+  /// @brief Returns 'what' to the power 'power'
+  /// @param what The base
+  /// @param power The exponent
+  /// @return Power
   constexpr Fp pow(Int what, Int power) noexcept
   {
     return clt::pow(static_cast<Fp>(what), static_cast<Fp>(power));
   }
 
   template<meta::FloatingPoint Fp>
+  /// @brief Returns the square root of 'x'
+  /// @param x The float whose square root to return
+  /// @return The square root of 'x'
   constexpr Fp sqrt(Fp x) noexcept
   {
     if (std::is_constant_evaluated())
@@ -264,12 +284,18 @@ namespace clt
   }
 
   template<meta::FloatingPoint Fp = double, meta::Integral Int>
+  /// @brief Returns the square root of 'x'
+  /// @param x The integral whose square root to return
+  /// @return The square root of 'x'
   constexpr Fp sqrt(Int x) noexcept
   {
     return clt::sqrt(static_cast<Fp>(x));
   }
 
   template<meta::FloatingPoint Fp>
+  /// @brief Returns the e to the power 'x'
+  /// @param x The power of 'e'
+  /// @return exp(x)
   constexpr Fp exp(Fp x) noexcept
   {
     if (std::is_constant_evaluated())
@@ -279,12 +305,18 @@ namespace clt
   }
 
   template<meta::FloatingPoint Fp = double, meta::Integral Int>
+  /// @brief Returns the e to the power 'x'
+  /// @param x The power of 'e'
+  /// @return exp(x)
   constexpr Fp exp(Int x) noexcept
   {
     return clt::exp(static_cast<Fp>(x));
   }
 
   template<meta::FloatingPoint Fp>
+  /// @brief Returns the natural log of 'x'
+  /// @param x The number whose natural log to return
+  /// @return ln(x)
   constexpr Fp log(Fp x) noexcept
   {
     if (std::is_constant_evaluated())
@@ -314,12 +346,18 @@ namespace clt
   }
 
   template<meta::FloatingPoint Fp = double, meta::Integral Int>
+  /// @brief Returns the natural log of 'x'
+  /// @param x The number whose natural log to return
+  /// @return ln(x)
   constexpr Fp log(Int x) noexcept
   {
     return clt::log(static_cast<Fp>(x));
   }
 
   template<meta::FloatingPoint Fp>
+  /// @brief Returns the log base 10 of 'x'
+  /// @param x The number whose log base 10 to return
+  /// @return log_10(x)
   constexpr Fp log10(Fp x) noexcept
   {
     if (std::is_constant_evaluated())
@@ -329,12 +367,18 @@ namespace clt
   }
 
   template<meta::FloatingPoint Fp = double, meta::Integral Int>
+  /// @brief Returns the log base 10 of 'x'
+  /// @param x The number whose log base 10 to return
+  /// @return log_10(x)
   constexpr Fp log10(Int x) noexcept
   {
     return clt::log10(static_cast<Fp>(x));
   }
 
   template<meta::FloatingPoint Fp>
+  /// @brief Returns the log base 2 of 'x'
+  /// @param x The number whose log base 2 to return
+  /// @return log_2(x)
   constexpr Fp log2(Fp x) noexcept
   {
     if (std::is_constant_evaluated())
@@ -344,6 +388,9 @@ namespace clt
   }
 
   template<meta::FloatingPoint Fp = double, meta::Integral Int>
+  /// @brief Returns the log base 2 of 'x'
+  /// @param x The number whose log base 2 to return
+  /// @return log_2(x)
   constexpr Fp log2(Int x) noexcept
   {
     return clt::log2(static_cast<Fp>(x));
