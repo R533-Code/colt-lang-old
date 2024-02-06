@@ -90,17 +90,17 @@ namespace clt::lng
     /// @param column The column of the line
     /// @param literal The literal index
     /// @return Generated Token
-    constexpr void addToken(Lexeme lexeme, u32 line, u32 column, u32 literal = 0) noexcept
+    void addToken(Lexeme lexeme, u32 line, u32 column, u32 literal = 0) noexcept
     {
       if constexpr (isDebugBuild())
-        tokens.push_back(InPlace, lexeme, line, column, buffer_id, literal);
+        tokens.push_back(Token{ lexeme, line, column, buffer_id, literal });
       else
-        tokens.push_back(InPlace, lexeme, line, column, literal);
+        tokens.push_back(Token{ lexeme, line, column, literal });
     }
 
     /// @brief Adds a line
     /// @param line The line to save
-    constexpr void addLine(StringView line) noexcept
+    void addLine(StringView line) noexcept
     {
       lines.push_back(line);
     }
@@ -110,7 +110,7 @@ namespace clt::lng
 
   public:
     /// @brief Default constructor
-    constexpr TokenBuffer() noexcept
+    TokenBuffer() noexcept
     {
       if constexpr (isDebugBuild())
         buffer_id = ID_GENERATOR.fetch_add(1, std::memory_order_acq_rel);
@@ -119,13 +119,13 @@ namespace clt::lng
     TokenBuffer(const TokenBuffer&) = delete;
     TokenBuffer& operator=(const TokenBuffer&) = delete;
     
-    constexpr TokenBuffer(TokenBuffer&&) noexcept = default;
-    constexpr TokenBuffer& operator=(TokenBuffer&&) noexcept = default;
+    TokenBuffer(TokenBuffer&&) noexcept = default;
+    TokenBuffer& operator=(TokenBuffer&&) noexcept = default;
 
     /// @brief Returns a StringView over the line in which the token appears
     /// @param tkn The Token whose line to return
     /// @return The line in which appears the token
-    constexpr StringView getLineStr(Token tkn) const noexcept
+    StringView getLineStr(Token tkn) const noexcept
     {
       owns(tkn);
       return lines[tkn.line_index];
@@ -134,7 +134,7 @@ namespace clt::lng
     /// @brief Returns the line number on which the token appears
     /// @param tkn The Token whose line to return
     /// @return The line in which appears the token (1-based)
-    constexpr u32 getLine(Token tkn) const noexcept
+    u32 getLine(Token tkn) const noexcept
     {
       owns(tkn);
       return tkn.line_index + 1;
@@ -143,7 +143,7 @@ namespace clt::lng
     /// @brief Returns the column on which the token appears
     /// @param tkn The Token whose column to return
     /// @return The column to return (1-based)
-    constexpr u32 getColumn(Token tkn) const noexcept
+    u32 getColumn(Token tkn) const noexcept
     {
       owns(tkn);
       return tkn.column_offset;
