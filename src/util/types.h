@@ -465,14 +465,20 @@ namespace clt
       /// @return Self
       constexpr BitSet& clear() noexcept { value = 0; return *this; }
 
-      template<typename From>
+      template<typename From> requires sizeof(From) <= sizeof(T)
+      /// @brief Assigns the bitwise representation of 'frm'
+      /// @param frm The value whose bitwise representation to use
+      /// @return Self
       constexpr BitSet bit_assign(From frm) noexcept
       {
         std::memcpy(&value, &frm, sizeof(From));
         return *this;
       }
 
-      template<typename To>
+      template<typename To> requires sizeof(To) <= sizeof(T)
+      /// @brief Converts the underlying bits to an object of 'To'
+      /// @tparam To The type to convert to
+      /// @return The converted object
       constexpr To as() const noexcept
       {
         To ret;
@@ -495,6 +501,7 @@ namespace clt
   using QWORD_t = details::BitSet<u64>;
 
   template<typename T>
+  /// @brief Check if a type is one of BYTE_t/WORD_t/DWORD_t/QWORD_t
   concept BitType = std::same_as<T, BYTE_t>
     || std::same_as<T, WORD_t>
     || std::same_as<T, DWORD_t>
