@@ -54,10 +54,15 @@ namespace clt
       : BasicString::UnderlyingVector(strv) {}
 
     template<typename AllocT, size_t N> requires meta::LocalAllocator<ALLOCATOR>
+    /// @brief Constructs a String
+    /// @param alloc The local allocator
+    /// @param x The array
     constexpr BasicString(AllocT& alloc, const char(&x)[N]) noexcept
       : BasicString::UnderlyingVector(alloc, StringView{ x, x + N }) {}
 
     template<size_t N> requires meta::GlobalAllocator<ALLOCATOR>
+    /// @brief Constructs a String
+    /// @param x The array
     constexpr BasicString(const char(&x)[N]) noexcept
       : BasicString::UnderlyingVector(StringView{ x, x + N }) {}
 
@@ -70,15 +75,18 @@ namespace clt
 
     /// @brief Pushes a StringView at the end of the String
     /// @param strv The StringView to push back
-    constexpr BasicString& push_back(StringView strv) noexcept
+    /// @param repeat The number of times to repeat the operation
+    constexpr BasicString& push_back(StringView strv, u64 repeat = 1) noexcept
     {
-      for (auto i : strv)
-        BasicString::UnderlyingVector::push_back(i);
+      for (size_t z = 0; z < repeat; z++)
+        for (auto i : strv)
+          BasicString::UnderlyingVector::push_back(i);
       return *this;
     }
 
     /// @brief Pushes a character at the end of the String
     /// @param i The character to push back
+    /// @param repeat The number of times to repeat the operation
     constexpr BasicString& push_back(char i, u64 repeat = 1) noexcept
     {
       for (size_t z = 0; z < repeat; z++)
@@ -91,7 +99,7 @@ namespace clt
     /// FILE_EOF and FILE_ERROR is only returned if no characters were read.
     /// @param from The (opened) file from which to read characters
     /// @param reserve The count of characters to reserve before reading characters
-    /// @param strip_front If true, skips all blank (' ', '\t') characters in the front of the string
+    /// @param strip_front If true, skips all blank (' ', '\\t') characters in the front of the string
     /// @return BasicString containing the line or either FILE_EOF or FILE_ERROR.
     static Expect<BasicString, io::IOError> getLine(FILE* from, u64 reserve = 64, bool strip_front = true) noexcept
     {
@@ -138,13 +146,16 @@ namespace clt
     /// The resulting BasicString is not NUL terminated, and does not contain the new line.
     /// FILE_EOF and FILE_ERROR is only returned if no characters were read.
     /// @param reserve The count of characters to reserve before reading characters
-    /// @param strip_front If true, skips all blank (' ', '\t') characters in the front of the string
-    /// @return BasicString containing the line or either FILE_EOF or FILE_ERROR.
+    /// @param strip_front If true, skips all blank (' ', '\\t') characters in the front of the string
+    /// @return BasicString containing the line or one of [FILE_EOF, FILE_ERROR, INVALID_ENCODING].
     static Expect<BasicString, io::IOError> getLine(u64 reserve = 64, bool strip_front = true) noexcept
     {
       return getLine(stdin, reserve, strip_front);
     }
 
+    /// @brief Returns the content of a file
+    /// @param name The path of the file
+    /// @return BasicString containing the line or one of [FILE_EOF, FILE_ERROR, INVALID_ENCODING].
     static Expect<BasicString, io::IOError> getFile(const char* name) noexcept
     {
       BasicString str;

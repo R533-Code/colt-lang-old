@@ -15,6 +15,7 @@
 
 namespace clt::lng
 {
+  // Forward declaration
   class TokenBuffer;
 
   /// @brief Lexes 'to_parse'

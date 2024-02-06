@@ -440,7 +440,11 @@ namespace clt
       return { begin(), end() };
     }
 
+    /// @brief Returns a span over the Vector
+    /// @return Span of the Vector
     constexpr Span<T> to_view() noexcept { return *this; }
+    /// @brief Returns a view over the Vector
+    /// @return View of the Vector
     constexpr View<T> to_view() const noexcept { return *this; }
 
     /// @brief Check if every object of v1 and v2 are equal
