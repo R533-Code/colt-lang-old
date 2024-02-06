@@ -465,7 +465,7 @@ namespace clt
       /// @return Self
       constexpr BitSet& clear() noexcept { value = 0; return *this; }
 
-      template<typename From> requires sizeof(From) <= sizeof(T)
+      template<typename From> requires (sizeof(From) <= sizeof(T))
       /// @brief Assigns the bitwise representation of 'frm'
       /// @param frm The value whose bitwise representation to use
       /// @return Self
@@ -475,7 +475,7 @@ namespace clt
         return *this;
       }
 
-      template<typename To> requires sizeof(To) <= sizeof(T)
+      template<typename To> requires (sizeof(To) <= sizeof(T))
       /// @brief Converts the underlying bits to an object of 'To'
       /// @tparam To The type to convert to
       /// @return The converted object
