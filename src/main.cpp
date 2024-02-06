@@ -1,3 +1,10 @@
+/*****************************************************************//**
+ * @file   main.cpp
+ * @brief  Starting point of the compiler.
+ * 
+ * @author RPC
+ * @date   February 2024
+ *********************************************************************/
 #include <util/colt_pch.h>
 #include "args.h"
 #include "lex/colt_lexer.h"

@@ -1,3 +1,10 @@
+/*****************************************************************//**
+ * @file   static_vector.h
+ * @brief  StaticVector, vector with predefined capacity.
+ * 
+ * @author RPC
+ * @date   February 2024
+ *********************************************************************/
 #ifndef HG_COLT_STATIC_VECTOR
 #define HG_COLT_STATIC_VECTOR
 

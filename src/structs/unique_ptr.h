@@ -1,3 +1,10 @@
+/*****************************************************************//**
+ * @file   unique_ptr.h
+ * @brief  UniquePtr supporting custom Colt allocators.
+ * 
+ * @author RPC
+ * @date   February 2024
+ *********************************************************************/
 #ifndef HG_COLT_UNIQUE_PTR
 #define HG_COLT_UNIQUE_PTR
 

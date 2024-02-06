@@ -1,3 +1,10 @@
+/*****************************************************************//**
+ * @file   colt_lexer.h
+ * @brief  Contains the lexing functions.
+ * 
+ * @author RPC
+ * @date   February 2024
+ *********************************************************************/
 #ifndef HG_COLT_LEXER
 #define HG_COLT_LEXER
 
