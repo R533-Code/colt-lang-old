@@ -48,6 +48,9 @@ namespace clt::lng
     virtual ~ErrorReporter() noexcept = 0;
   };
 
+  /// @brief Pointer to a Reporter
+  using ErrorReporter_t = ErrorReporter* const;
+
   namespace details
   {
     template<Reporter Rep>
