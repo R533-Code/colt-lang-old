@@ -9,7 +9,7 @@
 #define HG_COLT_OPERATORS
 
 #include <util/colt_pch.h>
-#include "colt_token.h"
+#include "colt_lexeme.h"
 
 DECLARE_ENUM_WITH_TYPE(u8, clt::lng, UnaryOp,
 	/// @brief ++...
