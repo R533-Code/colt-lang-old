@@ -181,17 +181,30 @@ namespace clt
   namespace details
   {
     template<typename T>
-    constexpr T xorshift(T n, int i) {
+    /// @brief Performs a xor followed by a shift
+    /// @param n The number to xor with its shifted self
+    /// @param i By how much to shift
+    /// @return n xor (n >> i)
+    constexpr T xorshift(T n, int i)
+    {
       return n ^ (n >> i);
     }
 
-    constexpr uint32_t distribute(uint32_t n) {
+    /// @brief Distributes a value (useful for hashing)
+    /// @param n The value to distribute
+    /// @return Distributed value
+    constexpr uint32_t distribute(uint32_t n)
+    {
       uint32_t p = 0x55555555UL; // pattern of alternating 0 and 1
       uint32_t c = 3423571495UL; // random uneven integer constant
       return c * xorshift(p * xorshift(n, 16), 16);
     }
 
-    constexpr uint64_t distribute(uint64_t n) {
+    /// @brief Distributes a value (useful for hashing)
+    /// @param n The value to distribute
+    /// @return Distributed value
+    constexpr uint64_t distribute(uint64_t n)
+    {
       uint64_t p = 0x5555555555555555ULL; // pattern of alternating 0 and 1
       uint64_t c = 17316035218449499591ULL;// random uneven integer constant
       return c * xorshift(p * xorshift(n, 32), 32);

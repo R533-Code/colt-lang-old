@@ -104,6 +104,9 @@ namespace clt
 
   namespace details
   {
+    /// @brief Converts a scn::error to a ParsingResult
+    /// @param code The error to convert
+    /// @return ParsingResult representing the error
     constexpr ParsingResult scn_error_to_ParsingResult(scn::error code) noexcept
     {
       using enum clt::ParsingCode;
@@ -122,6 +125,9 @@ namespace clt
       }
     }
 
+    /// @brief Converts an IOError to a ParsingResult
+    /// @param err The error to convert
+    /// @return ParsingResult representing the error
     constexpr ParsingResult IOError_to_ParsingResult(io::IOError err) noexcept
     {
       switch_no_default(err)
@@ -137,12 +143,21 @@ namespace clt
   }
 
   template<meta::Parsable T>
+  /// @brief Scans a value from a StringView
+  /// @param strv The string from which to parse
+  /// @param value Where to write a valid result
+  /// @return Parsing result
   ParsingResult parse(std::string_view strv, T& value) noexcept
   {
     return details::scn_error_to_ParsingResult(scn::scan_default(strv, value).error());
   }
 
   template<meta::Parsable T>
+  /// @brief Scans a value from a StringView
+  /// @param strv The string from which to parse
+  /// @param fmt The format specification
+  /// @param value Where to write a valid result
+  /// @return Parsing result
   ParsingResult parse(std::string_view strv, std::string_view fmt, T& value) noexcept
   {
     return details::scn_error_to_ParsingResult(scn::scan(strv, fmt, value));

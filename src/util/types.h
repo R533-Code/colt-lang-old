@@ -261,6 +261,7 @@ namespace clt
   template<typename T> requires (!std::is_reference_v<T>) && (!std::is_const_v<T>)
   /// @brief An 'out' parameter, which is a uninitialized reference that must be
   /// initialized inside the function. 'out' parameters are taken as is (without const or references).
+  /// @tparam T The type of the out parameter
   using out = std::add_const_t<std::conditional_t<isDebugBuild(), details::OutDebug<T>, details::OutRelease<T>>>&;
 
   /// @brief Boolean that represents a success/failure state that must be checked.
@@ -515,19 +516,26 @@ namespace clt
 namespace clt::details
 {
   template<typename Fun>
+  /// @brief Helper for ON_SCOPE_EXIT
   struct ScopeGuard
   {
+    /// @brief The function to execute
     Fun fn;
 
+    /// @brief Takes in a lambda to execute
+    /// @param fn The function to execute
     ScopeGuard(Fun&& fn) noexcept
       : fn(std::forward<Fun>(fn)) {}
 
+    /// @brief Runs the lambda in the destructor
     ~ScopeGuard() noexcept { fn(); }
   };
 
+  /// @brief Helper for ON_SCOPE_EXIT
   enum class ScopeGuardOnExit {};
 
   template<typename Fun>
+  /// @brief Helper for ON_SCOPE_EXIT
   ScopeGuard<Fun> operator+(ScopeGuardOnExit, Fun&& fn) noexcept
   {
     return ScopeGuard<Fun>(std::forward<Fun>(fn));
