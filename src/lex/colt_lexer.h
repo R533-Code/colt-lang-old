@@ -78,14 +78,39 @@ namespace clt::lng
 	/// @param lexer The lexer used for parsing
 	void ParseExclam(Lexer& lexer) noexcept;
 
+	/// @brief Parses a '<'
+	/// @param lexer The lexer used for parsing
 	void ParseLt(Lexer& lexer) noexcept;
 	
+	/// @brief Parses a '>'
+	/// @param lexer The lexer used for parsing
 	void ParseGt(Lexer& lexer) noexcept;
+	
+	/// @brief Parses a '&'
+	/// @param lexer The lexer used for parsing
+	void ParseAnd(Lexer& lexer) noexcept;
+
+	/// @brief Parses a '|'
+	/// @param lexer The lexer used for parsing
+	void ParseOr(Lexer& lexer) noexcept;
+
+	/// @brief Parses a '^'
+	/// @param lexer The lexer used for parsing
+	void ParseCaret(Lexer& lexer) noexcept;
+	
+	/// @brief Parses a '^'
+	/// @param lexer The lexer used for parsing
+	void ParseCaret(Lexer& lexer) noexcept;
+
+	template<Lexeme lexeme>
+	/// @brief Parses a single character, adding 'lexeme' to the token buffer.
+	/// @tparam lexeme The lexeme to add to the token buffer
+	/// @param lexer The lexer used for parsing
+	void ParseSingle(Lexer& lexer) noexcept;
 
 	/// @brief Parses a '\.'
 	/// @param lexer The lexer used for parsing
 	void ParseDot(Lexer& lexer) noexcept;
-
 
 	template<typename T>
 	/// @brief Check if a lexeme matches a type (used for assertions)
@@ -124,6 +149,12 @@ namespace clt::lng
 		table['.'] = &ParseDot;
 		table['<'] = &ParseLt;
 		table['>'] = &ParseGt;
+		table['&'] = &ParseAnd;
+		table['|'] = &ParseOr;
+		table['^'] = &ParseCaret;
+		table['~'] = &ParseSingle<Lexeme::TKN_TILDE>;
+		table[';'] = &ParseSingle<Lexeme::TKN_SEMICOLON>;
+		table[','] = &ParseSingle<Lexeme::TKN_COLON>;
 		return table;
 	}
 
@@ -159,9 +190,9 @@ namespace clt::lng
 
 		constexpr char getNext() noexcept
 		{
-			++size_lexeme;
 			if (line_nb == buffer.lines.size())
 				return EOF;
+			++size_lexeme;
 			if (offset == buffer.lines[line_nb].size())
 			{
 				offset = 0;
@@ -208,7 +239,7 @@ namespace clt::lng
 		/// @return SourceInfo over the lexeme
 		constexpr SourceInfo makeSource(const Snapshot& snap) const noexcept
 		{
-			return SourceInfo{ snap.line_nb, StringView{ &buffer.lines[snap.line_nb].front() + snap.column, 1}, buffer.lines[snap.line_nb] };
+			return SourceInfo{ snap.line_nb, StringView{ &buffer.lines[snap.line_nb].front() + snap.column, size_lexeme }, buffer.lines[snap.line_nb] };
 		}
 
 		/// @brief Creates a SourceInfo over a single-line lexeme
@@ -216,7 +247,7 @@ namespace clt::lng
 		/// @return SourceInfo over the lexeme
 		constexpr SourceInfo makeSource(u32 line_nb, u32 start) const noexcept
 		{
-			return SourceInfo{ line_nb, StringView{ &buffer.lines[line_nb].front() + start, 1}, buffer.lines[line_nb] };
+			return SourceInfo{ line_nb, StringView{ &buffer.lines[line_nb].front() + start, size_lexeme }, buffer.lines[line_nb] };
 		}
 
 		/// @brief Creates a SourceInfo over a single-line lexeme
@@ -234,18 +265,26 @@ namespace clt::lng
 		void addToken(Lexeme lexeme, const Snapshot& snap) const noexcept
 		{
 			assert_true("Invalid call to addToken", size_lexeme != 0);
-			buffer.addToken(lexeme, snap.line_nb, snap.column, size_lexeme - 1);
+			buffer.addToken(lexeme, snap.line_nb, snap.column, size_lexeme);
 		}
 
 		template<typename T>
-		void addLiteral(Lexeme lexeme, T value, u32 column) const noexcept
+		void addLiteral(Lexeme lexeme, T value, const Snapshot& snap) const noexcept
 		{
 			assert_true("Verify lexeme and literal type!", CheckLiteralLexeme<T>(lexeme));
 			QWORD_t literal{};
 			literal.bit_assign(value);
-			buffer.addLiteral(literal, lexeme, line_nb, column, size_lexeme);
+			buffer.addLiteral(literal, lexeme, snap.line_nb, snap.column, size_lexeme);
 		}
 	};	
+
+	template<Lexeme lexeme>
+	void ParseSingle(Lexer& lexer) noexcept
+	{
+		auto snap = lexer.startLexeme();
+		lexer.next = lexer.getNext();
+		lexer.addToken(lexeme, snap);
+	}
 
 	template<typename T>
 	constexpr bool CheckLiteralLexeme(Lexeme lex) noexcept
