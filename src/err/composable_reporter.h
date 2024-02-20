@@ -16,7 +16,7 @@ namespace clt::lng
   using filter_reporter_t = bool(*)(StringView, const Option<SourceInfo>&, const Option<ReportNumber>&) noexcept;
 
   /// @brief Consumes all reports
-  class SinkReporter
+  struct SinkReporter
   {
     /// @brief Does nothing
     void message(StringView, const Option<SourceInfo>&, const Option<ReportNumber>&) const noexcept
@@ -38,7 +38,7 @@ namespace clt::lng
   };
 
   /// @brief Prints the reports to the console
-  class ConsoleReporter
+  struct ConsoleReporter
   {
     /// @brief Prints the message to the console
     /// @param str The message
@@ -149,7 +149,7 @@ namespace clt::lng
     bool exhausted_error : 1 = false;
 
     /// @brief Special value that will not be decremented (useful to not limit a category)
-    static constexpr NO_DECREMENT = std::numeric_limits<u16>::max();
+    static constexpr u16 NO_DECREMENT = std::numeric_limits<u16>::max();
 
   public:
     LimiterReporter() = delete;
