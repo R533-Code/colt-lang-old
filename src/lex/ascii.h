@@ -184,7 +184,7 @@ namespace clt
   }
 
   /// @brief Checks if the given character is a control character.
-  /// Locale independent, and fastest implementation I could write.
+  /// Locale independent.
   /// @param chr The character to check
   /// @return True if the character is a control character
   constexpr bool iscntrl(char chr) noexcept
@@ -194,7 +194,7 @@ namespace clt
   }
 
   /// @brief Checks if the given character is a letter.
-  /// Locale independent, and fastest implementation I could write.
+  /// Locale independent.
   /// @param chr The character to check
   /// @return True if the character is a letter
   constexpr bool isalpha(char chr) noexcept
@@ -204,7 +204,7 @@ namespace clt
   }
 
   /// @brief Checks if the given character is a digit (0-9).
-  /// Locale independent, and fastest implementation I could write.
+  /// Locale independent.
   /// @param chr The character to check
   /// @return True if the character is a digit
   constexpr bool isdigit(char chr) noexcept
@@ -214,7 +214,7 @@ namespace clt
   }
 
   /// @brief Checks if the given character is a letter or digit.
-  /// Locale independent, and fastest implementation I could write.
+  /// Locale independent.
   /// @param chr The character to check
   /// @return True if the character is an alpha-numeric character
   constexpr bool isalnum(char chr) noexcept
@@ -224,7 +224,7 @@ namespace clt
   }
 
   /// @brief Checks if the given character is an lower case letter.
-  /// Locale independent, and fastest implementation I could write.
+  /// Locale independent.
   /// @param chr The character to check
   /// @return True if the character is an lower case letter
   constexpr bool islower(char chr) noexcept
@@ -234,7 +234,7 @@ namespace clt
   }
 
   /// @brief Checks if the given character is an upper case letter.
-  /// Locale independent, and fastest implementation I could write.
+  /// Locale independent.
   /// @param chr The character to check
   /// @return True if the character is an upper case letter
   constexpr bool isupper(char chr) noexcept
@@ -244,7 +244,7 @@ namespace clt
   }
 
   /// @brief Checks if the given character is any of !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~.
-  /// Locale independent, and fastest implementation I could write.
+  /// Locale independent.
   /// @param chr The character to check
   /// @return True if the character is a punctuation character
   constexpr bool ispunct(char chr) noexcept
@@ -254,7 +254,7 @@ namespace clt
   }
 
   /// @brief Checks if the given character has a graphical representation.
-  /// Locale independent, and fastest implementation I could write.
+  /// Locale independent.
   /// @param chr The character to check
   /// @return True if the character is graphic
   constexpr bool isgraph(char chr) noexcept
@@ -263,8 +263,8 @@ namespace clt
     return CHAR_INFO_TABLE[static_cast<u8>(chr)] & CharInfo::ISGRAPH;
   }
 
-  /// @brief Checks if a character is a ' ', '\f', '\n', '\r', '\t' or '\v'.
-  /// Locale independent, and fastest implementation I could write.
+  /// @brief Checks if a character is a ' ', '\\f', '\\n', '\\r', '\\t' or '\\v'.
+  /// Locale independent.
   /// @param chr The character to check
   /// @return True if the character is whitespace
   constexpr bool isspace(char chr) noexcept
@@ -274,7 +274,7 @@ namespace clt
   }
 
   /// @brief Checks if a character is a space or horizontal tab.
-  /// Locale independent, and fastest implementation I could write.
+  /// Locale independent.
   /// @param chr The character to check
   /// @return True if space or horizontal tab
   constexpr bool isblank(char chr) noexcept
@@ -285,7 +285,7 @@ namespace clt
   }
 
   /// @brief Converts a character to its upper case equivalent only if it is a lower case letter.
-  /// Locale independent, and fastest implementation I could write.
+  /// Locale independent.
   /// @param chr The character to convert
   /// @return Upper case equivalent if 'chr' is lower case, else 'chr'
   constexpr char toupper(char chr) noexcept
@@ -299,7 +299,7 @@ namespace clt
   }
 
   /// @brief Converts a character to its lower case equivalent only if it is an upper case letter.
-  /// Locale independent, and fastest implementation I could write.
+  /// Locale independent.
   /// @param chr The character to convert
   /// @return Lower case equivalent if 'chr' is upper case, else 'chr'
   constexpr char tolower(char chr) noexcept
