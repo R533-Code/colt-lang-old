@@ -133,8 +133,8 @@ namespace clt
 
     /// @brief Default constructor (when allocator is global)
     /// @param reserve The count of objects to allocate for
-    template<size_t Extent>
-    constexpr Vector(std::span<const T, Extent> to_copy) noexcept requires is_global
+    template<size_t Extent> requires is_global
+    constexpr Vector(std::span<const T, Extent> to_copy) noexcept
       : Vector(to_copy.size())
     {
       details::contiguous_copy(to_copy.data(), blk_ptr, to_copy.size());
