@@ -46,25 +46,25 @@ namespace clt
     /// @param alloc The local allocator
     /// @param strv The StringView to use whose content to copy
     constexpr BasicString(AllocT& alloc, StringView strv) noexcept requires meta::LocalAllocator<ALLOCATOR>
-      : BasicString::UnderlyingVector(alloc, strv) {}
+      : BasicString::UnderlyingVector(alloc, View{ strv.data(), strv.size() }) {}
 
     /// @brief Constructor for BasicString using a global allocator
     /// @param strv The StringView to use whose content to copy
     constexpr BasicString(StringView strv) noexcept requires meta::GlobalAllocator<ALLOCATOR>
-      : BasicString::UnderlyingVector(strv) {}
+      : BasicString::UnderlyingVector(View{ strv.data(), strv.size() }) {}
 
     template<typename AllocT, size_t N> requires meta::LocalAllocator<ALLOCATOR>
     /// @brief Constructs a String
     /// @param alloc The local allocator
     /// @param x The array
     constexpr BasicString(AllocT& alloc, const char(&x)[N]) noexcept
-      : BasicString::UnderlyingVector(alloc, StringView{ x, x + N }) {}
+      : BasicString::UnderlyingVector(alloc, View{ x, x + N }) {}
 
     template<size_t N> requires meta::GlobalAllocator<ALLOCATOR>
     /// @brief Constructs a String
     /// @param x The array
     constexpr BasicString(const char(&x)[N]) noexcept
-      : BasicString::UnderlyingVector(StringView{ x, x + N }) {}
+      : BasicString::UnderlyingVector(View{ x, x + N }) {}
 
     /// @brief Converts a String to a StringView
     /// @return Span over the whole Vector
