@@ -56,7 +56,7 @@ namespace clt::lng
       : public ErrorReporter, public Rep
     {
       template<typename... Args>
-      constexpr ToErrorReporter(Args&&... args) noexcept(std::is_nothrow_constructible_v<Rep, args...>)
+      constexpr ToErrorReporter(Args&&... args) noexcept(std::is_nothrow_constructible_v<Rep, Args...>)
         : Rep(std::forward<Args>(args)...) {}
 
       void message(StringView str, const Option<SourceInfo>& src_info = None, const Option<ReportNumber>& msg_nb = None) noexcept override
