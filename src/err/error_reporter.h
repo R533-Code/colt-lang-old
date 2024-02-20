@@ -45,17 +45,14 @@ namespace clt::lng
     virtual void   error(StringView str, const Option<SourceInfo>& src_info = None, const Option<ReportNumber>& msg_nb = None) noexcept = 0;
     
     /// @brief Destructor
-    virtual ~ErrorReporter() noexcept = 0;
+    virtual ~ErrorReporter() noexcept {};
   };
-
-  /// @brief Pointer to a Reporter
-  using ErrorReporter_t = ErrorReporter* const;
 
   namespace details
   {
     template<Reporter Rep>
     /// @brief Helper to convert a 'Reporter' to an ErrorReporter
-    class ToErrorReporter
+    struct ToErrorReporter
       : public ErrorReporter, public Rep
     {
       template<typename... Args>
@@ -77,14 +74,14 @@ namespace clt::lng
         Rep::error(str, src_info, msg_nb);
       }
 
-      ~ToErrorReporter() override = default;
+      ~ToErrorReporter() override {};
     };
   }  
 
-  template<typename Reporter, auto ALLOCATOR = mem::GlobalAllocatorDescription, typename... Args>
-  UniquePtr<ErrorReporter> make_error_reporter(Args&&... args) noexcept(std::is_nothrow_constructible_v<Reporter, Args...>)
+  template<Reporter Rep, auto ALLOCATOR = mem::GlobalAllocatorDescription, typename... Args>
+  UniquePtr<ErrorReporter> make_error_reporter(Args&&... args) noexcept(std::is_nothrow_constructible_v<Rep, Args...>)
   {
-    return make_unique<details::ToErrorReporter<Reporter>>(std::forward<Args>(args)...);
+    return make_unique<details::ToErrorReporter<Rep>>(std::forward<Args>(args)...);
   }  
 }
 
