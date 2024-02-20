@@ -24,8 +24,7 @@ namespace clt
 		: public std::exception
 	{
 	public:
-		ExitRecursionExcept()
-			: std::exception("ExitRecursionExcept") {}
+		ExitRecursionExcept() = default;
 	};
 
 	template<meta::Integral T>
