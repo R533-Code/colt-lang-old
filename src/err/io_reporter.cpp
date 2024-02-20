@@ -128,7 +128,7 @@ namespace clt::lng
 
   void generate_message(StringView fmt, const Option<SourceInfo>& src, const Option<ReportNumber>& nb) noexcept
   {
-		if (nb.is_value())
+		if (nb.is_none())
 			io::print_message("{}", fmt);
 		else
 			io::print_message("(M{}) {}", nb.value(), fmt);
@@ -139,7 +139,7 @@ namespace clt::lng
 
 	void generate_warn(StringView fmt, const Option<SourceInfo>& src, const Option<ReportNumber>& nb) noexcept
 	{
-		if (nb.is_value())
+		if (nb.is_none())
 			io::print_warn("{}", fmt);
 		else
 			io::print_warn("(W{}) {}", nb.value(), fmt);
@@ -150,7 +150,7 @@ namespace clt::lng
 
 	void generate_error(StringView fmt, const Option<SourceInfo>& src, const Option<ReportNumber>& nb) noexcept
 	{
-		if (nb.is_value())
+		if (nb.is_none())
 			io::print_error("{}", fmt);
 		else
 			io::print_error("(E{}) {}", nb.value(), fmt);
