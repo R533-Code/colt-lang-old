@@ -11,3 +11,4 @@ docs/latex
 docs/html
 # PYTHON OUTPUT
 __pycache__
+/resources/icon/colt.aps
