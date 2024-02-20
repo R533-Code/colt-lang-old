@@ -8,155 +8,279 @@
 #ifndef HG_COLT_LEXER
 #define HG_COLT_LEXER
 
-#include "structs/list.h"
-#include "structs/set.h"
-#include "colt_operators.h"
+#include <array>
+#include <exception>
+#include "ascii.h"
 #include "err/error_reporter.h"
+#include "colt_token_buffer.h"
+#include "util/exit_recursion.h"
 
 namespace clt::lng
-{
-  // Forward declaration
-  class TokenBuffer;
+{	
+	/**
+	* Functions starting with 'Consume' do not add any Token
+	* to the token buffer.
+	* Functions starting with 'Parse' add a Token to the
+	* token buffer.
+	*/
 
-  /// @brief Lexes 'to_parse'
-  /// @param reporter The reporter used to generate error/warnings/messages
-  /// @param to_parse The StringView to parse
-  /// @return A TokenBuffer containing parsed lexemes
-  TokenBuffer Lex(ErrorReporter_t reporter, StringView to_parse) noexcept;
+	/// @brief Consumes all characters till a whitespace is hit
+	/// @param lexer The lexer used for parsing
+	void ConsumeTillWhitespaces(Lexer& lexer) noexcept;
 
-  /// @brief Breaks down a StringView into lines
-  /// @param strv The StringView to break down into lines
-  /// @param buffer The buffer where to append these lines
-  void CreateLines(StringView strv, FlatList<StringView, 256>& buffer) noexcept;
+	/// @brief Consumes all whitespaces till a non-whitespace is hit
+	/// @param lexer The lexer used for parsing
+	void ConsumeWhitespaces(Lexer& lexer) noexcept;
 
-  class Token
-  {
-    /// @brief 0-based index into the array of lines of the program
-    u32 line_index;
-    /// @brief 1-based
-    u32 column_offset;
-    /// @brief 0-based index into the array of literals.
-    /// The array in which to index depends on the lexeme.
-    u32 literal_index;
-    /// @brief The actual lexeme
-    Lexeme lexeme;
+	/// @brief Consumes all multi-line comments (recursive)
+	/// @param lexer The lexer used for parsing
+	/// @pre The '/*' of the comment must be consumed
+	void ConsumeLinesComment(Lexer& lexer) noexcept;
 
-#ifdef COLT_DEBUG
-    /// @brief On debug, we store the ID of the TokenBuffer owning the Token
-    u32 buffer_id;
+	/// @brief Consumes all the digits (saving them in `lexer.temp`).
+	/// This function does not clear `temp`.
+	/// @param lexer The lexer used for parsing
+	void ConsumeDigits(Lexer& lexer) noexcept;
 
-    constexpr Token(Lexeme lexeme, u32 line, u32 column, u32 buffer_id, u32 literal = 0) noexcept
-      : line_index(line), column_offset(column), literal_index(literal), lexeme(lexeme), buffer_id(buffer_id) {}
+	/// @brief Parses an invalid character (consuming till a whitespace is hit)
+	/// @param lexer The lexer used for parsing
+	void ParseInvalid(Lexer& lexer) noexcept;
 
-#else
-    constexpr Token(Lexeme lexeme, u32 line, u32 column, u32 literal = 0) noexcept
-      : line_index(line), column_offset(column), literal_index(literal), lexeme(lexeme) {}
-#endif // COLT_DEBUG
+	/// @brief Parses a '+'
+	/// @param lexer The lexer used for parsing
+	void ParsePlus(Lexer& lexer) noexcept;
+
+	/// @brief Parses a '-'
+	/// @param lexer The lexer used for parsing
+	void ParseMinus(Lexer& lexer) noexcept;
+
+	/// @brief Parses a '*'
+	/// @param lexer The lexer used for parsing
+	void ParseStar(Lexer& lexer) noexcept;
+
+	/// @brief Parses a '/'
+	/// @param lexer The lexer used for parsing
+	void ParseSlash(Lexer& lexer) noexcept;
+
+	/// @brief Parses a '%'
+	/// @param lexer The lexer used for parsing
+	void ParsePercent(Lexer& lexer) noexcept;
+
+	/// @brief Parses a ':'
+	/// @param lexer The lexer used for parsing
+	void ParseColon(Lexer& lexer) noexcept;
+
+	/// @brief Parses a '='
+	/// @param lexer The lexer used for parsing
+	void ParseEqual(Lexer& lexer) noexcept;
+
+	/// @brief Parses a '!'
+	/// @param lexer The lexer used for parsing
+	void ParseExclam(Lexer& lexer) noexcept;
+
+	void ParseLt(Lexer& lexer) noexcept;
+	
+	void ParseGt(Lexer& lexer) noexcept;
+
+	/// @brief Parses a '\.'
+	/// @param lexer The lexer used for parsing
+	void ParseDot(Lexer& lexer) noexcept;
 
 
-  public:
-    friend class TokenBuffer;
+	template<typename T>
+	/// @brief Check if a lexeme matches a type (used for assertions)
+	/// @tparam T The type that the lexeme should represent
+	/// @param lex The lexeme that should represent 'T'
+	/// @return True if 'lex' represents 'T'
+	constexpr bool CheckLiteralLexeme(Lexeme lex) noexcept;
 
-    Token() = delete;
-    constexpr Token(Token&&) noexcept = default;
-    constexpr Token(const Token&) noexcept = default;
-    constexpr Token& operator=(Token&&) noexcept = default;
-    constexpr Token& operator=(const Token&) noexcept = default;
+	/// @brief The type of the lexing functions callbacks
+	using LexerDispatch_t = void(*)(Lexer&) noexcept;
 
-    /// @brief Converts a Token to the Lexeme it represents
-    constexpr operator Lexeme() const noexcept { return lexeme; }
-  };
+	/// @brief Table containing lexing functions used for dispatch
+	struct LexerDispatchTable
+		: public std::array<LexerDispatch_t, 256>
+	{};
 
-  class TokenBuffer
-  {
-    /// @brief The array of lines
-    FlatList<StringView, 256>         lines{};
-    /// @brief The array of string literals
-    FlatList<UniquePtr<String>, 256>  str_literals{};
-    /// @brief The array of literal numbers (including f32/f64)
-    FlatList<QWORD_t, 256>            nb_literals{};
-    /// @brief The array of tokens
-    FlatList<Token, 512>              tokens{};
+	consteval LexerDispatchTable GenLexerDispatchTable() noexcept
+	{
+		LexerDispatchTable table{};
+		for (size_t i = 0; i < table.size(); i++)
+		{
+			if (clt::isspace((char)i))
+				table[i] = &ConsumeWhitespaces;
+			else
+				table[i] = &ParseInvalid;
+		}		
 
-#ifdef COLT_DEBUG
-    /// @brief 
-    static std::atomic<u32> ID_GENERATOR;
+		table['+'] = &ParsePlus;
+		table['-'] = &ParseMinus;
+		table['*'] = &ParsePlus;
+		table['/'] = &ParseSlash;
+		table['%'] = &ParsePercent;
+		table[':'] = &ParseColon;
+		table['='] = &ParseEqual;
+		table['!'] = &ParseExclam;
+		table['.'] = &ParseDot;
+		table['<'] = &ParseLt;
+		table['>'] = &ParseGt;
+		return table;
+	}
 
-    u32 buffer_id;
-#endif // COLT_DEBUG
+	struct Lexer
+	{
+		/// @brief The error reporter
+		ErrorReporter& reporter;
+		/// @brief TokenBuffer where to save the lexemes
+		TokenBuffer& buffer;
+		/// @brief The current line
+		u32 line_nb = 0;
+		/// @brief The current offset into the current line
+		u32 offset = 0;
+		/// @brief Temporary string used for literals
+		String temp = {};
+		/// @brief The size of the current lexeme
+		u32 size_lexeme = 0;
+		/// @brief Recursion depth for parsing comments
+		u8 comment_depth = 0;
+		/// @brief Next character to parse
+		char next;
 
-    /// @brief Check if a Token is owned by the current TokenBuffer
-    constexpr void owns(Token tkn) const noexcept
-    {
-      if constexpr (isDebugBuild())
-        assert_true("Token is not owned by this TokenBuffer!", tkn.buffer_id == buffer_id);
-    }
-    
-    /// @brief Generates a Token
-    /// @param lexeme The lexeme of the Token
-    /// @param line The line number
-    /// @param column The column of the line
-    /// @param literal The literal index
-    /// @return Generated Token
-    void addToken(Lexeme lexeme, u32 line, u32 column, u32 literal = 0) noexcept
-    {
-      if constexpr (isDebugBuild())
-        tokens.push_back(Token{ lexeme, line, column, buffer_id, literal });
-      else
-        tokens.push_back(Token{ lexeme, line, column, literal });
-    }
+		struct Snapshot
+		{
+			u32 line_nb;
+			u32 column;
+		};
 
-    /// @brief Adds a line
-    /// @param line The line to save
-    void addLine(StringView line) noexcept
-    {
-      lines.push_back(line);
-    }
+		/// @brief Size of the beginning of a multiline comment (SLASH STAR)
+		static constexpr u32 MultilineCommentSize = 2;
+		/// @brief The lexing table used to dispatch
+		static constexpr LexerDispatchTable LexingTable = GenLexerDispatchTable();
 
-    // Friend declaration to use addToken
-    friend TokenBuffer Lex(ErrorReporter_t reporter, StringView to_parse) noexcept;
+		constexpr char getNext() noexcept
+		{
+			++size_lexeme;
+			if (line_nb == buffer.lines.size())
+				return EOF;
+			if (offset == buffer.lines[line_nb].size())
+			{
+				offset = 0;
+				++line_nb;
+				return getNext();
+			}
+			return buffer.lines[line_nb][offset++];
+		}
 
-  public:
-    /// @brief Default constructor
-    TokenBuffer() noexcept
-    {
-      if constexpr (isDebugBuild())
-        buffer_id = ID_GENERATOR.fetch_add(1, std::memory_order_acq_rel);
-    }
+		constexpr u32 getOffset() const noexcept
+		{
+			assert_true("getOffset can only be called after a call to getNext!",
+				!(offset == 0 && line_nb == 0));
+			
+			return offset ? offset - 1
+				: static_cast<u32>(buffer.lines[line_nb - 1].size()) - 1;
+		}
 
-    TokenBuffer(const TokenBuffer&) = delete;
-    TokenBuffer& operator=(const TokenBuffer&) = delete;
-    
-    TokenBuffer(TokenBuffer&&) noexcept = default;
-    TokenBuffer& operator=(TokenBuffer&&) noexcept = default;
+		constexpr Snapshot startLexeme() noexcept
+		{
+			assert_true("startLexeme can only be called after a call to getNext!",
+				!(offset == 0 && line_nb == 0));
+			
+			size_lexeme = 0;
+			return Snapshot{ line_nb, offset - 1 };
+		}
 
-    /// @brief Returns a StringView over the line in which the token appears
-    /// @param tkn The Token whose line to return
-    /// @return The line in which appears the token
-    StringView getLineStr(Token tkn) const noexcept
-    {
-      owns(tkn);
-      return lines[tkn.line_index];
-    }
-    
-    /// @brief Returns the line number on which the token appears
-    /// @param tkn The Token whose line to return
-    /// @return The line in which appears the token (1-based)
-    u32 getLine(Token tkn) const noexcept
-    {
-      owns(tkn);
-      return tkn.line_index + 1;
-    }
-    
-    /// @brief Returns the column on which the token appears
-    /// @param tkn The Token whose column to return
-    /// @return The column to return (1-based)
-    u32 getColumn(Token tkn) const noexcept
-    {
-      owns(tkn);
-      return tkn.column_offset;
-    }
-  };
+		/// @brief Look ahead in the string to scan
+		/// @param offset The offset to add (0 being look ahead 1 character)
+		/// @return The character 'offset + 1' after the current one
+		constexpr char peekNext(u32 offset = 0) const noexcept
+		{
+			auto i = (i64)(this->offset + offset) - (i64)buffer.lines[line_nb].size();
+			if (i < 0)
+				return buffer.lines[line_nb][this->offset + offset];
+			const auto next_line = line_nb + 1;
+			if (next_line == buffer.lines.size())
+				return EOF;
+			return buffer.lines[next_line][i];
+		}
+
+		/// @brief Creates a SourceInfo over a single-line lexeme
+		/// @param start The start offset of the lexeme
+		/// @return SourceInfo over the lexeme
+		constexpr SourceInfo makeSource(const Snapshot& snap) const noexcept
+		{
+			return SourceInfo{ snap.line_nb, StringView{ &buffer.lines[snap.line_nb].front() + snap.column, 1}, buffer.lines[snap.line_nb] };
+		}
+
+		/// @brief Creates a SourceInfo over a single-line lexeme
+		/// @param start The start offset of the lexeme
+		/// @return SourceInfo over the lexeme
+		constexpr SourceInfo makeSource(u32 line_nb, u32 start) const noexcept
+		{
+			return SourceInfo{ line_nb, StringView{ &buffer.lines[line_nb].front() + start, 1}, buffer.lines[line_nb] };
+		}
+
+		/// @brief Creates a SourceInfo over a single-line lexeme
+		/// @param start The start offset of the lexeme
+		/// @param end The end offset of the lexeme
+		/// @return SourceInfo over the lexeme
+		constexpr SourceInfo makeSource(u32 line_nb, u32 start, u32 end) const noexcept
+		{
+			return SourceInfo{ line_nb, StringView{ &buffer.lines[line_nb].front() + start, end - start }, buffer.lines[line_nb] };
+		}
+
+		/// @brief Saves a Token in the TokenBuffer
+		/// @param lexeme The lexeme of the Token
+		/// @param column The starting column of the Token
+		void addToken(Lexeme lexeme, const Snapshot& snap) const noexcept
+		{
+			assert_true("Invalid call to addToken", size_lexeme != 0);
+			buffer.addToken(lexeme, snap.line_nb, snap.column, size_lexeme - 1);
+		}
+
+		template<typename T>
+		void addLiteral(Lexeme lexeme, T value, u32 column) const noexcept
+		{
+			assert_true("Verify lexeme and literal type!", CheckLiteralLexeme<T>(lexeme));
+			QWORD_t literal{};
+			literal.bit_assign(value);
+			buffer.addLiteral(literal, lexeme, line_nb, column, size_lexeme);
+		}
+	};	
+
+	template<typename T>
+	constexpr bool CheckLiteralLexeme(Lexeme lex) noexcept
+	{
+		switch (lex)
+		{
+			using enum Lexeme;
+		case TKN_BOOL_L:
+			return std::same_as<T, bool>;
+		case TKN_CHAR_L:
+			return std::same_as<T, char>;
+		case TKN_U8_L:
+			return std::same_as<T, u8>;
+		case TKN_U16_L:
+			return std::same_as<T, u16>;
+		case TKN_U32_L:
+			return std::same_as<T, u32>;
+		case TKN_U64_L:
+			return std::same_as<T, u64>;
+		case TKN_I8_L:
+			return std::same_as<T, i8>;
+		case TKN_I16_L:
+			return std::same_as<T, i16>;
+		case TKN_I32_L:
+			return std::same_as<T, i32>;
+		case TKN_I64_L:
+			return std::same_as<T, i64>;
+		case TKN_FLOAT_L:
+			return std::same_as<T, f32>;
+		case TKN_DOUBLE_L:
+			return std::same_as<T, f64>;
+		default:
+			return false;
+		}
+	}
 }
 
 #endif // !HG_COLT_LEXER
