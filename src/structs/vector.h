@@ -127,7 +127,7 @@ namespace clt
     constexpr Vector(AllocT& alloc, std::span<const T, Extent> to_copy) noexcept
       : Vector(alloc, to_copy.size())
     {
-      details::contiguous_copy(to_copy.begin(), blk_ptr, to_copy.size());
+      details::contiguous_copy(to_copy.data(), blk_ptr, to_copy.size());
       blk_size = to_copy.size();
     }
 
@@ -137,7 +137,7 @@ namespace clt
     constexpr Vector(std::span<const T, Extent> to_copy) noexcept requires is_global
       : Vector(to_copy.size())
     {
-      details::contiguous_copy(to_copy.begin(), blk_ptr, to_copy.size());
+      details::contiguous_copy(to_copy.data(), blk_ptr, to_copy.size());
       blk_size = to_copy.size();
     }
 
