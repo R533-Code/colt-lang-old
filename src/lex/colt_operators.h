@@ -204,7 +204,7 @@ namespace clt::lng
 			return UnaryOp::OP_NEGATE;
 		case TKN_STAR:
 			return UnaryOp::OP_DEREF;
-		case TKN_BANG:
+		case TKN_EXCLAM:
 			return UnaryOp::OP_BOOL_NOT;
 		case TKN_TILDE:
 			return UnaryOp::OP_BIT_NOT;
