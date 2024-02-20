@@ -57,7 +57,6 @@ namespace clt::lng
     // We hit EOF
     lexer.reporter.error("Unterminated multi-line comment!",
       lexer.makeSource(line_nb, start_offset, start_offset + Lexer::MultilineCommentSize));
-    lexer.next = EOF; // To stop parsing
     throw ExitRecursionExcept{};
   }
 
