@@ -8,6 +8,8 @@
 #ifndef HG_COLT_RUN_TESTS
 #define HG_COLT_RUN_TESTS
 
+#include "io/print.h"
+
 namespace clt
 {
   /// @brief Run all unit tests on Debug configuration,
