@@ -16,7 +16,9 @@
 #include "util/exit_recursion.h"
 
 namespace clt::lng
-{	
+{
+	struct Lexer;
+
 	/**
 	* Functions starting with 'Consume' do not add any Token
 	* to the token buffer.
@@ -41,6 +43,16 @@ namespace clt::lng
 	/// This function does not clear `temp`.
 	/// @param lexer The lexer used for parsing
 	void ConsumeDigits(Lexer& lexer) noexcept;
+
+	/// @brief Consumes all the digits (with base 'base'), saving them in `lexer.temp`.
+	/// This function does not clear `temp`.
+	/// @param lexer The lexer used for parsing
+	void ConsumeDigits(Lexer& lexer, int base) noexcept;
+
+	/// @brief Consumes all the alpha-numeric characters (saving them in `lexer.temp`).
+	/// This function does not clear `temp`.
+	/// @param lexer The lexer used for parsing
+	void ConsumeAlnum(Lexer& lexer) noexcept;
 
 	/// @brief Parses an invalid character (consuming till a whitespace is hit)
 	/// @param lexer The lexer used for parsing
@@ -81,11 +93,11 @@ namespace clt::lng
 	/// @brief Parses a '<'
 	/// @param lexer The lexer used for parsing
 	void ParseLt(Lexer& lexer) noexcept;
-	
+
 	/// @brief Parses a '>'
 	/// @param lexer The lexer used for parsing
 	void ParseGt(Lexer& lexer) noexcept;
-	
+
 	/// @brief Parses a '&'
 	/// @param lexer The lexer used for parsing
 	void ParseAnd(Lexer& lexer) noexcept;
@@ -97,10 +109,18 @@ namespace clt::lng
 	/// @brief Parses a '^'
 	/// @param lexer The lexer used for parsing
 	void ParseCaret(Lexer& lexer) noexcept;
-	
+
 	/// @brief Parses a '^'
 	/// @param lexer The lexer used for parsing
 	void ParseCaret(Lexer& lexer) noexcept;
+
+	/// @brief Parses digits (floats or integrals)
+	/// @param lexer The lexer used for parsing
+	void ParseDigit(Lexer& lexer) noexcept;
+
+	/// @brief Parses an identifier
+	/// @param lexer The lexer used for parsing
+	void ParseIdentifier(Lexer& lexer) noexcept;
 
 	template<Lexeme lexeme>
 	/// @brief Parses a single character, adding 'lexeme' to the token buffer.
@@ -113,11 +133,10 @@ namespace clt::lng
 	void ParseDot(Lexer& lexer) noexcept;
 
 	template<typename T>
-	/// @brief Check if a lexeme matches a type (used for assertions)
-	/// @tparam T The type that the lexeme should represent
-	/// @param lex The lexeme that should represent 'T'
-	/// @return True if 'lex' represents 'T'
-	constexpr bool CheckLiteralLexeme(Lexeme lex) noexcept;
+	/// @brief Returns the literal lexeme representing the C++ type 'T'
+	/// @tparam T The type to convert to its lexeme equivalent
+	/// @return The lexeme corresponding to 'T'
+	constexpr Lexeme LiteralFromType() noexcept;
 
 	/// @brief The type of the lexing functions callbacks
 	using LexerDispatch_t = void(*)(Lexer&) noexcept;
@@ -130,14 +149,19 @@ namespace clt::lng
 	consteval LexerDispatchTable GenLexerDispatchTable() noexcept
 	{
 		LexerDispatchTable table{};
-		for (size_t i = 0; i < table.size(); i++)
+		for (char i = 0; i < table.size(); i++)
 		{
-			if (clt::isspace((char)i))
+			if (clt::isspace(i))
 				table[i] = &ConsumeWhitespaces;
+			else if (clt::isdigit(i))
+				table[i] = &ParseDigit;
+			else if (clt::isalpha(i))
+				table[i] = &ParseIdentifier;
 			else
 				table[i] = &ParseInvalid;
-		}		
+		}
 
+		table['_'] = &ParseIdentifier;
 		table['+'] = &ParsePlus;
 		table['-'] = &ParseMinus;
 		table['*'] = &ParsePlus;
@@ -155,6 +179,7 @@ namespace clt::lng
 		table['~'] = &ParseSingle<Lexeme::TKN_TILDE>;
 		table[';'] = &ParseSingle<Lexeme::TKN_SEMICOLON>;
 		table[','] = &ParseSingle<Lexeme::TKN_COLON>;
+
 		return table;
 	}
 
@@ -188,6 +213,12 @@ namespace clt::lng
 		/// @brief The lexing table used to dispatch
 		static constexpr LexerDispatchTable LexingTable = GenLexerDispatchTable();
 
+		template<typename... Args>
+		StringView fmt(clt::io::fmt_str<Args...> fmt, Args&&... args) noexcept
+		{
+			return buffer.fmt(fmt, std::forward<Args>(args)...);
+		}
+
 		constexpr char getNext() noexcept
 		{
 			if (line_nb == buffer.lines.size())
@@ -206,7 +237,7 @@ namespace clt::lng
 		{
 			assert_true("getOffset can only be called after a call to getNext!",
 				!(offset == 0 && line_nb == 0));
-			
+
 			return offset ? offset - 1
 				: static_cast<u32>(buffer.lines[line_nb - 1].size()) - 1;
 		}
@@ -215,7 +246,7 @@ namespace clt::lng
 		{
 			assert_true("startLexeme can only be called after a call to getNext!",
 				!(offset == 0 && line_nb == 0));
-			
+
 			size_lexeme = 0;
 			return Snapshot{ line_nb, offset - 1 };
 		}
@@ -271,12 +302,27 @@ namespace clt::lng
 		template<typename T>
 		void addLiteral(Lexeme lexeme, T value, const Snapshot& snap) const noexcept
 		{
-			assert_true("Verify lexeme and literal type!", CheckLiteralLexeme<T>(lexeme));
+			assert_true("Verify lexeme and literal type!", LiteralFromType<T>() == lexeme);
 			QWORD_t literal{};
 			literal.bit_assign(value);
 			buffer.addLiteral(literal, lexeme, snap.line_nb, snap.column, size_lexeme);
 		}
-	};	
+	};
+
+	void HandleFloatWithExtension(Lexer& lexer, const Lexer::Snapshot& snap) noexcept;
+	
+	template<bool UnsignedOnly = false>
+	void HandleIntWithExtension(Lexer& lexer, const Lexer::Snapshot& snap, int base = 10) noexcept;
+
+	template<meta::FloatingPoint T, Lexeme lex>
+	void parse_floating(Lexer& lexer, const Lexer::Snapshot& snap) noexcept;
+	
+	template<meta::Integral T, Lexeme lex>
+	void parse_integral(Lexer& lexer, const Lexer::Snapshot& snap, int base = 10) noexcept;
+
+	/**
+	* Template function implementations
+	*/
 
 	template<Lexeme lexeme>
 	void ParseSingle(Lexer& lexer) noexcept
@@ -284,41 +330,134 @@ namespace clt::lng
 		auto snap = lexer.startLexeme();
 		lexer.next = lexer.getNext();
 		lexer.addToken(lexeme, snap);
+	}	
+
+	template<meta::FloatingPoint T, Lexeme lex>
+	void parse_floating(Lexer& lexer, const Lexer::Snapshot& snap) noexcept
+	{
+		T value;
+		auto result = clt::parse(lexer.temp, value);
+		if (result.code() == ParsingCode::GOOD)
+			return lexer.addLiteral(lex, value, snap);
+
+		lexer.addToken(Lexeme::TKN_ERROR, snap);
+		lexer.reporter.error(
+			lexer.fmt("Invalid '{}' literal!", clt::reflect<T>::str()),
+			lexer.makeSource(snap)
+		);
+	}
+
+	template<meta::Integral T, Lexeme lex>
+	void parse_integral(Lexer& lexer, const Lexer::Snapshot& snap, int base) noexcept
+	{
+		T value = 0;
+		auto [ptr, err] = std::from_chars(lexer.temp.begin(), lexer.temp.end(), value, base);
+		if (ptr == lexer.temp.end() && err == std::errc{})
+			return lexer.addLiteral(lex, value, snap);
+
+		lexer.addToken(Lexeme::TKN_ERROR, snap);
+		lexer.reporter.error(
+			lexer.fmt("Invalid '{}' literal!", clt::reflect<T>::str()),
+			lexer.makeSource(snap)
+		);
+	}
+
+	namespace details
+	{
+		template<typename dtype, typename found>
+		void handle_1nb_int_extension(Lexer& lexer, const Lexer::Snapshot& snap, int base) noexcept
+		{
+			if (clt::isdigit(lexer.peekNext(1)))
+				return parse_integral<dtype, LiteralFromType<dtype>()>(lexer, snap, base);
+			// consume [iu]8
+			lexer.getNext();
+			lexer.next = lexer.getNext();
+			return parse_integral<found, LiteralFromType<found>()>(lexer, snap, base);
+		}
+
+		template<typename dtype, typename found>
+		void handle_2nb_int_extension(char chr, Lexer& lexer, const Lexer::Snapshot& snap, int base) noexcept
+		{
+			if (lexer.peekNext(1) != chr || clt::isdigit(lexer.peekNext(2)))
+				return parse_integral<dtype, LiteralFromType<dtype>()>(lexer, snap, base);
+			// consume [iu](16|32|64)
+			lexer.getNext();
+			lexer.getNext();
+			lexer.next = lexer.getNext();
+			return parse_integral<found, LiteralFromType<found>()>(lexer, snap, base);
+		}
+	}
+
+
+	template<bool UnsignedOnly>
+	void HandleIntWithExtension(Lexer& lexer, const Lexer::Snapshot& snap, int base) noexcept
+	{
+		// The default type to parse if no literal extension was found
+		using dtype = std::conditional_t<UnsignedOnly, u64, i64>;
+
+		switch (clt::tolower(lexer.next))
+		{
+		break; case 'u':
+			switch (lexer.peekNext())
+			{
+			case '8':
+				return details::handle_1nb_int_extension<dtype, u8>(lexer, snap, base);
+			case '1':
+				return details::handle_2nb_int_extension<dtype, u16>('6', lexer, snap, base);
+			case '3':
+				return details::handle_2nb_int_extension<dtype, u32>('2', lexer, snap, base);
+			case '6':
+				return details::handle_2nb_int_extension<dtype, u64>('4', lexer, snap, base);
+			}
+			// We make use of fallthrough if unsigned only
+		break; case 'i': if constexpr (!UnsignedOnly) {
+			switch (lexer.peekNext())
+			{
+			case '8':
+				return details::handle_1nb_int_extension<dtype, i8>(lexer, snap, base);
+			case '1':
+				return details::handle_2nb_int_extension<dtype, i16>('6', lexer, snap, base);
+			case '3':
+				return details::handle_2nb_int_extension<dtype, i32>('2', lexer, snap, base);
+			case '6':
+				return details::handle_2nb_int_extension<dtype, i64>('4', lexer, snap, base);
+			}
+			break;
+		}
+		default:
+			return parse_integral<dtype, LiteralFromType<dtype>()>(lexer, snap, base);
+		}
 	}
 
 	template<typename T>
-	constexpr bool CheckLiteralLexeme(Lexeme lex) noexcept
+	constexpr Lexeme LiteralFromType() noexcept
 	{
-		switch (lex)
-		{
-			using enum Lexeme;
-		case TKN_BOOL_L:
-			return std::same_as<T, bool>;
-		case TKN_CHAR_L:
-			return std::same_as<T, char>;
-		case TKN_U8_L:
-			return std::same_as<T, u8>;
-		case TKN_U16_L:
-			return std::same_as<T, u16>;
-		case TKN_U32_L:
-			return std::same_as<T, u32>;
-		case TKN_U64_L:
-			return std::same_as<T, u64>;
-		case TKN_I8_L:
-			return std::same_as<T, i8>;
-		case TKN_I16_L:
-			return std::same_as<T, i16>;
-		case TKN_I32_L:
-			return std::same_as<T, i32>;
-		case TKN_I64_L:
-			return std::same_as<T, i64>;
-		case TKN_FLOAT_L:
-			return std::same_as<T, f32>;
-		case TKN_DOUBLE_L:
-			return std::same_as<T, f64>;
-		default:
-			return false;
-		}
+		using enum Lexeme;
+		
+		if constexpr (std::same_as<T, bool>)
+			return TKN_BOOL_L;
+		if constexpr (std::same_as<T, char>)
+			return TKN_CHAR_L;
+		if constexpr (std::same_as<T, u8>)
+			return TKN_U8_L;
+		if constexpr (std::same_as<T, u16>)
+			return TKN_U16_L;
+		if constexpr (std::same_as<T, u32>)
+			return TKN_U32_L;
+		if constexpr (std::same_as<T, u64>)
+			return TKN_U64_L;
+		if constexpr (std::same_as<T, i8>)
+			return TKN_I8_L;
+		if constexpr (std::same_as<T, i16>)
+			return TKN_I16_L;
+		if constexpr (std::same_as<T, i32>)
+			return TKN_I32_L;
+		if constexpr (std::same_as<T, i64>)
+			return TKN_I64_L;
+		if constexpr (std::same_as<T, f32>)
+			return TKN_FLOAT_L;
+		if constexpr (std::same_as<T, f64>)
+			return TKN_DOUBLE_L;
 	}
 }
 
