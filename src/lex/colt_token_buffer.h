@@ -93,6 +93,8 @@ namespace clt::lng
 
   class TokenBuffer
   {
+    /// @brief The array of identifiers
+    StableSet<StringView>             identifiers{};
     /// @brief The array of lines
     FlatList<StringView, 256>         lines{};
     /// @brief The list of strings
@@ -166,6 +168,21 @@ namespace clt::lng
 #endif // COLT_DEBUG
     }
 
+    void addIdentifier(StringView value, Lexeme lexeme, u32 line, u32 column, u32 size) noexcept
+    {
+      u64 ret = identifiers.size();
+      identifiers.push_back(value);
+      assert_true("Integer overflow!", ret <= std::numeric_limits<u32>::max());
+ 
+#ifdef COLT_DEBUG
+      tokens.push_back(Token{ lexeme, static_cast<u32>(tokens_info.size()), buffer_id, static_cast<u32>(ret) });
+      tokens_info.push_back(TokenInfo{ column, size, line, line });
+#else
+      tokens.push_back(Token{ lexeme, static_cast<u32>(tokens_info.size()), static_cast<u32>(ret) });
+      tokens_info.push_back(TokenInfo{ column, size, line, line });
+#endif // COLT_DEBUG
+    }
+    
     void addLiteral(QWORD_t value, Lexeme lexeme, u32 line, u32 column, u32 size) noexcept
     {
       u64 ret = nb_literals.size();
@@ -215,6 +232,20 @@ namespace clt::lng
     {
       owns(tkn);
       return tokens_info[tkn.info_index].column + 1;
+    }
+
+    StringView getIdentifier(Token tkn) const noexcept
+    {
+      assert_true("Token does not represent an identifier!", tkn.getLexeme() == Lexeme::TKN_IDENTIFIER);
+      owns(tkn);
+      return identifiers[tkn.literal_index];
+    }
+
+    QWORD_t getLiteral(Token tkn) const noexcept
+    {
+      assert_true("Token does not represent a literal!", isLiteralToken(tkn.getLexeme()), tkn.getLexeme() != Lexeme::TKN_STRING_L);
+      owns(tkn);
+      return nb_literals[tkn.literal_index];
     }
 
     /// @brief Returns the column on which the token appears
