@@ -16,6 +16,8 @@ namespace clt
 {
   /// @brief Flag to check if the application must wait for input before exiting.
   inline bool               WaitForUserInput = true;
+  /// @brief Flag to run tests (on debug configuration)
+  inline bool               RunTests = false;
   /// @brief Number of spaces to use when transpiling code
   inline u8                 OutputSpace = 2;
   /// @brief The output file name
@@ -48,6 +50,9 @@ namespace clt
   using CMDs = meta::type_list<
     cl::Opt<"nocolor", cl::desc<"Turns off colored output">, cl::alias<"C">,
       cl::callback<[]{ clt::io::OutputColor = false; }>>,
+
+    cl::Opt< "run-tests", cl::desc<"Run unit tests on Debug configuration">,
+      cl::callback<[] { clt::RunTests = true; }>>,
 
     cl::Opt<"nowait", cl::desc<"Do not wait for user input">,
       cl::callback<[]{ clt::WaitForUserInput = false; }>>,
