@@ -136,6 +136,8 @@ namespace clt::lng
 	/// @param lexer The lexer used for parsing
 	void ParseDot(Lexer& lexer) noexcept;
 
+	void PrintToken(Token tkn, const TokenBuffer& buffer) noexcept;	
+
 	template<typename T>
 	/// @brief Returns the literal lexeme representing the C++ type 'T'
 	/// @tparam T The type to convert to its lexeme equivalent
@@ -146,20 +148,18 @@ namespace clt::lng
 	using LexerDispatch_t = void(*)(Lexer&) noexcept;
 
 	/// @brief Table containing lexing functions used for dispatch
-	struct LexerDispatchTable
-		: public std::array<LexerDispatch_t, 256>
-	{};
+	struct LexerDispatchTable: public std::array<LexerDispatch_t, 256>{};
 
 	consteval LexerDispatchTable GenLexerDispatchTable() noexcept
 	{
 		LexerDispatchTable table{};
-		for (char i = 0; i < table.size(); i++)
+		for (size_t i = 0; i < table.size(); i++)
 		{
-			if (clt::isspace(i))
+			if (clt::isspace((char)i))
 				table[i] = &ConsumeWhitespaces;
-			else if (clt::isdigit(i))
+			else if (clt::isdigit((char)i))
 				table[i] = &ParseDigit;
-			else if (clt::isalpha(i))
+			else if (clt::isalpha((char)i))
 				table[i] = &ParseIdentifier;
 			else
 				table[i] = &ParseInvalid;
@@ -243,7 +243,7 @@ namespace clt::lng
 				!(offset == 0 && line_nb == 0));
 
 			return offset ? offset - 1
-				: static_cast<u32>(buffer.lines[line_nb - 1].size()) - 1;
+				: static_cast<u32>(buffer.lines[line_nb - 1].size());
 		}
 
 		constexpr Snapshot startLexeme() noexcept
@@ -252,7 +252,12 @@ namespace clt::lng
 				!(offset == 0 && line_nb == 0));
 
 			size_lexeme = 0;
-			return Snapshot{ line_nb, offset - 1 };
+			return Snapshot{ line_nb, getOffset() };
+		}
+
+		constexpr StringView getCurrentIdentifier(const Snapshot& snap) noexcept
+		{
+			return StringView{ buffer.lines[snap.line_nb].data() + snap.column, getOffset() };
 		}
 
 		/// @brief Look ahead in the string to scan
@@ -274,7 +279,7 @@ namespace clt::lng
 		/// @return SourceInfo over the lexeme
 		constexpr SourceInfo makeSource(const Snapshot& snap) const noexcept
 		{
-			return SourceInfo{ snap.line_nb, StringView{ &buffer.lines[snap.line_nb].front() + snap.column, size_lexeme }, buffer.lines[snap.line_nb] };
+			return SourceInfo{ snap.line_nb + 1, StringView{ &buffer.lines[snap.line_nb].front() + snap.column, size_lexeme }, buffer.lines[snap.line_nb] };
 		}
 
 		/// @brief Creates a SourceInfo over a single-line lexeme
@@ -282,7 +287,7 @@ namespace clt::lng
 		/// @return SourceInfo over the lexeme
 		constexpr SourceInfo makeSource(u32 line_nb, u32 start) const noexcept
 		{
-			return SourceInfo{ line_nb, StringView{ &buffer.lines[line_nb].front() + start, size_lexeme }, buffer.lines[line_nb] };
+			return SourceInfo{ line_nb + 1, StringView{ &buffer.lines[line_nb].front() + start, size_lexeme }, buffer.lines[line_nb] };
 		}
 
 		/// @brief Creates a SourceInfo over a single-line lexeme
@@ -291,7 +296,7 @@ namespace clt::lng
 		/// @return SourceInfo over the lexeme
 		constexpr SourceInfo makeSource(u32 line_nb, u32 start, u32 end) const noexcept
 		{
-			return SourceInfo{ line_nb, StringView{ &buffer.lines[line_nb].front() + start, end - start }, buffer.lines[line_nb] };
+			return SourceInfo{ line_nb + 1, StringView{ &buffer.lines[line_nb].front() + start, end - start }, buffer.lines[line_nb] };
 		}
 
 		/// @brief Saves a Token in the TokenBuffer
@@ -301,6 +306,12 @@ namespace clt::lng
 		{
 			assert_true("Invalid call to addToken", size_lexeme != 0);
 			buffer.addToken(lexeme, snap.line_nb, snap.column, size_lexeme);
+		}
+
+		void addIdentifier(StringView identifier, const Snapshot& snap) const noexcept
+		{
+			assert_true("Invalid call to addToken", size_lexeme != 0);
+			buffer.addIdentifier(identifier, Lexeme::TKN_IDENTIFIER, snap.line_nb, snap.column, size_lexeme);
 		}
 
 		template<typename T>
@@ -391,7 +402,6 @@ namespace clt::lng
 			return parse_integral<found, LiteralFromType<found>()>(lexer, snap, base);
 		}
 	}
-
 
 	template<bool UnsignedOnly>
 	void HandleIntWithExtension(Lexer& lexer, const Lexer::Snapshot& snap, int base) noexcept
