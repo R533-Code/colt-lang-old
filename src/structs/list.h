@@ -131,12 +131,14 @@ namespace clt
     constexpr void clear() noexcept(std::is_nothrow_destructible_v<T>)
     {
       auto cpy = head;
+      cpy->data.clear();
       while (cpy != last_active_node)
       {
-        head->data.clear();
+        cpy->data.clear();
         cpy = head->after;
       }
       last_active_node = head;
+      count = 0;
     }
 
     /// @brief Destructor
