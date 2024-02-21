@@ -84,6 +84,40 @@ namespace clt::lng
     }
   }
 
+  void ConsumeDigits(Lexer& lexer, int base) noexcept
+  {
+    assert_true("Invalid base!", base > 1, base <= 16);
+    if (base <= 10)
+    {
+      while (('0' <= lexer.next && lexer.next < '0' + base) && lexer.next != EOF)
+      {
+        lexer.temp.push_back(lexer.next);
+        lexer.next = lexer.getNext();
+      }
+    }
+    else
+    {
+      const int minus_10 = base - 10;
+      while ((('0' <= lexer.next && lexer.next < '0' + base)
+        || ('A' <= clt::toupper(lexer.next) &&  clt::toupper(lexer.next) < 'A' + minus_10))
+        && lexer.next != EOF)
+      {
+        lexer.temp.push_back(lexer.next);
+        lexer.next = lexer.getNext();
+      }
+    }
+  }
+
+  void ConsumeAlnum(Lexer& lexer) noexcept
+  {
+    // Consume while is alnum and not EOF is hit
+    while (clt::isalnum(lexer.next) && lexer.next != EOF)
+    {
+      lexer.temp.push_back(lexer.next);
+      lexer.next = lexer.getNext();
+    }
+  }
+
   void ParseInvalid(Lexer& lexer) noexcept
   {
     auto snap = lexer.startLexeme();
@@ -329,30 +363,135 @@ namespace clt::lng
     }
     else
       lexer.addToken(Lexeme::TKN_CARET, snap);
+  }  
+
+  void parse_integer(Lexer& lexer, const Lexer::Snapshot& snap) noexcept
+  {
+
   }
 
-  void parse_float(Lexer& lexer, const Lexer::Snapshot& snap) noexcept
+  void ParseDigit(Lexer& lexer) noexcept
   {
-    float value;
-    auto result = clt::parse(lexer.temp, value);
-    if (result.code() == ParsingCode::GOOD)
-      return lexer.addLiteral(Lexeme::TKN_DOUBLE_L, value, snap);
+    auto snap = lexer.startLexeme();
+    lexer.temp.clear();
+    lexer.temp.push_back(lexer.next);
+    
+    if (lexer.next == '0') //Could be 0x, 0b, 0o
+    {
+      lexer.next = lexer.getNext();
+      char symbol = lexer.next;      
+      int base = 10;
+      switch (clt::tolower(symbol))
+      {
+      break; case 'x': //HEXADECIMAL
+        base = 16;
+      break; case 'b': //BINARY
+        base = 2;
+      break; case 'o': //OCTAL
+        base = 8;
+      break; default:
+        //If not any 'x', 'b' or 'o', parse normally
+        if (clt::isdigit(symbol) || symbol == '.')
+          goto NORM;
+        else //If not digit nor '.', then simply '0'
+          return parse_integer(lexer, snap);
+      }
+      lexer.next = lexer.getNext(); //Consume symbol
+      //Pop the leading '0'
+      lexer.temp.clear();
+      ConsumeDigits(lexer, base);
 
-    lexer.addToken(Lexeme::TKN_ERROR, snap);
-    lexer.reporter.error("Invalid 'f32' literal!",
-      lexer.makeSource(snap));
+      if (lexer.temp.size() == 0) //Contains only the '0'
+      {
+        const char* range_str;
+        switch_no_default(symbol)
+        {
+        break; case 'x':
+          range_str = "Integral literals starting with '0x' should be followed by characters in range [0-9] or [a-f]!";
+        break; case 'b':
+          range_str = "Integral literals starting with '0b' should be followed by characters in range [0-1]!";
+        break; case 'o':
+          range_str = "Integral literals starting with '0o' should be followed by characters in range [0-7]!";
+        }
+        ConsumeTillWhitespaces(lexer);
+        lexer.reporter.error(range_str, lexer.makeSource(snap));
+        return lexer.addToken(Lexeme::TKN_ERROR, snap);
+      }
+      return HandleIntWithExtension<true>(lexer, snap, base);
+    }
+  NORM:
+    //Parse as many digits as possible
+    ConsumeDigits(lexer);
+
+    bool isfloat = false;
+    // [0-9]+ followed by a .[0-9] is a float
+    if (lexer.next == '.')
+    {
+      lexer.next = lexer.getNext();
+      if (clt::isdigit(lexer.next))
+      {
+        isfloat = true;
+        lexer.temp.push_back('.');
+        lexer.temp.push_back(lexer.next);
+
+        //Parse as many digits as possible
+        ConsumeDigits(lexer);
+      }
+      else
+      {
+        //We parse the integer first, so the informations of
+        // snap are still valid.
+        HandleIntWithExtension(lexer, snap);
+        
+        //We directly consume the dot and add its Token to the buffer
+        auto snap_dot = lexer.startLexeme();
+        //The dot is not followed by a digit, this is not a float,
+        //but rather should be a dot followed by an identifier for a function call
+        lexer.next = lexer.getNext();
+        lexer.addToken(Lexeme::TKN_DOT, snap_dot);
+        return;
+      }
+    }
+
+    // [0-9]+(.[0-9]+)?e[+-][0-9]+ is a float
+    // We are possibly parsing an exponent
+    if (lexer.next == 'e')
+    {
+      char after_e = lexer.peekNext();
+      if (clt::isdigit(after_e))
+      {
+        isfloat = true;
+        lexer.next = lexer.getNext(); // consume 'e'
+        lexer.temp.push_back('e');
+        ConsumeDigits(lexer);
+      }
+      else if (after_e == '+' && clt::isdigit(lexer.peekNext(1)))
+      {
+        isfloat = true;
+        lexer.getNext(); // consume 'e'
+        lexer.next = lexer.getNext(); // consume '+'
+        lexer.temp.push_back('e');
+        ConsumeDigits(lexer);
+      }
+      else if (after_e == '-' && clt::isdigit(lexer.peekNext(1)))
+      {
+        isfloat = true;
+        lexer.getNext(); // consume 'e'
+        lexer.next = lexer.getNext(); // consume '-'
+        lexer.temp.push_back("e-");
+        ConsumeDigits(lexer);
+      }
+    }
+
+    if (isfloat)
+      HandleFloatWithExtension(lexer, snap);
+    else
+      HandleIntWithExtension(lexer, snap);
   }
 
-  void parse_double(Lexer& lexer, const Lexer::Snapshot& snap) noexcept
+  void ParseIdentifier(Lexer& lexer) noexcept
   {
-    double value;
-    auto result = clt::parse(lexer.temp, value);
-    if (result.code() == ParsingCode::GOOD)
-      return lexer.addLiteral(Lexeme::TKN_DOUBLE_L, value, snap);
 
-    lexer.addToken(Lexeme::TKN_ERROR, snap);
-    lexer.reporter.error("Invalid 'f64' literal!",
-      lexer.makeSource(snap));
   }
 
   void ParseDot(Lexer& lexer) noexcept
@@ -368,7 +507,7 @@ namespace clt::lng
     lexer.temp.push_back('.');
     ConsumeDigits(lexer);
 
-    // We are parsing an exponent
+    // We are possibly parsing an exponent
     if (lexer.next == 'e')
     {
       char after_e = lexer.peekNext();
@@ -393,14 +532,18 @@ namespace clt::lng
         ConsumeDigits(lexer);
       }
     }
-
+    HandleFloatWithExtension(lexer, snap);
+  }
+  
+  void HandleFloatWithExtension(Lexer& lexer, const Lexer::Snapshot& snap) noexcept
+  {
     if (lexer.next == 'f')
     {
       lexer.next = lexer.getNext();
-      return parse_float(lexer, snap);
+      return parse_floating<f32, Lexeme::TKN_FLOAT_L>(lexer, snap);
     }
     if (lexer.next == 'd')
       lexer.next = lexer.getNext();
-    parse_double(lexer, snap);
-  }
+    parse_floating<f64, Lexeme::TKN_DOUBLE_L>(lexer, snap);
+  }  
 }
