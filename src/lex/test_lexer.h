@@ -12,7 +12,7 @@ namespace clt::test
 {
   /// @brief Tests the lexer using a file.
   /// The file should follow a specific format:
-  /// Starts with the expected token on a line, followed
+  /// Starts with the expected tokens on a line (without TKN_EOF), followed
   /// by the line to lex and compare against the previous line.
   /// Lines starting with a '#' are ignored (useful for comments).
   /// @param file_path The file to use as a test
