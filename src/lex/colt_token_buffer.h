@@ -95,6 +95,8 @@ namespace clt::lng
   {
     /// @brief The array of lines
     FlatList<StringView, 256>         lines{};
+    /// @brief The list of strings
+    FlatList<String, 256>             report_str{};
     /// @brief The array of string literals
     FlatList<UniquePtr<String>, 256>  str_literals{};
     /// @brief The array of literal numbers (including f32/f64)
@@ -177,6 +179,15 @@ namespace clt::lng
       tokens.push_back(Token{ lexeme, static_cast<u32>(tokens_info.size()), static_cast<u32>(ret) });
       tokens_info.push_back(TokenInfo{ column, size, line, line });
 #endif // COLT_DEBUG
+    }
+
+    template<typename... Args>
+    StringView fmt(clt::io::fmt_str<Args...> fmt, Args&&... args) noexcept
+    {
+      String str;
+      fmt::format_to(std::back_inserter(str), fmt, std::forward<Args>(args)...);
+      report_str.push_back(std::move(str));
+      return report_str.back();
     }
 
     /// @brief Returns a StringView over the line in which the token appears
