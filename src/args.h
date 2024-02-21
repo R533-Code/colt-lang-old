@@ -24,6 +24,8 @@ namespace clt
   inline std::string_view   OutputFile = {};
   /// @brief The input file name
   inline std::string_view   InputFile = {};
+  /// @brief Lexer test file name
+  inline std::string_view   LexerTestFile = {};
   /// @brief The maximum number of messages
   inline Option<u16>        MaxMessages = 128;
   /// @brief The maximum number of warnings
@@ -49,10 +51,7 @@ namespace clt
   /// @brief The meta type used to generated command line argument handling function
   using CMDs = meta::type_list<
     cl::Opt<"nocolor", cl::desc<"Turns off colored output">, cl::alias<"C">,
-      cl::callback<[]{ clt::io::OutputColor = false; }>>,
-
-    cl::Opt< "run-tests", cl::desc<"Run unit tests on Debug configuration">,
-      cl::callback<[] { clt::RunTests = true; }>>,
+      cl::callback<[]{ clt::io::OutputColor = false; }>>,    
 
     cl::Opt<"nowait", cl::desc<"Do not wait for user input">,
       cl::callback<[]{ clt::WaitForUserInput = false; }>>,
@@ -73,14 +72,20 @@ namespace clt
 
     cl::Opt<"max-msg", cl::desc<"Chooses the maximum number of messages reported">,
       cl::value_desc<"[None|1-65536]">, cl::location<MaxMessages>,
-      cl::callback<[] { details::max_reporter_validator(MaxMessages, "-max-msg", 128); } >>,
+      cl::callback<[] { details::max_reporter_validator(MaxMessages, "-max-msg", 128); } >>,    
 
     cl::Opt<"o", cl::desc<"Output file name">,
       cl::location<OutputFile>>,
 
     cl::OptPos<"input_file", cl::desc<"The input file">,
-      cl::location<InputFile>>
-    > ;
+      cl::location<InputFile>>,
+    
+    cl::Opt< "run-tests", cl::desc<"Run unit tests on Debug configuration">,
+      cl::callback<[] { clt::RunTests = true; }>>,
+
+    cl::Opt<"test-lexer", cl::desc<"Lexer test file name, only used if -run-tests was specified">,
+      cl::location<OutputFile>>
+    >;
 }
 
 
