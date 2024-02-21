@@ -84,7 +84,7 @@ namespace clt
       cl::callback<[] { clt::RunTests = true; }>>,
 
     cl::Opt<"test-lexer", cl::desc<"Lexer test file name, only used if -run-tests was specified">,
-      cl::location<OutputFile>>
+      cl::location<LexerTestFile>>
     >;
 }
 
