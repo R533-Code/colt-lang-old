@@ -32,7 +32,7 @@ namespace clt
   void run_tests() noexcept
   {
     if (RunTests)
-      io::print_warning("Tests can only be run on Debug configuration!");
+      io::print_warn("Tests can only be run on Debug configuration!");
   }
 #endif
 }
