@@ -31,7 +31,8 @@ namespace clt::lng
     while (auto nl = static_cast<const char*>(memchr(&text[start], '\n', size - start)))
     {
       i64 nl_index = nl - text;
-      buffer.addLine(StringView{ front + start, static_cast<size_t>(nl_index - start) });
+      // + 1 to include the '\n'
+      buffer.addLine(StringView{ front + start, static_cast<size_t>(nl_index - start) + 1 });
       start = nl_index + 1;
     }
     // The last line ends at the end of the file.
