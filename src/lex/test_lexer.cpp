@@ -80,10 +80,8 @@ namespace clt::test
           buffer.unsafeClear();
         }
         else
-        {
           consume_line = false;
-          expected_lexemes.clear();
-        }
+        expected_lexemes.clear();
       }
     WHILE_END:
       ++line_count;
