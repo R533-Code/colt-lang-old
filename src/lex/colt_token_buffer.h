@@ -29,6 +29,14 @@ namespace clt::lng
   /// @return A TokenBuffer containing parsed lexemes
   TokenBuffer Lex(ErrorReporter& reporter, StringView to_parse) noexcept;
 
+  /// @brief Lexes 'to_parse'.
+  /// This does not clear 'buffer' first, use with caution!
+  /// @param buffer The TokenBuffer in which to store lexing result
+  /// @param reporter The reporter used to generate error/warnings/messages
+  /// @param to_parse The StringView to parse
+  /// @return A TokenBuffer containing parsed lexemes
+  void Lex(TokenBuffer& buffer, ErrorReporter& reporter, StringView to_parse) noexcept;
+
   /// @brief Breaks down a StringView into lines
   /// @param strv The StringView to break down into lines
   /// @param buffer The buffer where to append these lines
@@ -142,6 +150,17 @@ namespace clt::lng
 
     TokenBuffer(TokenBuffer&&) noexcept = default;
     TokenBuffer& operator=(TokenBuffer&&) noexcept = default;
+
+    /// @brief Clears the TokenBuffer
+    void unsafeClear() noexcept
+    {
+      lines.clear();
+      report_str.clear();
+      str_literals.clear();
+      nb_literals.clear();
+      tokens_info.clear();
+      tokens.clear();
+    }
 
     /// @brief Adds a line
     /// @param line The line to save

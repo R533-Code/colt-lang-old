@@ -10,16 +10,20 @@ namespace clt::lng
   TokenBuffer Lex(ErrorReporter& reporter, StringView to_parse) noexcept
   {
     TokenBuffer buffer;
+    Lex(buffer, reporter, to_parse);
+    return buffer;
+  }
+
+  void Lex(TokenBuffer& buffer, ErrorReporter& reporter, StringView to_parse) noexcept
+  {    
     CreateLines(to_parse, buffer);
     Lexer lex = { reporter, buffer };
-    
+
     lex.next = lex.getNext();
     while (lex.next != EOF)
       Lexer::LexingTable[(u8)lex.next](lex);
     // Add EOF (even if there is already an EOF)
     buffer.addToken(Lexeme::TKN_EOF, lex.line_nb, 0, 0);
-
-    return buffer;
   }
 
   void CreateLines(StringView strv, TokenBuffer& buffer) noexcept
