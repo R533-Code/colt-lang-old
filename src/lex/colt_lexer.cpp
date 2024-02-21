@@ -14,6 +14,13 @@ namespace clt::lng
       lexer.next = lexer.getNext();
   }
 
+  void ConsumeTillSpaceOrPunct(Lexer& lexer) noexcept
+  {
+    // Consume till a whitespace or a punctuation or EOF is hit
+    while (!clt::isspace(lexer.next) && !clt::ispunct(lexer.next) && lexer.next != EOF)
+      lexer.next = lexer.getNext();
+  }
+
   void ConsumeWhitespaces(Lexer& lexer) noexcept
   {
     // Consume while whitespace and not EOF is hit
@@ -122,7 +129,7 @@ namespace clt::lng
   {
     auto snap = lexer.startLexeme();
 
-    ConsumeTillWhitespaces(lexer);
+    ConsumeTillSpaceOrPunct(lexer);
     lexer.addToken(Lexeme::TKN_ERROR, snap);
 
     // TODO: add error number
@@ -413,7 +420,7 @@ namespace clt::lng
         break; case 'o':
           range_str = "Integral literals starting with '0o' should be followed by characters in range [0-7]!";
         }
-        ConsumeTillWhitespaces(lexer);
+        ConsumeTillSpaceOrPunct(lexer);
         lexer.reporter.error(range_str, lexer.makeSource(snap));
         return lexer.addToken(Lexeme::TKN_ERROR, snap);
       }

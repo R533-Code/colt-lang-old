@@ -29,6 +29,10 @@ namespace clt::lng
 	/// @brief Consumes all characters till a whitespace is hit
 	/// @param lexer The lexer used for parsing
 	void ConsumeTillWhitespaces(Lexer& lexer) noexcept;
+	
+	/// @brief Consumes all characters till a whitespace or a punctuation is hit
+	/// @param lexer The lexer used for parsing
+	void ConsumeTillSpaceOrPunct(Lexer& lexer) noexcept;
 
 	/// @brief Consumes all whitespaces till a non-whitespace is hit
 	/// @param lexer The lexer used for parsing
