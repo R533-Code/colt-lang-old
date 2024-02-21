@@ -129,6 +129,7 @@ namespace clt::lng
   {
     auto snap = lexer.startLexeme();
 
+    lexer.next = lexer.getNext();
     ConsumeTillSpaceOrPunct(lexer);
     lexer.addToken(Lexeme::TKN_ERROR, snap);
 
@@ -370,11 +371,6 @@ namespace clt::lng
     }
     else
       lexer.addToken(Lexeme::TKN_CARET, snap);
-  }  
-
-  void parse_integer(Lexer& lexer, const Lexer::Snapshot& snap) noexcept
-  {
-
   }
 
   void ParseDigit(Lexer& lexer) noexcept
@@ -386,7 +382,7 @@ namespace clt::lng
     if (lexer.next == '0') //Could be 0x, 0b, 0o
     {
       lexer.next = lexer.getNext();
-      char symbol = lexer.next;      
+      char symbol = lexer.next;
       int base = 10;
       switch (clt::tolower(symbol))
       {
@@ -401,7 +397,7 @@ namespace clt::lng
         if (clt::isdigit(symbol) || symbol == '.')
           goto NORM;
         else //If not digit nor '.', then simply '0'
-          return parse_integer(lexer, snap);
+          return HandleIntWithExtension(lexer, snap);
       }
       lexer.next = lexer.getNext(); //Consume symbol
       //Pop the leading '0'
@@ -426,6 +422,7 @@ namespace clt::lng
       }
       return HandleIntWithExtension<true>(lexer, snap, base);
     }
+    lexer.next = lexer.getNext();
   NORM:
     //Parse as many digits as possible
     ConsumeDigits(lexer);
@@ -434,29 +431,29 @@ namespace clt::lng
     // [0-9]+ followed by a .[0-9] is a float
     if (lexer.next == '.')
     {
+      //Snapshot for '.' character
+      auto snap_dot = lexer.startLexeme();
+
       lexer.next = lexer.getNext();
       if (clt::isdigit(lexer.next))
       {
         isfloat = true;
         lexer.temp.push_back('.');
         lexer.temp.push_back(lexer.next);
+        lexer.next = lexer.getNext();
 
         //Parse as many digits as possible
         ConsumeDigits(lexer);
       }
       else
       {
-        //We parse the integer first, so the informations of
-        // snap are still valid.
-        HandleIntWithExtension(lexer, snap);
-        
-        //We directly consume the dot and add its Token to the buffer
-        auto snap_dot = lexer.startLexeme();
+        //We parse the integer
+        parse_integral<i64, LiteralFromType<i64>()>(lexer, snap);
+                
         //The dot is not followed by a digit, this is not a float,
         //but rather should be a dot followed by an identifier for a function call
         lexer.next = lexer.getNext();
-        lexer.addToken(Lexeme::TKN_DOT, snap_dot);
-        return;
+        return lexer.addToken(Lexeme::TKN_DOT, snap_dot);
       }
     }
 
@@ -498,7 +495,22 @@ namespace clt::lng
 
   void ParseIdentifier(Lexer& lexer) noexcept
   {
+    auto snap = lexer.startLexeme();
 
+    // Consume till a whitespace or EOF is hit
+    while (clt::isalnum(lexer.next) || lexer.next == '_')
+      lexer.next = lexer.getNext();
+    
+    StringView identifier = lexer.getCurrentIdentifier(snap);
+    if (identifier.starts_with("___"))
+    {
+      lexer.reporter.error(
+        "Identifiers starting with '___' are reserved for the compiler!",
+        lexer.makeSource(snap));
+      // TODO: add identifier but increment error count
+      return lexer.addToken(Lexeme::TKN_ERROR, snap);
+    }
+    lexer.addIdentifier(identifier, snap);
   }
 
   void ParseDot(Lexer& lexer) noexcept
@@ -540,6 +552,42 @@ namespace clt::lng
       }
     }
     HandleFloatWithExtension(lexer, snap);
+  }
+
+  void PrintToken(Token tkn, const TokenBuffer& buffer) noexcept
+  {
+    using enum Lexeme;
+    
+    if (isLiteralToken(tkn) && tkn != TKN_STRING_L)
+    {
+      switch_no_default(tkn.getLexeme())
+      {
+      case TKN_BOOL_L:
+        return io::print("{:h} {}", tkn.getLexeme(), buffer.getLiteral(tkn).as<bool>());
+      case TKN_CHAR_L:
+        return io::print("{:h} {}", tkn.getLexeme(), buffer.getLiteral(tkn).as<char>());      
+      case TKN_U8_L:
+      case TKN_U16_L:
+      case TKN_U32_L:
+      case TKN_U64_L:
+        return io::print("{:h} {}", tkn.getLexeme(), buffer.getLiteral(tkn).as<u64>());      
+      case TKN_I8_L:
+        return io::print("{:h} {}", tkn.getLexeme(), buffer.getLiteral(tkn).as<i8>());      
+      case TKN_I16_L:
+        return io::print("{:h} {}", tkn.getLexeme(), buffer.getLiteral(tkn).as<i16>());      
+      case TKN_I32_L:
+        return io::print("{:h} {}", tkn.getLexeme(), buffer.getLiteral(tkn).as<i32>());      
+      case TKN_I64_L:
+        return io::print("{:h} {}", tkn.getLexeme(), buffer.getLiteral(tkn).as<i64>());
+      case TKN_FLOAT_L:
+        return io::print("{:h} {}", tkn.getLexeme(), buffer.getLiteral(tkn).as<f32>());      
+      case TKN_DOUBLE_L:
+        return io::print("{:h} {}", tkn.getLexeme(), buffer.getLiteral(tkn).as<f64>());
+      }
+    }
+    else if (tkn == TKN_IDENTIFIER)
+      return io::print("{:h} {}", tkn.getLexeme(), buffer.getIdentifier(tkn));
+    return io::print("{:h}", tkn.getLexeme());
   }
   
   void HandleFloatWithExtension(Lexer& lexer, const Lexer::Snapshot& snap) noexcept
