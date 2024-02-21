@@ -13,7 +13,8 @@ file(GLOB_RECURSE ColtHeaders "src/*.h")
 file(GLOB_RECURSE ColtUnits "src/*.cpp")
 file(GLOB_RECURSE ColtGithubActions ".github/workflows/*.yml")
 # Save test files
-file(GLOB_RECURSE ColtTestsPath "resources/tests/*.ct")
+file(GLOB_RECURSE ColtTestsPath "resources/tests/ast/*.ct")
+file(GLOB_RECURSE ColtLexerTestsPath "resources/tests/lexer/*.ct")
 
 # Name of the compiler executable
 set(COLT_EXECUTABLE_NAME colt)
@@ -150,7 +151,7 @@ endif()
 set(COLT_ADDITIONAL_ARGS -C -nowait)
 
 # TESTING:
-# Each file in resources/tests/ that ends with .ct
+# Each file in resources/tests/ast that ends with .ct
 # is a file to try to run.
 # The first line of these files is a comment '//.*'
 # If the second line is a comment, it must be the expected error count
@@ -209,6 +210,24 @@ foreach(testPath ${ColtTestsPath})
   if (${ENUM_TESTS})
     message("Created test '${testName}' of REGEX [${RegexTest}].")
   endif()
+endforeach()
+
+# TESTING:
+# Each file in resources/tests/ast that ends with .ct
+# is a file to try to run.
+# The first line of these files is a comment '//.*'
+# If the second line is a comment, it must be the expected error count
+# of the compilation (a positive integer).
+# which gives the regex to test the output of interpreting
+# the file against.
+foreach(testPath ${ColtLexerTestsPath})  
+  # Get test name
+  get_filename_component(testName ${testPath} NAME_WE)
+  string(TOUPPER ${testName} testName)
+
+  # Create test
+  add_test(NAME "${testName}" COMMAND ${COLT_EXECUTABLE_NAME} ${COLT_ADDITIONAL_ARGS} -run-tests -test-lexer ${testPath})
+  set_property(TEST ${testName} PROPERTY TIMEOUT 10) # 10s
 endforeach()
 
 if (NOT ${testCount} EQUAL 0 AND ${ENUM_TESTS})
