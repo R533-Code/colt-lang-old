@@ -13,7 +13,7 @@ file(GLOB_RECURSE ColtHeaders "src/*.h")
 file(GLOB_RECURSE ColtUnits "src/*.cpp")
 file(GLOB_RECURSE ColtGithubActions ".github/workflows/*.yml")
 # Save test files
-file(GLOB_RECURSE ColtTestsPath "resources/tests/ast/*.ct")
+file(GLOB_RECURSE ColtASTTestsPath "resources/tests/ast/*.ct")
 file(GLOB_RECURSE ColtLexerTestsPath "resources/tests/lexer/*.ct")
 
 # Name of the compiler executable
@@ -22,13 +22,13 @@ set(COLT_EXECUTABLE_NAME colt)
 # Create the compiler executable
 if (WIN32)
   add_executable(${COLT_EXECUTABLE_NAME}
-    ${ColtHeaders} ${ColtUnits} ${ColtTestsPath}
+    ${ColtHeaders} ${ColtUnits} ${ColtASTTestsPath} ${ColtLexerTestsPath}
     "resources/icon/colt.rc"
     ${ColtGithubActions}
   )
 else()
   add_executable(${COLT_EXECUTABLE_NAME}
-    ${ColtHeaders} ${ColtUnits} ${ColtTestsPath}
+    ${ColtHeaders} ${ColtUnits} ${ColtASTTestsPath} ${ColtLexerTestsPath}
     ${ColtGithubActions}
   )
 endif()
@@ -129,19 +129,21 @@ target_include_directories(${COLT_EXECUTABLE_NAME} PUBLIC
 
 message(STATUS "Searching for tests...")
 # Load tests
-list(LENGTH ColtTestsPath testCount)
-message(STATUS "Found " ${testCount} " tests.")
+list(LENGTH ColtASTTestsPath testCountAST)
+list(LENGTH ColtLexerTestsPath testCountLexer)
+message(STATUS "Found " ${testCountAST} " AST tests and " ${testCountLexer} " Lexer tests.")
 
 # For VS, group tests
-source_group("Colt Tests" FILES ${ColtTestsPath})
+source_group("Colt AST Tests" FILES ${ColtASTTestsPath})
+source_group("Colt Lexer Tests" FILES ${ColtLexerTestsPath})
 source_group("Github Actions" FILES ${ColtGithubActions})
 
 # Testing for CTest
-# enable_testing()
+enable_testing()
 
 option(ENUM_TESTS "Enumerates tests to run" OFF)
 
-if (NOT ${testCount} EQUAL 0 AND ${ENUM_TESTS})
+if (NOT ${testCountAST} EQUAL 0 AND ${ENUM_TESTS})
   message(STATUS "Enumerating tests...")
 endif()
 
@@ -158,79 +160,74 @@ set(COLT_ADDITIONAL_ARGS -C -nowait)
 # of the compilation (a positive integer).
 # which gives the regex to test the output of interpreting
 # the file against.
-foreach(testPath ${ColtTestsPath})
-  # Read all the lines of the file
-  file(STRINGS ${testPath} testLines)
-  # Store the first line
-  list(GET testLines 0 firstLine)
-  
-  # Get test name
-  get_filename_component(testName ${testPath} NAME_WE)
-
-  if (NOT "${firstLine}" MATCHES "//.*")
-    message(SEND_ERROR "Test '${testName}.ct' should begin with a '//' followed by the Regex to check for!")
-  endif()
-
-  # Pop the 2 first characters which are //
-  string(REPLACE "//" "" RegexTest ${firstLine})
-  # Strip new lines from end of line
-  string(REGEX REPLACE "\n$" "" RegexTest "${RegexTest}")
-
-  if ("${RegexTest}" MATCHES "^`.*")
-    string(REGEX REPLACE "([][+.*()^;])" "\\\\\\1" RegexTest "${RegexTest}")
-    # Pop the first characters which is '`'
-    string(REPLACE "`" "" RegexTest ${RegexTest})
-  endif()
-
-  # Get folder before test name
-  get_filename_component(testFolder_temp "${testPath}/.." ABSOLUTE)
-  
-  # Get position of last '/'
-  string(FIND "${testFolder_temp}" "/" testFolderNameBegin REVERSE)
-  # Increment past '/'
-  MATH(EXPR testFolderNameBegin "${testFolderNameBegin}+1")
-  # Obtain the last directory name by striping the part before the last '/'
-  string(SUBSTRING "${testFolder_temp}" "${testFolderNameBegin}" "-1" testFolderName)
-  # Replace any spaces in the directory name by an '_'
-  string(REPLACE " " "_" testFolderName "${testFolderName}")
-  
-  string(TOUPPER ${testName} testName)
-  string(TOUPPER ${testFolderName} testFolderName)
-  # Example of name: resources/tests/syntax/binary.ct -> SYNTAX_BINARY
-  set(testName "${testFolderName}_${testName}")
-  #string(REPLACE " " "_" testName "${testName}")
-  string(REGEX REPLACE "([^a-zA-Z0-9_])" "_" testName "${testName}")
-  string(REGEX REPLACE "(_+)" "_" testName "${testName}")
-  string(REGEX REPLACE "_$" "" testName ${testName})
-
-  # Create test
-  add_test(NAME "${testName}" COMMAND ${COLT_EXECUTABLE_NAME} ${COLT_ADDITIONAL_ARGS} ${testPath})
-  set_property(TEST ${testName} PROPERTY PASS_REGULAR_EXPRESSION ${RegexTest})
-  set_property(TEST ${testName} PROPERTY TIMEOUT 5) # 5s
-  if (${ENUM_TESTS})
-    message("Created test '${testName}' of REGEX [${RegexTest}].")
-  endif()
-endforeach()
+# foreach(testPath ${ColtASTTestsPath})
+#   # Read all the lines of the file
+#   file(STRINGS ${testPath} testLines)
+#   # Store the first line
+#   list(GET testLines 0 firstLine)
+#   
+#   # Get test name
+#   get_filename_component(testName ${testPath} NAME_WE)
+# 
+#   if (NOT "${firstLine}" MATCHES "//.*")
+#     message(SEND_ERROR "Test '${testName}.ct' should begin with a '//' followed by the Regex to check for!")
+#   endif()
+# 
+#   # Pop the 2 first characters which are //
+#   string(REPLACE "//" "" RegexTest ${firstLine})
+#   # Strip new lines from end of line
+#   string(REGEX REPLACE "\n$" "" RegexTest "${RegexTest}")
+# 
+#   if ("${RegexTest}" MATCHES "^`.*")
+#     string(REGEX REPLACE "([][+.*()^;])" "\\\\\\1" RegexTest "${RegexTest}")
+#     # Pop the first characters which is '`'
+#     string(REPLACE "`" "" RegexTest ${RegexTest})
+#   endif()
+# 
+#   # Get folder before test name
+#   get_filename_component(testFolder_temp "${testPath}/.." ABSOLUTE)
+#   
+#   # Get position of last '/'
+#   string(FIND "${testFolder_temp}" "/" testFolderNameBegin REVERSE)
+#   # Increment past '/'
+#   MATH(EXPR testFolderNameBegin "${testFolderNameBegin}+1")
+#   # Obtain the last directory name by striping the part before the last '/'
+#   string(SUBSTRING "${testFolder_temp}" "${testFolderNameBegin}" "-1" testFolderName)
+#   # Replace any spaces in the directory name by an '_'
+#   string(REPLACE " " "_" testFolderName "${testFolderName}")
+#   
+#   string(TOUPPER ${testName} testName)
+#   string(TOUPPER ${testFolderName} testFolderName)
+#   # Example of name: resources/tests/syntax/binary.ct -> SYNTAX_BINARY
+#   set(testName "${testFolderName}_${testName}")
+#   #string(REPLACE " " "_" testName "${testName}")
+#   string(REGEX REPLACE "([^a-zA-Z0-9_])" "_" testName "${testName}")
+#   string(REGEX REPLACE "(_+)" "_" testName "${testName}")
+#   string(REGEX REPLACE "_$" "" testName ${testName})
+# 
+#   # Create test
+#   add_test(NAME "${testName}" COMMAND ${COLT_EXECUTABLE_NAME} ${COLT_ADDITIONAL_ARGS} ${testPath})
+#   set_property(TEST ${testName} PROPERTY PASS_REGULAR_EXPRESSION ${RegexTest})
+#   set_property(TEST ${testName} PROPERTY TIMEOUT 5) # 5s
+#   if (${ENUM_TESTS})
+#     message("Created test '${testName}' of REGEX [${RegexTest}].")
+#   endif()
+# endforeach()
 
 # TESTING:
-# Each file in resources/tests/ast that ends with .ct
-# is a file to try to run.
-# The first line of these files is a comment '//.*'
-# If the second line is a comment, it must be the expected error count
-# of the compilation (a positive integer).
-# which gives the regex to test the output of interpreting
-# the file against.
-foreach(testPath ${ColtLexerTestsPath})  
+foreach(testPath ${ColtLexerTestsPath})
+  message(${testPath})
   # Get test name
   get_filename_component(testName ${testPath} NAME_WE)
   string(TOUPPER ${testName} testName)
 
   # Create test
-  add_test(NAME "${testName}" COMMAND ${COLT_EXECUTABLE_NAME} ${COLT_ADDITIONAL_ARGS} -run-tests -test-lexer ${testPath})
+  add_test(NAME "${testName}" COMMAND ${COLT_EXECUTABLE_NAME} ${COLT_ADDITIONAL_ARGS} -run-tests "-test-lexer=${testPath}")
+  set_property(TEST ${testName} PROPERTY PASS_REGULAR_EXPRESSION "Tested [0-9]+ features with 0")
   set_property(TEST ${testName} PROPERTY TIMEOUT 10) # 10s
 endforeach()
 
-if (NOT ${testCount} EQUAL 0 AND ${ENUM_TESTS})
+if (NOT ${testCountAST} EQUAL 0 AND ${ENUM_TESTS})
   message(STATUS "Finished enumerating tests!")
 endif()
 
