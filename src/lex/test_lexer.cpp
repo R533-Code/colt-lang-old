@@ -52,6 +52,8 @@ namespace clt::test
           }
           expected_lexemes.push_back(*try_cnv);
         }
+        // add EOF
+        expected_lexemes.push_back(Lexeme::TKN_EOF);
       }
       else
       {
