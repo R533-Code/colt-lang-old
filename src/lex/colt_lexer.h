@@ -19,6 +19,20 @@ namespace clt::lng
 {
 	struct Lexer;
 
+	/// @brief Lexes 'to_parse'
+	/// @param reporter The reporter used to generate error/warnings/messages
+	/// @param to_parse The StringView to parse
+	/// @return A TokenBuffer containing parsed lexemes
+	TokenBuffer Lex(ErrorReporter& reporter, StringView to_parse) noexcept;
+
+	/// @brief Lexes 'to_parse'.
+	/// This does not clear 'buffer' first, use with caution!
+	/// @param buffer The TokenBuffer in which to store lexing result
+	/// @param reporter The reporter used to generate error/warnings/messages
+	/// @param to_parse The StringView to parse
+	/// @return A TokenBuffer containing parsed lexemes
+	void Lex(TokenBuffer& buffer, ErrorReporter& reporter, StringView to_parse) noexcept;
+
 	/**
 	* Functions starting with 'Consume' do not add any Token
 	* to the token buffer.
