@@ -206,20 +206,7 @@ namespace clt
   enum class StringEncoding
   {
     ASCII, UTF8, UTF32
-  };
-
-  /// @brief Strips chars from the beginning and end of a StringView
-  /// @param strv The StringView to strip
-  /// @param fn The filter function (pops the character if it returns true)
-  /// @return Stripped StringView
-  constexpr StringView strip(StringView strv, bool(*fn)(char) = &clt::isspace) noexcept
-  {
-    while (!strv.empty() && fn(strv.front()))
-      strv.remove_prefix(1);
-    while (!strv.empty() && fn(strv.back()))
-      strv.remove_suffix(1);
-    return strv;
-  }
+  };  
 
   /// @brief Represents the result of an insert/insert_or_assign operation
   enum class InsertionResult
