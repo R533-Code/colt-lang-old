@@ -10,6 +10,7 @@
 
 #include <string_view>
 #include "util/types.h"
+#include <ranges>
 
 namespace clt
 {
@@ -323,6 +324,32 @@ namespace clt
         return false;
 
     return true;
+  }
+
+  /// @brief Returns an iterator that splits a string using 'chr' as separator
+  /// @param strv The string to split
+  /// @param chr The separator
+  /// @return Split iterator
+  constexpr auto split_by_char(std::string_view strv, char chr) noexcept
+  {
+    return strv
+      | std::views::split(chr)
+      | std::views::transform([](auto&& r) -> std::string_view {
+      return { r.begin(), r.end() };
+        });
+  }
+
+  /// @brief Strips chars from the beginning and end of a StringView
+  /// @param strv The StringView to strip
+  /// @param fn The filter function (pops the character if it returns true)
+  /// @return Stripped StringView
+  constexpr StringView strip(StringView strv, bool(*fn)(char) = &clt::isspace) noexcept
+  {
+    while (!strv.empty() && fn(strv.front()))
+      strv.remove_prefix(1);
+    while (!strv.empty() && fn(strv.back()))
+      strv.remove_suffix(1);
+    return strv;
   }
 }
 
