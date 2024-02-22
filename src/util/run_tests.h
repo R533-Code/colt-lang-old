@@ -9,6 +9,7 @@
 #define HG_COLT_RUN_TESTS
 
 #include "io/print.h"
+#include "lex/test_lexer.h"
 
 namespace clt
 {
