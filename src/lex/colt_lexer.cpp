@@ -493,6 +493,9 @@ namespace clt::lng
       HandleIntWithExtension(lexer, snap);
   }
 
+  /// @brief Map from keyword string to lexeme
+  static constexpr auto KeywordMap = getKeywordMap();
+
   void ParseIdentifier(Lexer& lexer) noexcept
   {
     auto snap = lexer.startLexeme();
@@ -502,6 +505,10 @@ namespace clt::lng
       lexer.next = lexer.getNext();
     
     StringView identifier = lexer.getCurrentIdentifier(snap);
+    // This is a keyword
+    if (auto keyword_opt = KeywordMap.find(identifier); keyword_opt.is_value())
+      return lexer.addToken(*keyword_opt, snap);
+
     if (identifier.starts_with("___"))
     {
       lexer.reporter.error(
