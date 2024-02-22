@@ -271,7 +271,7 @@ namespace clt::lng
 
 		constexpr StringView getCurrentIdentifier(const Snapshot& snap) noexcept
 		{
-			return StringView{ buffer.lines[snap.line_nb].data() + snap.column, getOffset() };
+			return StringView{ buffer.lines[snap.line_nb].data() + snap.column, getOffset() - snap.column };
 		}
 
 		/// @brief Look ahead in the string to scan
