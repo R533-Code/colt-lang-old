@@ -8,6 +8,9 @@
 #ifndef HG_COLT_TEST_LEXER
 #define HG_COLT_TEST_LEXER
 
+#include "lex/colt_lexer.h"
+#include "err/composable_reporter.h"
+
 namespace clt::test
 {
   /// @brief Tests the lexer using a file.
