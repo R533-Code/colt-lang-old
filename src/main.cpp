@@ -11,6 +11,26 @@
 
 using namespace clt;
 
+void REPL()
+{
+  using namespace lng;
+  io::print_warn("REPL is not implemented...");
+
+  auto reporter = lng::make_error_reporter<lng::ConsoleReporter>();
+  while (true)
+  {
+    io::print<"">("Enter line to lex: ");
+    auto a = String::getLine(64, false);
+    if (a.is_error())
+      return;
+    const auto& str = *a;
+
+    TokenBuffer buffer = lng::Lex(*reporter, str);
+    for (auto tkn : buffer.getTokens())
+      lng::PrintToken(tkn, buffer);
+  }
+}
+
 int main(int argc, const char** argv)
 {
   mem::global_on_null([]() noexcept { io::print_fatal("Could not allocate memory!"); });
@@ -20,7 +40,7 @@ int main(int argc, const char** argv)
   clt::run_tests();
 
   if (InputFile.empty())
-    io::print_warn("REPL is not implemented...");
+    REPL();
   else
     io::print_warn("Transpilation is not implemented...");  
 
