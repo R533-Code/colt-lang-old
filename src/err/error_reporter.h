@@ -79,6 +79,10 @@ namespace clt::lng
   }  
 
   template<Reporter Rep, auto ALLOCATOR = mem::GlobalAllocatorDescription, typename... Args>
+  /// @brief Creates an error reporter from a composable error reporter
+  /// @tparam Rep The error reporter type
+  /// @param args The arguments to forward to the error reporter constructor
+  /// @return UniquePtr to the error reporter
   UniquePtr<ErrorReporter> make_error_reporter(Args&&... args) noexcept(std::is_nothrow_constructible_v<Rep, Args...>)
   {
     return make_unique<details::ToErrorReporter<Rep>>(std::forward<Args>(args)...);

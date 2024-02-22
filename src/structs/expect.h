@@ -38,7 +38,7 @@ namespace clt
   ///     return a / b;
   ///   return { Error, "Division by zero is prohibited!" };
   /// }
-  /// @endcde
+  /// @endcode
   /// @tparam ExpectedTy The expected type
   /// @tparam ErrorTy The error type
   class Expect

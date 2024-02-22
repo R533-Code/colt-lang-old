@@ -103,6 +103,9 @@ namespace clt::lng
 		}
 	}
 
+	/// @brief Prints a valid source code information
+	/// @param src_info The source information to print
+	/// @param color The highlight color
 	void handle_valid_src(const SourceInfo& src_info, io::Color color) noexcept
 	{
 		StringView begin_line = { src_info.lines.data(), src_info.expr.data() };
@@ -121,9 +124,9 @@ namespace clt::lng
 
 		size_t line_nb_size = fmt::formatted_size("{}", src_info.line_end);
 		if (src_info.is_single_line())
-			print_single_line(io::CyanF, src_info, begin_line, end_line, line_nb_size);
+			print_single_line(color, src_info, begin_line, end_line, line_nb_size);
 		else
-			print_multiple_lines(io::CyanF, src_info, begin_line, end_line, line_nb_size);
+			print_multiple_lines(color, src_info, begin_line, end_line, line_nb_size);
 	}
 
   void generate_message(StringView fmt, const Option<SourceInfo>& src, const Option<ReportNumber>& nb) noexcept

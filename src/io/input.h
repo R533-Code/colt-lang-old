@@ -31,6 +31,11 @@ namespace clt::io
   }
 
   template<typename... Args>
+  /// @brief Extracts a line from an opened file
+  /// @param file The opened file from which to read
+  /// @param fmt The format of the message to write
+  /// @param args The arguments to format to the message
+  /// @return The line or the encountered error
   inline Expect<String, ParsingResult> getline(std::FILE* file, fmt_str<Args...> fmt, Args&&... args) noexcept
   {
     //Print the message...
@@ -43,12 +48,22 @@ namespace clt::io
   }
 
   template<typename... Args>
+  /// @brief Extracts a line from 'stdin'
+  /// @param fmt The format of the message to write
+  /// @param args The arguments to format to the message
+  /// @return The line or the encountered error
   inline Expect<String, ParsingResult> getline(fmt_str<Args...> fmt, Args&&... args) noexcept
   {
     return getline(stdin, fmt, std::forward<Args>(args)...);
   }
 
   template<typename T = String, typename... Args> requires meta::Parsable<T>
+  /// @brief Scans a line from an opened file, converting it to 'T'
+  /// @tparam T The type to convert to
+  /// @param file The opened file from which to read
+  /// @param fmt The format of the message to write
+  /// @param args The arguments to format to the message
+  /// @return The parsed object or the encountered error
   inline Expect<T, ParsingResult> input(std::FILE* file, fmt_str<Args...> fmt, Args&&... args) noexcept
   {
     //Print the message...
@@ -71,6 +86,11 @@ namespace clt::io
   }
 
   template<typename T = String, meta::StringLiteral endl = "", typename... Args>
+  /// @brief Scans a line from 'stdin', converting it to 'T'
+  /// @tparam T The type to convert to
+  /// @param fmt The format of the message to write
+  /// @param args The arguments to format to the message
+  /// @return The parsed object or the encountered error
   inline Expect<T, ParsingResult> input(fmt_str<Args...> fmt, Args&&... args) noexcept
   {
     return input<T>(stdin, fmt, std::forward<Args>(args)...);

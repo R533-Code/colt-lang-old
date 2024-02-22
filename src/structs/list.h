@@ -14,6 +14,7 @@ namespace clt
 {
   template<typename T, size_t PER_NODE = 16, auto ALLOCATOR = mem::GlobalAllocatorDescription>
     requires meta::AllocatorScope<ALLOCATOR>
+  /// @brief A linked list with multiple elements in each nodes
   class FlatList
   {
     /// @brief Doubly linked Node

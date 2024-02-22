@@ -244,7 +244,7 @@ namespace clt
     return CHAR_INFO_TABLE[static_cast<u8>(chr)] & CharInfo::ISUPPER;
   }
 
-  /// @brief Checks if the given character is any of !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~.
+  /// @brief Checks if the given character is any of !\"\#\$\%\&'()*+,-\./:;\<\=\>?\@[\\]^_`\{\|\}\~.
   /// Locale independent.
   /// @param chr The character to check
   /// @return True if the character is a punctuation character

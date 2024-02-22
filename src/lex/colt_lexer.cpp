@@ -448,7 +448,7 @@ namespace clt::lng
       else
       {
         //We parse the integer
-        parse_integral<i64, LiteralFromType<i64>()>(lexer, snap);
+        parse_integral<i64>(lexer, snap);
                 
         //The dot is not followed by a digit, this is not a float,
         //but rather should be a dot followed by an identifier for a function call
@@ -602,10 +602,10 @@ namespace clt::lng
     if (lexer.next == 'f')
     {
       lexer.next = lexer.getNext();
-      return parse_floating<f32, Lexeme::TKN_FLOAT_L>(lexer, snap);
+      return parse_floating<f32>(lexer, snap);
     }
     if (lexer.next == 'd')
       lexer.next = lexer.getNext();
-    parse_floating<f64, Lexeme::TKN_DOUBLE_L>(lexer, snap);
+    parse_floating<f64>(lexer, snap);
   }  
 }

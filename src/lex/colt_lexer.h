@@ -150,6 +150,9 @@ namespace clt::lng
 	/// @param lexer The lexer used for parsing
 	void ParseDot(Lexer& lexer) noexcept;
 
+	/// @brief Prints a token (used for debugging purposes)
+	/// @param tkn The token to print
+	/// @param buffer The token buffer (owns 'tkn')
 	void PrintToken(Token tkn, const TokenBuffer& buffer) noexcept;	
 
 	template<typename T>
@@ -164,6 +167,9 @@ namespace clt::lng
 	/// @brief Table containing lexing functions used for dispatch
 	struct LexerDispatchTable: public std::array<LexerDispatch_t, 256>{};
 
+	/// @brief Creates the table of lexing functions.
+	/// The next character to parse is the index into the table.
+	/// @return The table of lexing functions
 	consteval LexerDispatchTable GenLexerDispatchTable() noexcept
 	{
 		LexerDispatchTable table{};
@@ -338,15 +344,36 @@ namespace clt::lng
 		}
 	};
 
+	/// @brief Handles the floating point contained in 'lexer.temp', consuming
+	/// 'f' or 'd' extension if necessary.
+	/// @param lexer The lexer used for parsing
+	/// @param snap The source code informations of the floating point
 	void HandleFloatWithExtension(Lexer& lexer, const Lexer::Snapshot& snap) noexcept;
 	
 	template<bool UnsignedOnly = false>
+	/// @brief Handles the integer contained in 'lexer.temp', consuming
+	/// [ui](8|16|32|64) extension if necessary.
+	/// @tparam UnsignedOnly True if only unsigned extensions are allowed
+	/// @param lexer The lexer used for parsing
+	/// @param snap The source code informations of the integer
+	/// @param base The base of the integer to parse
 	void HandleIntWithExtension(Lexer& lexer, const Lexer::Snapshot& snap, int base = 10) noexcept;
 
-	template<meta::FloatingPoint T, Lexeme lex>
+	template<typename T>
+	constexpr Lexeme LiteralFromType() noexcept;
+
+	template<meta::FloatingPoint T>
+	/// @brief Converts the floating point in 'lexer.temp' and reports errors.
+	/// @tparam T The floating point type to parse (f32 or f64)
+	/// @param lexer The lexer used for parsing
+	/// @param snap The source code informations of the integer
 	void parse_floating(Lexer& lexer, const Lexer::Snapshot& snap) noexcept;
 	
-	template<meta::Integral T, Lexeme lex>
+	template<meta::Integral T>
+	/// @brief Converts the integer in 'lexer.temp' and reports errors.
+	/// @tparam T The integer type to parse
+	/// @param lexer The lexer used for parsing
+	/// @param snap The source code informations of the integer
 	void parse_integral(Lexer& lexer, const Lexer::Snapshot& snap, int base = 10) noexcept;
 
 	/**
@@ -361,13 +388,13 @@ namespace clt::lng
 		lexer.addToken(lexeme, snap);
 	}	
 
-	template<meta::FloatingPoint T, Lexeme lex>
+	template<meta::FloatingPoint T>
 	void parse_floating(Lexer& lexer, const Lexer::Snapshot& snap) noexcept
 	{
 		T value;
 		auto result = clt::parse(lexer.temp, value);
 		if (result.code() == ParsingCode::GOOD)
-			return lexer.addLiteral(lex, value, snap);
+			return lexer.addLiteral(LiteralFromType<T>(), value, snap);
 
 		lexer.addToken(Lexeme::TKN_ERROR, snap);
 		lexer.reporter.error(
@@ -376,13 +403,13 @@ namespace clt::lng
 		);
 	}
 
-	template<meta::Integral T, Lexeme lex>
+	template<meta::Integral T>
 	void parse_integral(Lexer& lexer, const Lexer::Snapshot& snap, int base) noexcept
 	{
 		T value = 0;
 		auto [ptr, err] = std::from_chars(lexer.temp.begin(), lexer.temp.end(), value, base);
 		if (ptr == lexer.temp.end() && err == std::errc{})
-			return lexer.addLiteral(lex, value, snap);
+			return lexer.addLiteral(LiteralFromType<T>(), value, snap);
 
 		lexer.addToken(Lexeme::TKN_ERROR, snap);
 		lexer.reporter.error(
@@ -397,23 +424,23 @@ namespace clt::lng
 		void handle_1nb_int_extension(Lexer& lexer, const Lexer::Snapshot& snap, int base) noexcept
 		{
 			if (clt::isdigit(lexer.peekNext(1)))
-				return parse_integral<dtype, LiteralFromType<dtype>()>(lexer, snap, base);
+				return parse_integral<dtype>(lexer, snap, base);
 			// consume [iu]8
 			lexer.getNext();
 			lexer.next = lexer.getNext();
-			return parse_integral<found, LiteralFromType<found>()>(lexer, snap, base);
+			return parse_integral<found>(lexer, snap, base);
 		}
 
 		template<typename dtype, typename found>
 		void handle_2nb_int_extension(char chr, Lexer& lexer, const Lexer::Snapshot& snap, int base) noexcept
 		{
 			if (lexer.peekNext(1) != chr || clt::isdigit(lexer.peekNext(2)))
-				return parse_integral<dtype, LiteralFromType<dtype>()>(lexer, snap, base);
+				return parse_integral<dtype>(lexer, snap, base);
 			// consume [iu](16|32|64)
 			lexer.getNext();
 			lexer.getNext();
 			lexer.next = lexer.getNext();
-			return parse_integral<found, LiteralFromType<found>()>(lexer, snap, base);
+			return parse_integral<found>(lexer, snap, base);
 		}
 	}
 
@@ -453,7 +480,7 @@ namespace clt::lng
 			break;
 		}
 		default:
-			return parse_integral<dtype, LiteralFromType<dtype>()>(lexer, snap, base);
+			return parse_integral<dtype>(lexer, snap, base);
 		}
 	}
 
