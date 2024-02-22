@@ -166,60 +166,63 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, Lexeme,
 	/********* END OF LITERAL TOKENS *******/
 
 	/********* LOOPS AND CONDITIONALS *******/
+	// DO NOT ADD ANY KEYWORD BEFORE TKN_KEYWORD_IF
+	// ALL KEYWORDS MUST START WITH TKN_KEYWORD_ FOLLOWED BY
+	// THE ACTUAL KEYWORD
 
 	/// @brief if
-	TKN_KEYWORD_IF,
+	TKN_KEYWORD_if,
 	/// @brief elif
-	TKN_KEYWORD_ELIF,
+	TKN_KEYWORD_elif,
 	/// @brief else
-	TKN_KEYWORD_ELSE,
+	TKN_KEYWORD_else,
 
 	/// @brief for
-	TKN_KEYWORD_FOR,
+	TKN_KEYWORD_for,
 	/// @brief while
-	TKN_KEYWORD_WHILE,
+	TKN_KEYWORD_while,
 	/// @brief break
-	TKN_KEYWORD_BREAK,
+	TKN_KEYWORD_break,
 	/// @brief continue
-	TKN_KEYWORD_CONTINUE,
+	TKN_KEYWORD_continue,
 
 	/********* VARIABLE DECLARATIONS *******/
 
 	/// @brief var
-	TKN_KEYWORD_VAR,
+	TKN_KEYWORD_var,
 	/// @brief mut
-	TKN_KEYWORD_MUT,
+	TKN_KEYWORD_mut,
 	/// @brief global
 	TKN_KEYWORD_GLOBAL,
 
 	/********* BEGINNING OF BUILTIN TYPES *******/
 
 	/// @brief void
-	TKN_KEYWORD_VOID,
+	TKN_KEYWORD_void,
 	/// @brief bool
-	TKN_KEYWORD_BOOL,
+	TKN_KEYWORD_bool,
 	/// @brief char
-	TKN_KEYWORD_CHAR,
+	TKN_KEYWORD_char,
 	/// @brief u8
-	TKN_KEYWORD_U8,
+	TKN_KEYWORD_u8,
 	/// @brief u16
-	TKN_KEYWORD_U16,
+	TKN_KEYWORD_u16,
 	/// @brief u32
-	TKN_KEYWORD_U32,
+	TKN_KEYWORD_u32,
 	/// @brief u64
-	TKN_KEYWORD_U64,
+	TKN_KEYWORD_u64,
 	/// @brief i8
-	TKN_KEYWORD_I8,
+	TKN_KEYWORD_i8,
 	/// @brief i16
-	TKN_KEYWORD_I16,
+	TKN_KEYWORD_i16,
 	/// @brief i32
-	TKN_KEYWORD_I32,
+	TKN_KEYWORD_i32,
 	/// @brief i64
-	TKN_KEYWORD_I64,
+	TKN_KEYWORD_i64,
 	/// @brief f32
-	TKN_KEYWORD_FLOAT,
+	TKN_KEYWORD_f32,
 	/// @brief f64
-	TKN_KEYWORD_DOUBLE,
+	TKN_KEYWORD_f64,
 	/// @brief BYTE
 	TKN_KEYWORD_BYTE,
 	/// @brief WORD
@@ -229,67 +232,68 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, Lexeme,
 	/// @brief QWORD
 	TKN_KEYWORD_QWORD,
 	/// @brief ptr
-	TKN_KEYWORD_PTR,
+	TKN_KEYWORD_ptr,
 	/// @brief mut_ptr
-	TKN_KEYWORD_MUT_PTR,
+	TKN_KEYWORD_mut_ptr,
 	/// @brief opaque
-	TKN_KEYWORD_OPAQUE,
+	TKN_KEYWORD_opaque,
 
 	/********* END OF BUILTIN TYPES *******/
 
 	/// @brief fn
-	TKN_KEYWORD_FN,
+	TKN_KEYWORD_fn,
 	/// @brief return
-	TKN_KEYWORD_RETURN,
+	TKN_KEYWORD_return,
 	/// @brief extern
-	TKN_KEYWORD_EXTERN,
+	TKN_KEYWORD_extern,
 	/// @brief const
-	TKN_KEYWORD_CONST,
+	TKN_KEYWORD_const,
 	/// @brief In parameter
-	TKN_KEYWORD_IN,
+	TKN_KEYWORD_in,
 	/// @brief Out parameter
-	TKN_KEYWORD_OUT,
+	TKN_KEYWORD_out,
 	/// @brief Inout parameter
-	TKN_KEYWORD_INOUT,
+	TKN_KEYWORD_inout,
 	/// @brief Move parameter
-	TKN_KEYWORD_MOVE,
+	TKN_KEYWORD_move,
 	/// @brief Copy parameter
-	TKN_KEYWORD_COPY,
+	TKN_KEYWORD_copy,
 
 	/// @brief typeof
-	TKN_KEYWORD_TYPEOF,
+	TKN_KEYWORD_typeof,
 
 	/// @brief sizeof
-	TKN_KEYWORD_SIZEOF,
+	TKN_KEYWORD_sizeof,
 	/// @brief alignof
-	TKN_KEYWORD_ALIGNOF,
+	TKN_KEYWORD_alignof,
 	/// @brief alignas
-	TKN_KEYWORD_ALIGNAS,
+	TKN_KEYWORD_alignas,
 
 	/// @brief as
-	TKN_KEYWORD_AS,
+	TKN_KEYWORD_as,
 	/// @brief bit_as
-	TKN_KEYWORD_BIT_AS,
+	TKN_KEYWORD_bit_as,
 	/// @brief using
-	TKN_KEYWORD_USING,
+	TKN_KEYWORD_using,
 	/// @brief public
-	TKN_KEYWORD_PUBLIC,
+	TKN_KEYWORD_public,
 	/// @brief private
-	TKN_KEYWORD_PRIVATE,
-	/// @brief namespace
-	TKN_KEYWORD_MODULE,
+	TKN_KEYWORD_private,
+	/// @brief module
+	TKN_KEYWORD_module,
 
 	/// @brief switch
-	TKN_KEYWORD_SWITCH,
+	TKN_KEYWORD_switch,
 	/// @brief case
-	TKN_KEYWORD_CASE,
+	TKN_KEYWORD_case,
 	/// @brief default
-	TKN_KEYWORD_DEFAULT,
+	TKN_KEYWORD_default,
 
 	/// @brief goto
-	TKN_KEYWORD_GOTO,
+	TKN_KEYWORD_goto,
 
 	/********* ADD NEW KEYWORDS BEGINNING HERE *******/
+	// Do not forget to add them to the table of keywords in getKeywordTable
 
 
 	/// @brief any identifier
@@ -301,7 +305,7 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, Lexeme,
 		);
 
 namespace clt::lng
-{
+{	
 	/// @brief Check if a Lexeme represents any assignment Lexeme (=, +=, ...)
 	/// @param tkn The token to check for
 	/// @return True if the Lexeme is an assignment Lexeme
@@ -376,7 +380,42 @@ namespace clt::lng
 	/// @return True if any TKN_KEYWORD_* that represents a type (PTR is not a type)
 	constexpr bool isBuiltinToken(Lexeme tkn) noexcept
 	{
-		return Lexeme::TKN_KEYWORD_VOID <= tkn && tkn <= Lexeme::TKN_KEYWORD_QWORD;
+		return Lexeme::TKN_KEYWORD_void <= tkn && tkn <= Lexeme::TKN_KEYWORD_QWORD;
+	}
+
+	/// @brief Returns the keywords count (in Lexeme).
+	/// This function counts the number of lexeme declared
+	/// as TKN_KEYWORD_* in code.
+	/// @return The number of keywords in Lexeme
+	consteval u8 getKeywordCount() noexcept
+	{
+		u8 count = 0;
+		for (auto i : reflect<Lexeme>::iter())
+			if (reflect<Lexeme>::to_str(i).starts_with("TKN_KEYWORD_"))
+				count++;
+		return count;
+	}
+
+	/// @brief Returns a sorted map of the keywords string to
+	/// their corresponding lexeme.
+	/// @return Table from keyword string to lexeme
+	consteval auto getKeywordMap() noexcept
+	{
+		constexpr u8 count = getKeywordCount();
+		// Offset to the first keyword
+		constexpr u8 first_key_offset = static_cast<u8>(Lexeme::TKN_KEYWORD_if);
+		std::array<std::pair<std::string_view, Lexeme>, getKeywordCount()> array{};
+		for (size_t i = 0; i < count; i++)
+		{
+			Lexeme lex = static_cast<Lexeme>(first_key_offset + i);
+			std::string_view str = reflect<Lexeme>::to_str(lex);
+			assert_true("Invalid Lexeme: all keywords must be contiguous!", str.find("TKN_KEYWORD_") != str.npos);
+			// 12 for TKN_KEYWORD_
+			str.remove_prefix(12);
+			assert_true("Keyword size must at least be greater than 1!", str.size() > 1);
+			array[i] = std::pair{ str, lex };
+		}
+		return meta::ConstexprMap{ array };
 	}
 }
 
