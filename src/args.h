@@ -83,8 +83,8 @@ namespace clt
     cl::Opt< "run-tests", cl::desc<"Run unit tests on Debug configuration">,
       cl::callback<[] { clt::RunTests = true; }>>,
 
-    cl::Opt<"test-lexer", cl::desc<"Lexer test file name, only used if -run-tests was specified">,
-      cl::location<LexerTestFile>>
+    cl::Opt<"test-lexer", cl::desc<"Lexer test file name (if -run-tests)">,
+      cl::location<LexerTestFile>, cl::value_desc<"<file_path>">>
     >;
 }
 
