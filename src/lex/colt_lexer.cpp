@@ -427,7 +427,7 @@ namespace clt::lng
     //Parse as many digits as possible
     ConsumeDigits(lexer);
 
-    bool isfloat = false;
+    bool is_float = false;
     // [0-9]+ followed by a .[0-9] is a float
     if (lexer.next == '.')
     {
@@ -437,7 +437,7 @@ namespace clt::lng
       lexer.next = lexer.getNext();
       if (clt::isdigit(lexer.next))
       {
-        isfloat = true;
+        is_float = true;
         lexer.temp.push_back('.');
         lexer.temp.push_back(lexer.next);
         lexer.next = lexer.getNext();
@@ -464,14 +464,14 @@ namespace clt::lng
       char after_e = lexer.peekNext();
       if (clt::isdigit(after_e))
       {
-        isfloat = true;
+        is_float = true;
         lexer.next = lexer.getNext(); // consume 'e'
         lexer.temp.push_back('e');
         ConsumeDigits(lexer);
       }
       else if (after_e == '+' && clt::isdigit(lexer.peekNext(1)))
       {
-        isfloat = true;
+        is_float = true;
         lexer.getNext(); // consume 'e'
         lexer.next = lexer.getNext(); // consume '+'
         lexer.temp.push_back('e');
@@ -479,7 +479,7 @@ namespace clt::lng
       }
       else if (after_e == '-' && clt::isdigit(lexer.peekNext(1)))
       {
-        isfloat = true;
+        is_float = true;
         lexer.getNext(); // consume 'e'
         lexer.next = lexer.getNext(); // consume '-'
         lexer.temp.push_back("e-");
@@ -487,7 +487,7 @@ namespace clt::lng
       }
     }
 
-    if (isfloat)
+    if (is_float)
       HandleFloatWithExtension(lexer, snap);
     else
       HandleIntWithExtension(lexer, snap);
