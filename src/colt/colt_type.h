@@ -12,6 +12,7 @@
 #include "meta/meta_type_list.h"
 #include "colt_builtin_id.h"
 #include "util/hash.h"
+#include "colt_type_token.h"
 
 DECLARE_ENUM_WITH_TYPE(u8, clt::lng, TypeID,
   TYPE_ERROR, TYPE_BUILTIN, TYPE_VOID,
@@ -20,9 +21,6 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, TypeID,
 
 namespace clt::lng
 {
-  /// @brief Represent a type through its index
-  using TypeToken = u32;
-
   /// @brief Base class of all types
   class TypeBase
   {
@@ -38,7 +36,9 @@ namespace clt::lng
       : type_id(id) {}
     // Move constructible and move assignable
     constexpr TypeBase(TypeBase&&) noexcept = default;
+    constexpr TypeBase(const TypeBase&) noexcept = default;
     constexpr TypeBase& operator=(TypeBase&&) noexcept = default;
+    constexpr TypeBase& operator=(const TypeBase&) noexcept = default;
 
     /// @brief Returns the ID of the type (used for down-casts)
     /// @return The TypeID of the current type
@@ -64,7 +64,9 @@ namespace clt::lng
                           public: \
                             constexpr name() noexcept : TypeBase(TypeToTypeID<name>()) {} \
                             constexpr name(name&&) noexcept = default; \
+                            constexpr name(const name&) noexcept = default; \
                             constexpr name& operator=(name&&) noexcept = default; \
+                            constexpr name& operator=(const name&) noexcept = default; \
                             constexpr bool operator==(const name&) const { return true; } \
                             constexpr size_t getHash() const noexcept { return hash_value(static_cast<u8>(classof())); } \
                           }
@@ -103,6 +105,8 @@ namespace clt::lng
     // Move constructible and move assignable
     constexpr BuiltinType(BuiltinType&&) noexcept = default;
     constexpr BuiltinType& operator=(BuiltinType&&) noexcept = default;
+    constexpr BuiltinType(const BuiltinType&) noexcept = default;
+    constexpr BuiltinType& operator=(const BuiltinType&) noexcept = default;
 
     /// @brief Check if two built-in types represent the same types
     /// @param b The other built-in type
@@ -141,6 +145,8 @@ namespace clt::lng
     // Move constructible and move assignable
     constexpr PtrType(PtrType&&) noexcept = default;
     constexpr PtrType& operator=(PtrType&&) noexcept = default;
+    constexpr PtrType(const PtrType&) noexcept = default;
+    constexpr PtrType& operator=(const PtrType&) noexcept = default;
 
     /// @brief Check if two ptr types represent the same type
     /// @param b The other pointer type
@@ -157,7 +163,7 @@ namespace clt::lng
     {
       size_t seed = 0;
       seed = hash_combine(seed, hash_value(static_cast<u8>(classof())));
-      seed = hash_combine(seed, hash_value(static_cast<u32>(getPointingTo())));
+      seed = hash_combine(seed, hash_value(getPointingTo().getID()));
       return seed;
     }
   };
@@ -179,6 +185,8 @@ namespace clt::lng
     // Move constructible and move assignable
     constexpr MutPtrType(MutPtrType&&) noexcept = default;
     constexpr MutPtrType& operator=(MutPtrType&&) noexcept = default;
+    constexpr MutPtrType(const MutPtrType&) noexcept = default;
+    constexpr MutPtrType& operator=(const MutPtrType&) noexcept = default;
 
     /// @brief Check if two ptr types represent the same type
     /// @param b The other pointer type
@@ -195,7 +203,7 @@ namespace clt::lng
     {
       size_t seed = 0;
       seed = hash_combine(seed, hash_value(static_cast<u8>(classof())));
-      seed = hash_combine(seed, hash_value(static_cast<u32>(getPointingTo())));
+      seed = hash_combine(seed, hash_value(getPointingTo().getID()));
       return seed;
     }
   };
@@ -311,6 +319,11 @@ namespace clt::lng
     {
       new(variant) Type(std::forward<Args>(args)...);
     }
+
+    constexpr TypeVariant(TypeVariant&&) noexcept = default;
+    constexpr TypeVariant(const TypeVariant&) noexcept = default;
+    constexpr TypeVariant& operator=(TypeVariant&&) noexcept = default;
+    constexpr TypeVariant& operator=(const TypeVariant&) noexcept = default;
 
     /// @brief Returns the type ID of the current type
     /// @return The ID of the current type
