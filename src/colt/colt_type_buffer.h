@@ -3,6 +3,7 @@
 
 #include "colt_type.h"
 #include "structs/map.h"
+#include "colt_type_token.h"
 
 namespace clt::lng
 {
@@ -12,7 +13,6 @@ namespace clt::lng
     Vector<const TypeVariant*> type_vec{};
 
 #ifdef COLT_DEBUG
-    /// @brief 
     static std::atomic<u32> ID_GENERATOR;
 
     u32 buffer_id;
@@ -29,10 +29,11 @@ namespace clt::lng
 
     constexpr TypeToken getNext() const noexcept
     {
+      // TODO: check for overflow
 #ifdef COLT_DEBUG
-      return TypeToken(type_map.size(), buffer_id);
+      return TypeToken(static_cast<u32>(type_map.size()), buffer_id);
 #else
-      return TypeToken(type_map.size());
+      return TypeToken(static_cast<u32>(type_map.size()));
 #endif // COLT_DEBUG
     }
 
@@ -49,12 +50,12 @@ namespace clt::lng
     /// @brief Saves a type and return its index number
     /// @param variant The type to save
     /// @return The TypeToken representing the type
-    TypeToken addType(TypeVariant&& variant) noexcept
+    TypeToken addType(const TypeVariant& variant) noexcept
     {
-      auto pair = type_map.insert(std::move(variant), getNext());
-      if (pair.second == InsertionResult::SUCCESS)
-        type_vec.push_back(&pair.first->first);
-      return pair.first->second;
+      auto [pair, insert] = type_map.insert(variant, getNext());
+      if (insert == InsertionResult::SUCCESS)
+        type_vec.push_back(&pair->first);
+      return pair->second;
     }
 
     const TypeVariant& getType(TypeToken tkn) const noexcept
