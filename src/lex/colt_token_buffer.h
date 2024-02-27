@@ -130,7 +130,7 @@ namespace clt::lng
       if constexpr (isDebugBuild())
         assert_true("Token is not owned by this TokenBuffer!", tkn.buffer_id == buffer_id);
 #endif // COLT_DEBUG
-    }    
+    }
 
     // Friend declaration to use addToken
     friend struct Lexer;
