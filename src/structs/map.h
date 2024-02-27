@@ -340,7 +340,7 @@ namespace clt
     /// @param key The key of the value 'value'
     /// @param value The value to insert or assign
     /// @return Pair of pointer to the inserted/assigned slot, and SUCESS on insertion or ASSIGN on assignment
-    constexpr std::pair<Slot*, InsertionResult> insert_or_assign(meta::copy_trivial_t<const Key&> key, meta::copy_trivial_t<const Value&> value)
+    constexpr std::pair<Slot*, InsertionResult> insert_or_assign(const Key& key, const Value& value)
       noexcept(std::is_nothrow_destructible_v<Key>
         && std::is_nothrow_destructible_v<Value>
         && std::is_nothrow_move_constructible_v<Key>
