@@ -11,6 +11,7 @@
 #include "util/types.h"
 #include "meta/meta_type_list.h"
 #include "colt_builtin_id.h"
+#include "util/hash.h"
 
 DECLARE_ENUM_WITH_TYPE(u8, clt::lng, TypeID,
   TYPE_ERROR, TYPE_BUILTIN, TYPE_VOID,
@@ -49,6 +50,7 @@ namespace clt::lng
   concept ColtType = std::equality_comparable<T> && std::convertible_to<TypeBase, T> && requires (T a)
   {
     { a.classof() } -> std::same_as<TypeID>;
+    { a.getHash() } -> std::same_as<size_t>;
   };
 
   template<typename T>
@@ -57,13 +59,14 @@ namespace clt::lng
   constexpr TypeID TypeToTypeID() noexcept;  
 
   // Create a type that is default constructible, movable and move assignable
-#define CREATE_TYPE(name) class name final : public TypeBase\
+#define CREATE_TYPE(name) class name final : public TypeBase \
                           { \
                           public: \
                             constexpr name() noexcept : TypeBase(TypeToTypeID<name>()) {} \
                             constexpr name(name&&) noexcept = default; \
                             constexpr name& operator=(name&&) noexcept = default; \
                             constexpr bool operator==(const name&) const { return true; } \
+                            constexpr size_t getHash() const noexcept { return hash_value(static_cast<u8>(classof())); } \
                           }
 
   // Create the empty types.
@@ -109,6 +112,16 @@ namespace clt::lng
     /// @brief Returns the built-in type ID
     /// @return The built-in type ID
     constexpr BuiltinID typeID() const noexcept { return type_id; }
+
+    /// @brief Hashes the current type
+    /// @return The hash of the current type
+    constexpr size_t getHash() const noexcept
+    {
+      size_t seed = 0;
+      seed = hash_combine(seed, hash_value(static_cast<u8>(classof())));
+      seed = hash_combine(seed, hash_value(static_cast<u8>(typeID())));
+      return seed;
+    }
   };
 
   /// @brief Represents a pointer to constant memory of a type
@@ -137,6 +150,16 @@ namespace clt::lng
     /// @brief Returns the type pointed to
     /// @return The type pointed to
     constexpr TypeToken getPointingTo() const noexcept { return type_id; }
+    
+    /// @brief Hashes the current type
+    /// @return The hash of the current type
+    constexpr size_t getHash() const noexcept
+    {
+      size_t seed = 0;
+      seed = hash_combine(seed, hash_value(static_cast<u8>(classof())));
+      seed = hash_combine(seed, hash_value(static_cast<u32>(getPointingTo())));
+      return seed;
+    }
   };
   
   /// @brief Represents a pointer to mutable memory of a type
@@ -165,6 +188,16 @@ namespace clt::lng
     /// @brief Returns the type pointed to
     /// @return The type pointed to
     constexpr TypeToken getPointingTo() const noexcept { return type_id; }
+
+    /// @brief Hashes the current type
+    /// @return The hash of the current type
+    constexpr size_t getHash() const noexcept
+    {
+      size_t seed = 0;
+      seed = hash_combine(seed, hash_value(static_cast<u8>(classof())));
+      seed = hash_combine(seed, hash_value(static_cast<u32>(getPointingTo())));
+      return seed;
+    }
   };
 
   /// @brief Macro Type List (with same index as TypeID declaration!)
@@ -253,10 +286,22 @@ namespace clt::lng
     {
       return a.getUnionMember<T>() == b.getUnionMember<T>();
     }
+    
+    template<typename T>
+    /// @brief Hashes a variant if using their getHash() method
+    /// @param a The variant to hash
+    /// @return a.getUnionMember<T>().getHash()
+    static constexpr bool table_hash(const TypeVariant& a) noexcept
+    {
+      return a.getUnionMember<T>().getHash();
+    }
 
     // Generates a dispatch table for using table_operator_equal.
     // The generated dispatch table can be indexed by getTypeID().
     COLTC_TYPE_VARIANT_GEN_TABLE(OperatorEqualTable, table_operator_equal);
+    // Generates a dispatch table for using table_hash.
+    // The generated dispatch table can be indexed by getTypeID().
+    COLTC_TYPE_VARIANT_GEN_TABLE(HashTable, table_hash);
 
   public:
     template<ColtType Type, typename... Args>
@@ -336,6 +381,14 @@ namespace clt::lng
         return true;
       return *this == type;
     }
+
+    /// @brief Hashes the current type.
+    /// The hash of different type might be equal!
+    /// @return The hash of the current type
+    constexpr size_t getHash() const noexcept
+    {
+      return HashTable[static_cast<u8>(this->getTypeID())](*this);
+    }
   };
 
   template<ColtType T>
@@ -357,7 +410,19 @@ namespace clt::lng
       return TYPE_PTR;
     if constexpr (std::same_as<T, MutPtrType>)
       return TYPE_MUT_PTR;
-  }
+  }  
+}
+
+namespace clt
+{
+  template<>
+  struct hash<lng::TypeVariant>
+  {
+    constexpr size_t operator()(const lng::TypeVariant& var) noexcept
+    {
+      return var.getHash();
+    }
+  };
 }
 
 #endif //!HG_COLTC_TYPE
