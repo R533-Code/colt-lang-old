@@ -331,6 +331,40 @@ namespace clt
       else
         return { slots.ptr() + prob_index, InsertionResult::EXISTS };
     }
+    
+    /// @brief Inserts a new value if 'key' does not already exist.
+    /// Returns an InsertionResult SUCCESS (if the insertion was performed) or EXISTS (if the key already exists).
+    /// The returned pointer is to the newly inserted key/value on SUCCESS.
+    /// The returned pointer is to the existing key/value that matches 'key' on EXISTS.
+    /// The returned pointer is never null.
+    /// @param key The key of the value 'value'
+    /// @param value The value to insert
+    /// @return Pair of pointer to the inserted slot or the existent one, and SUCESS on insertion or EXISTS if the key already exists
+    constexpr std::pair<Slot*, InsertionResult> insert(const Key& key, Value&& value)
+      noexcept(std::is_nothrow_destructible_v<Key>
+        && std::is_nothrow_destructible_v<Value>
+        && std::is_nothrow_move_constructible_v<Key>
+        && std::is_nothrow_move_constructible_v<Value>
+        && std::is_nothrow_copy_constructible_v<Key>
+        && std::is_nothrow_copy_constructible_v<Value>)
+    {
+      if (will_reallocate())
+        realloc_map(capacity() + 16);
+
+      const size_t key_hash = hash_value(key);
+      size_t prob_index;
+      if (find_key(key_hash, key, prob_index, sentinel_metadata, slots))
+      {
+        new(slots.ptr() + prob_index) Slot(key, std::move(value));
+        //Set the slot to ACTIVE
+        sentinel_metadata[prob_index] = details::create_active_sentinel(key_hash);
+        //Update size
+        ++size_v;
+        return { slots.ptr() + prob_index, InsertionResult::SUCCESS };
+      }
+      else
+        return { slots.ptr() + prob_index, InsertionResult::EXISTS };
+    }
 
     /// @brief Insert a new value if 'key' does not already exist, else assigns 'value' to the existing value.
     /// Returns an InsertionResult SUCCESS (if the insertion was performed) or ASSIGNED (if the key already exists and was assigned).
