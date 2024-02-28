@@ -14,7 +14,6 @@ using namespace clt;
 
 void REPL()
 {
-  using namespace lng;
   io::print_warn("REPL is not implemented...");
 
   auto reporter = lng::make_error_reporter<lng::ConsoleReporter>();
@@ -26,7 +25,7 @@ void REPL()
       return;
     const auto& str = *a;
 
-    TokenBuffer buffer = lng::Lex(*reporter, str);
+    lng::TokenBuffer buffer = lng::Lex(*reporter, str);
     for (auto tkn : buffer.getTokens())
       lng::PrintToken(tkn, buffer);
   }
