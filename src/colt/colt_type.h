@@ -247,7 +247,7 @@ namespace clt::lng
   /// @brief Macro used inside of TypeVariant, see OperatorEqualTable
 #define COLTC_TYPE_VARIANT_GEN_TABLE(name, template_fn, GenName) \
   template<typename... Args> \
-  static consteval std::array<decltype(&template_fn<ErrorType>), ColtTypeList::size> GenName() noexcept \
+  static consteval std::array<decltype(&template_fn<VoidType>), ColtTypeList::size> GenName() noexcept \
   { \
     return std::array{ &template_fn<Args>... }; \
   } \
@@ -310,33 +310,31 @@ namespace clt::lng
       // We can cast away const
       auto& a = getUnionMember<T>();
       return const_cast<std::remove_const_t<decltype(a)>>(a);
-    }
+    }    
 
+    // Generates a dispatch table for using table_operator_equal.
+    // The generated dispatch table can be indexed by getTypeID().
+    
     template<typename T>
     /// @brief Compares two variants if using their operator=
     /// @param a The first variant
     /// @param b The second variant
     /// @return True if a.getUnionMember<T>() == b.getUnionMember<T>() evaluates to true
-    static constexpr bool table_operator_equal(const TypeVariant& a, const TypeVariant& b) noexcept
-    {
-      return a.getUnionMember<T>() == b.getUnionMember<T>();
-    }
+    static constexpr bool table_operator_equal(const TypeVariant& a, const TypeVariant& b) noexcept { return a.getUnionMember<T>() == b.getUnionMember<T>(); }
+    template<typename... Args>
+    static consteval std::array<decltype(&table_operator_equal<VoidType>), ColtTypeList::size> GenTableOperatorEqual() noexcept { return std::array{ &table_operator_equal<Args>... }; }
+    
+    static constexpr auto OperatorEqualTable = GenTableOperatorEqual<COLTC_TYPE_LIST>();
     
     template<typename T>
     /// @brief Hashes a variant if using their getHash() method
     /// @param a The variant to hash
     /// @return a.getUnionMember<T>().getHash()
-    static constexpr bool table_hash(const TypeVariant& a) noexcept
-    {
-      return a.getUnionMember<T>().getHash();
-    }
-
-    // Generates a dispatch table for using table_operator_equal.
-    // The generated dispatch table can be indexed by getTypeID().
-    COLTC_TYPE_VARIANT_GEN_TABLE(OperatorEqualTable, table_operator_equal, GenOperatorEqualTable);
-    // Generates a dispatch table for using table_hash.
-    // The generated dispatch table can be indexed by getTypeID().
-    COLTC_TYPE_VARIANT_GEN_TABLE(HashTable, table_hash, GenHashTable);
+    static constexpr bool table_hash(const TypeVariant& a) noexcept { return a.getUnionMember<T>().getHash(); }
+    template<typename... Args>
+    static consteval std::array<decltype(&table_hash<VoidType>), ColtTypeList::size> GenTableHash() noexcept { return std::array{ &table_hash<Args>... }; }
+    
+    static constexpr auto HashTable = GenTableHash<COLTC_TYPE_LIST>();
 
   public:
     template<ColtType Type, typename... Args>
