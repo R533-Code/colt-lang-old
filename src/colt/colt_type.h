@@ -19,6 +19,10 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, TypeID,
   TYPE_PTR, TYPE_MUT_PTR, TYPE_OPTR, TYPE_MUT_OPTR
 );
 
+/// @brief Macro Type List (with same index as TypeID declaration!)
+#define COLTC_TYPE_LIST ErrorType, BuiltinType, VoidType, \
+   PtrType, MutPtrType, OpaquePtrType, MutOpaquePtrType
+
 namespace clt::lng
 {
   /// @brief Base class of all types
@@ -235,19 +239,19 @@ namespace clt::lng
     }
   };
 
-  /// @brief Macro Type List (with same index as TypeID declaration!)
-#define COLTC_TYPE_LIST ErrorType, BuiltinType, VoidType, PtrType, MutPtrType, OpaquePtrType, MutOpaquePtrType
-
   /// @brief Type List of all Colt Types
   using ColtTypeList = meta::type_list<COLTC_TYPE_LIST>;
 
   static_assert(ColtTypeList::size == reflect<TypeID>::count(),
     "ColtTypeList and TypeID count must be equal!");
 
+  /// @brief Macro helper to generate function table
 #define COLTC_EXPAND_VARIANT_ARG(template_fn, value) , &template_fn<value>
-  /// @brief Macro used inside of TypeVariant, see OperatorEqualTable
-#define COLTC_TYPE_VARIANT_GEN_TABLE(template_fn, first, ...) \
+  /// @brief Macro helper to generate function table
+#define COLTC_TYPE_VARIANT_IMPL_GEN_TABLE(template_fn, first, ...) \
   std::array{ &template_fn<first> COLT_FOR_EACH_1ARG(COLTC_EXPAND_VARIANT_ARG, template_fn, __VA_ARGS__) }
+  /// @brief Macro used inside of TypeVariant, see OperatorEqualTable
+#define COLTC_TYPE_VARIANT_GEN_TABLE(template_fn, list) COLTC_TYPE_VARIANT_IMPL_GEN_TABLE(template_fn, list)
 
   /// @brief Represents a type.
   /// Rather than using an inheritance, we make use of a variant.
@@ -316,7 +320,7 @@ namespace clt::lng
     /// @param a The first variant
     /// @param b The second variant
     /// @return True if a.getUnionMember<T>() == b.getUnionMember<T>() evaluates to true
-    static constexpr bool table_operator_equal(const TypeVariant& a, const TypeVariant& b) noexcept
+    static constexpr bool table_equal(const TypeVariant& a, const TypeVariant& b) noexcept
     {
       return a.getUnionMember<T>() == b.getUnionMember<T>();
     }
@@ -330,8 +334,8 @@ namespace clt::lng
       return a.getUnionMember<T>().getHash();
     }
     
-    static constexpr auto OperatorEqualTable = COLTC_TYPE_VARIANT_GEN_TABLE(table_operator_equal, ErrorType, BuiltinType, VoidType, PtrType, MutPtrType, OpaquePtrType, MutOpaquePtrType);
-    static constexpr auto HashTable = COLTC_TYPE_VARIANT_GEN_TABLE(table_hash, ErrorType, BuiltinType, VoidType, PtrType, MutPtrType, OpaquePtrType, MutOpaquePtrType);
+    static constexpr auto EqualTable = COLTC_TYPE_VARIANT_GEN_TABLE(table_equal, COLTC_TYPE_LIST);
+    static constexpr auto HashTable  = COLTC_TYPE_VARIANT_GEN_TABLE(table_hash, COLTC_TYPE_LIST);
 
   public:
     template<ColtType Type, typename... Args>
@@ -402,7 +406,7 @@ namespace clt::lng
       if (this->getTypeID() != type.getTypeID())
         return false;
 
-      return OperatorEqualTable[static_cast<u8>(this->getTypeID())](*this, type);
+      return EqualTable[static_cast<u8>(this->getTypeID())](*this, type);
     }
     
     /// @brief Check if the current type is same as another.
