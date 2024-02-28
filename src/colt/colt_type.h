@@ -245,13 +245,13 @@ namespace clt::lng
     "ColtTypeList and TypeID count must be equal!");
 
   /// @brief Macro used inside of TypeVariant, see OperatorEqualTable
-#define COLTC_TYPE_VARIANT_GEN_TABLE(name, template_fn) \
+#define COLTC_TYPE_VARIANT_GEN_TABLE(name, template_fn, GenName) \
   template<typename... Args> \
-  static consteval std::array<decltype(&template_fn<ErrorType>), ColtTypeList::size> COLT_CONCAT(Gen, name)() noexcept \
+  static consteval std::array<decltype(&template_fn<ErrorType>), ColtTypeList::size> GenName() noexcept \
   { \
     return std::array{ &template_fn<Args>... }; \
   } \
-  static constexpr auto name = COLT_CONCAT(Gen, name)<COLTC_TYPE_LIST>()
+  static constexpr auto name = GenName<COLTC_TYPE_LIST>()
 
   /// @brief Represents a type.
   /// Rather than using an inheritance, we make use of a variant.
@@ -333,10 +333,10 @@ namespace clt::lng
 
     // Generates a dispatch table for using table_operator_equal.
     // The generated dispatch table can be indexed by getTypeID().
-    COLTC_TYPE_VARIANT_GEN_TABLE(OperatorEqualTable, table_operator_equal);
+    COLTC_TYPE_VARIANT_GEN_TABLE(OperatorEqualTable, table_operator_equal, GenOperatorEqualTable);
     // Generates a dispatch table for using table_hash.
     // The generated dispatch table can be indexed by getTypeID().
-    COLTC_TYPE_VARIANT_GEN_TABLE(HashTable, table_hash);
+    COLTC_TYPE_VARIANT_GEN_TABLE(HashTable, table_hash, GenHashTable);
 
   public:
     template<ColtType Type, typename... Args>
