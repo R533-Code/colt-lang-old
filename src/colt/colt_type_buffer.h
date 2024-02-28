@@ -2,15 +2,16 @@
 #define HG_COLTC_TYPE_BUFFER
 
 #include "colt_type.h"
-#include "structs/map.h"
+#include "structs/set.h"
 #include "colt_type_token.h"
 
 namespace clt::lng
 {
+  /// @brief Class responsible of storing types.
   class TypeBuffer
   {
-    Map<TypeVariant, TypeToken> type_map{};
-    Vector<const TypeVariant*> type_vec{};
+    /// @brief Set of types
+    IndexedSet<TypeVariant> type_map{};
 
 #ifdef COLT_DEBUG
     static std::atomic<u32> ID_GENERATOR;
@@ -23,17 +24,20 @@ namespace clt::lng
     {
 #ifdef COLT_DEBUG
       if constexpr (isDebugBuild())
-        assert_true("Token is not owned by this TokenBuffer!", tkn.buffer_id == buffer_id);
+        assert_true("Token is not owned by this TypeBuffer!", tkn.buffer_id == buffer_id);
 #endif // COLT_DEBUG
     }
 
-    constexpr TypeToken getNext() const noexcept
+    /// @brief Returns the next token to save
+    /// @return The token to save
+    constexpr TypeToken createToken(size_t sz) const noexcept
     {
-      // TODO: check for overflow
+      assert_true("Integer overflow!", sz <= std::numeric_limits<u32>::max());
+
 #ifdef COLT_DEBUG
-      return TypeToken(static_cast<u32>(type_map.size()), buffer_id);
+      return TypeToken(static_cast<u32>(sz), buffer_id);
 #else
-      return TypeToken(static_cast<u32>(type_map.size()));
+      return TypeToken(static_cast<u32>(sz));
 #endif // COLT_DEBUG
     }
 
@@ -52,15 +56,17 @@ namespace clt::lng
     /// @return The TypeToken representing the type
     TypeToken addType(const TypeVariant& variant) noexcept
     {
-      auto [pair, insert] = type_map.insert(variant, getNext());
-      if (insert == InsertionResult::SUCCESS)
-        type_vec.push_back(&pair->first);
-      return pair->second;
+      auto [pair, insert] = type_map.insert(variant);
+      return createToken(pair);
     }
 
+    /// @brief Get a type using its token.
+    /// The reference is valid as long as addType was not called!
+    /// @param tkn The token whose type to return
+    /// @return The type represented by 'tkn'
     const TypeVariant& getType(TypeToken tkn) const noexcept
     {
-      return *type_vec[tkn.type_index];
+      return type_map.internal_list()[tkn.type_index];
     }
   };
 }
