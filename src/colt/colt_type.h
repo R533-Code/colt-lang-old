@@ -53,6 +53,15 @@ namespace clt::lng
     { a.getHash() } -> std::same_as<size_t>;
   };
 
+  // Forward declarations
+  class ErrorType;
+  class BuiltinType;
+  class VoidType;
+  class OpaquePtrType;
+  class MutOpaquePtrType;
+  class PtrType;
+  class MutPtrType;
+
   template<typename T>
   /// @brief Converts a type to its ID.
   /// @return The ID representing 'T'
