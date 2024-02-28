@@ -117,9 +117,10 @@ namespace clt::lng
     FlatList<Token, 512>              tokens{};
 
 #ifdef COLT_DEBUG
-    /// @brief 
+    /// @brief Used to differentiate different TokenBuffer
     static std::atomic<u32> ID_GENERATOR;
 
+    /// @brief The ID of the current buffer
     u32 buffer_id;
 #endif // COLT_DEBUG
 
