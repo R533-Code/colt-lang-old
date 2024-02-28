@@ -56,7 +56,25 @@ namespace clt::lng
   template<typename T>
   /// @brief Converts a type to its ID.
   /// @return The ID representing 'T'
-  constexpr TypeID TypeToTypeID() noexcept;  
+  constexpr TypeID TypeToTypeID() noexcept
+  {
+    using enum TypeID;
+
+    if constexpr (std::same_as<T, ErrorType>)
+      return TYPE_ERROR;
+    if constexpr (std::same_as<T, BuiltinType>)
+      return TYPE_BUILTIN;
+    if constexpr (std::same_as<T, VoidType>)
+      return TYPE_VOID;
+    if constexpr (std::same_as<T, OpaquePtrType>)
+      return TYPE_OPTR;
+    if constexpr (std::same_as<T, MutOpaquePtrType>)
+      return TYPE_MUT_OPTR;
+    if constexpr (std::same_as<T, PtrType>)
+      return TYPE_PTR;
+    if constexpr (std::same_as<T, MutPtrType>)
+      return TYPE_MUT_PTR;
+  }
 
   // Create a type that is default constructible, movable and move assignable
 #define CREATE_TYPE(name) class name final : public TypeBase \
@@ -220,7 +238,7 @@ namespace clt::lng
   /// @brief Macro used inside of TypeVariant, see OperatorEqualTable
 #define COLTC_TYPE_VARIANT_GEN_TABLE(name, template_fn) \
   template<typename... Args> \
-  static consteval auto COLT_CONCAT(Gen, name)() noexcept \
+  static consteval std::array<decltype(&template_fn<ErrorType>), ColtTypeList::size> COLT_CONCAT(Gen, name)() noexcept \
   { \
     return std::array{ &template_fn<Args>... }; \
   } \
@@ -402,28 +420,7 @@ namespace clt::lng
     {
       return HashTable[static_cast<u8>(this->getTypeID())](*this);
     }
-  };
-
-  template<ColtType T>
-  constexpr TypeID TypeToTypeID() noexcept
-  {
-    using enum TypeID;
-
-    if constexpr (std::same_as<T, ErrorType>)
-      return TYPE_ERROR;
-    if constexpr (std::same_as<T, BuiltinType>)
-      return TYPE_BUILTIN;
-    if constexpr (std::same_as<T, VoidType>)
-      return TYPE_VOID;
-    if constexpr (std::same_as<T, OpaquePtrType>)
-      return TYPE_OPTR;
-    if constexpr (std::same_as<T, MutOpaquePtrType>)
-      return TYPE_MUT_OPTR;
-    if constexpr (std::same_as<T, PtrType>)
-      return TYPE_PTR;
-    if constexpr (std::same_as<T, MutPtrType>)
-      return TYPE_MUT_PTR;
-  }  
+  };  
 }
 
 namespace clt
