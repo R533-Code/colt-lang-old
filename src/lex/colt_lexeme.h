@@ -193,9 +193,11 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, Lexeme,
 	/// @brief mut
 	TKN_KEYWORD_mut,
 	/// @brief global
-	TKN_KEYWORD_GLOBAL,
+	TKN_KEYWORD_global,
 
 	/********* BEGINNING OF BUILTIN TYPES *******/
+
+		// DO NOT REORDER THIS TYPES
 
 	/// @brief void
 	TKN_KEYWORD_void,
