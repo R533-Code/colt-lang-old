@@ -51,7 +51,7 @@ namespace clt::lng
 
   template<typename T>
   /// @brief A ColtType provides its ID and is equality comparable
-  concept ColtType = std::equality_comparable<T> && std::convertible_to<TypeBase, T> && requires (T a)
+  concept ColtType = std::equality_comparable<T> && std::convertible_to<T, TypeBase> && requires (T a)
   {
     { a.classof() } -> std::same_as<TypeID>;
     { a.getHash() } -> std::same_as<size_t>;
@@ -253,15 +253,41 @@ namespace clt::lng
   /// @brief Macro used inside of TypeVariant, see OperatorEqualTable
 #define COLTC_TYPE_VARIANT_GEN_TABLE(template_fn, list) COLTC_TYPE_VARIANT_IMPL_GEN_TABLE(template_fn, list)
 
+  /// @brief Macro used to generate getUnionMember body
+#define COLTC_getUnionMember \
+  if constexpr (std::same_as<T, ErrorType>) \
+    return error_type; \
+  if constexpr (std::same_as<T, VoidType>) \
+    return void_type; \
+  if constexpr (std::same_as<T, OpaquePtrType>) \
+    return opaque_type; \
+  if constexpr (std::same_as<T, MutOpaquePtrType>) \
+    return mut_opaque_type; \
+  if constexpr (std::same_as<T, BuiltinType>) \
+    return builtin_type; \
+  if constexpr (std::same_as<T, PtrType>) \
+    return ptr_type; \
+  if constexpr (std::same_as<T, MutPtrType>) \
+    return mut_ptr_type
+
   /// @brief Represents a type.
   /// Rather than using an inheritance, we make use of a variant.
   /// This variant is responsible of runtime polymorphism through
   /// function dispatch.
   class TypeVariant
   {
-    /// @brief The possible types contained in the variant
-    union AllTypes
+    template<typename T, typename... Args>
+    static constexpr std::monostate construct(T* placement, Args&&... args)
     {
+      std::construct_at(placement, std::forward<Args>(args)...);
+      return {};
+    }
+
+    /// @brief The possible types contained in the variant
+    union
+    {
+      // Helper used in constructor
+      std::monostate   _mono_state_;
       /// @brief Access through ErrorType
       ErrorType        error_type;
       /// @brief Access through VoidType
@@ -275,42 +301,21 @@ namespace clt::lng
       /// @brief Access through PtrType
       PtrType          ptr_type;
       /// @brief Access through MutPtrType
-      MutPtrType       mut_ptr_type;
+      MutPtrType       mut_ptr_type;      
     };
 
     /// @brief The variant of all types
-    AllTypes variant;
+    //AllTypes variant;
 
     template<typename T>
     /// @brief Returns a reference to the union member of type 'T'
     /// @return Reference to the union member of type 'T'
-    constexpr const auto& getUnionMember() const noexcept
-    {
-      if constexpr (std::same_as<T, ErrorType>)
-        return variant.error_type;
-      if constexpr (std::same_as<T, VoidType>)
-        return variant.void_type;
-      if constexpr (std::same_as<T, OpaquePtrType>)
-        return variant.opaque_type;
-      if constexpr (std::same_as<T, MutOpaquePtrType>)
-        return variant.mut_opaque_type;
-      if constexpr (std::same_as<T, BuiltinType>)
-        return variant.builtin_type;
-      if constexpr (std::same_as<T, PtrType>)
-        return variant.ptr_type;
-      if constexpr (std::same_as<T, MutPtrType>)
-        return variant.mut_ptr_type;
-    }
+    constexpr const auto& getUnionMember() const noexcept { COLTC_getUnionMember; }
     
     template<typename T>
     /// @brief Returns a reference to the union member of type 'T'
     /// @return Reference to the union member of type 'T'
-    constexpr auto& getUnionMember() noexcept
-    {
-      // We can cast away const
-      auto& a = getUnionMember<T>();
-      return const_cast<std::remove_const_t<decltype(a)>>(a);
-    }    
+    constexpr auto& getUnionMember() noexcept { COLTC_getUnionMember; }
 
     // Generates a dispatch table for using table_operator_equal.
     // The generated dispatch table can be indexed by getTypeID().
@@ -341,9 +346,11 @@ namespace clt::lng
     template<ColtType Type, typename... Args>
     /// @brief Constructor
     /// @param args... The arguments to forward to the constructor
-    constexpr TypeVariant(Args&&... args) noexcept(std::is_nothrow_constructible_v<Type, Args...>)
+    constexpr TypeVariant(std::type_identity<Type>, Args&&... args)
+      noexcept(std::is_nothrow_constructible_v<Type, Args...>)
+      : _mono_state_(construct<Type>(&getUnionMember<Type>(), std::forward<Args>(args)...))
     {
-      new(variant) Type(std::forward<Args>(args)...);
+      // The ugly code above is used to keep the constructor constexpr
     }
 
     constexpr TypeVariant(TypeVariant&&) noexcept = default;
@@ -360,9 +367,9 @@ namespace clt::lng
       // The memcpy is optimized away by the compiler.
       TypeID id;
       if (std::is_constant_evaluated()) // bit_cast is constexpr...
-        id = std::bit_cast<TypeID>(variant.error_type);
+        id = std::bit_cast<TypeID>(error_type);
       else
-        std::memcpy(&id, &variant, sizeof(TypeID));
+        std::memcpy(&id, &error_type, sizeof(TypeID));
       return id;
     }
 
@@ -388,7 +395,7 @@ namespace clt::lng
     constexpr bool isBuiltinAnd(BuilinTypeCheck_t check) const noexcept
     {
       return getTypeID() == TypeID::TYPE_BUILTIN
-        && check(variant.builtin_type.typeID());
+        && check(builtin_type.typeID());
     }
 
     /// @brief Check if the current type is void
@@ -428,7 +435,34 @@ namespace clt::lng
     {
       return HashTable[static_cast<u8>(this->getTypeID())](*this);
     }
-  };  
+  };
+
+  template<ColtType type, typename... Args>
+  constexpr TypeVariant make_coltc_type(Args&&... args) noexcept(std::is_nothrow_constructible_v<type, Args...>)
+  {
+    return TypeVariant(std::type_identity<type>{}, std::forward<Args>(args)...);
+  }
+  
+  /// @brief Table of all built-in types
+  static constexpr std::array ColtBuiltinTypeTable =
+  {
+    make_coltc_type<BuiltinType>(BuiltinID::BOOL),
+    make_coltc_type<BuiltinType>(BuiltinID::CHAR),
+    make_coltc_type<BuiltinType>(BuiltinID::U8),
+    make_coltc_type<BuiltinType>(BuiltinID::U16),
+    make_coltc_type<BuiltinType>(BuiltinID::U32),
+    make_coltc_type<BuiltinType>(BuiltinID::U64),
+    make_coltc_type<BuiltinType>(BuiltinID::I8),
+    make_coltc_type<BuiltinType>(BuiltinID::I16),
+    make_coltc_type<BuiltinType>(BuiltinID::I32),
+    make_coltc_type<BuiltinType>(BuiltinID::I64),
+    make_coltc_type<BuiltinType>(BuiltinID::F32),
+    make_coltc_type<BuiltinType>(BuiltinID::F64),
+    make_coltc_type<BuiltinType>(BuiltinID::BYTE),
+    make_coltc_type<BuiltinType>(BuiltinID::WORD),
+    make_coltc_type<BuiltinType>(BuiltinID::DWORD),
+    make_coltc_type<BuiltinType>(BuiltinID::QWORD)
+  };
 }
 
 namespace clt
@@ -442,5 +476,10 @@ namespace clt
     }
   };
 }
+
+#undef COLTC_getUnionMember
+#undef COLTC_TYPE_VARIANT_GEN_TABLE
+#undef COLTC_TYPE_VARIANT_IMPL_GEN_TABLE
+#undef COLTC_EXPAND_VARIANT_ARG
 
 #endif //!HG_COLTC_TYPE
