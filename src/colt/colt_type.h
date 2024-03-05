@@ -304,9 +304,6 @@ namespace clt::lng
       MutPtrType       mut_ptr_type;      
     };
 
-    /// @brief The variant of all types
-    //AllTypes variant;
-
     template<typename T>
     /// @brief Returns a reference to the union member of type 'T'
     /// @return Reference to the union member of type 'T'
