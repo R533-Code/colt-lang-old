@@ -1,3 +1,10 @@
+/*****************************************************************//**
+ * @file   colt_type_buffer.h
+ * @brief  Contains TypeBuffer, responsible for storing types.
+ * 
+ * @author RPC
+ * @date   March 2024
+ *********************************************************************/
 #ifndef HG_COLTC_TYPE_BUFFER
 #define HG_COLTC_TYPE_BUFFER
 

@@ -1,3 +1,10 @@
+/*****************************************************************//**
+ * @file   colt_type_buffer.cpp
+ * @brief  Contains the implementation of `colt_type_buffer.h`.
+ * 
+ * @author RPC
+ * @date   March 2024
+ *********************************************************************/
 #include "colt_type_buffer.h"
 
 namespace clt::lng
