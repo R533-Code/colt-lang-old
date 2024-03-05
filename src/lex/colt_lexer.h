@@ -203,6 +203,12 @@ namespace clt::lng
 		table['~'] = &ParseSingle<Lexeme::TKN_TILDE>;
 		table[';'] = &ParseSingle<Lexeme::TKN_SEMICOLON>;
 		table[','] = &ParseSingle<Lexeme::TKN_COLON>;
+		table['{'] = &ParseSingle<Lexeme::TKN_LEFT_CURLY>;
+		table['}'] = &ParseSingle<Lexeme::TKN_RIGHT_CURLY>;
+		table['('] = &ParseSingle<Lexeme::TKN_LEFT_PAREN>;
+		table[')'] = &ParseSingle<Lexeme::TKN_RIGHT_PAREN>;
+		table['['] = &ParseSingle<Lexeme::TKN_LEFT_SQUARE>;
+		table[']'] = &ParseSingle<Lexeme::TKN_RIGHT_SQUARE>;
 
 		return table;
 	}
