@@ -277,8 +277,13 @@ namespace clt::lng
   class TypeVariant
   {
     template<typename T, typename... Args>
+    /// @brief Helper to construct the union
+    /// @param placement The pointer to the object to construct
+    /// @param args... The arguments to forward to the constructor
+    /// @return Empty monostate
     static constexpr std::monostate construct(T* placement, Args&&... args)
     {
+      // Use construct_at rather than placement new for constexpr
       std::construct_at(placement, std::forward<Args>(args)...);
       return {};
     }
@@ -435,6 +440,9 @@ namespace clt::lng
   };
 
   template<ColtType type, typename... Args>
+  /// @brief Constructs a TypeVariant containing a type
+  /// @param args... The argument to forward to the constructor
+  /// @return TypeVariant containing the constructed type
   constexpr TypeVariant make_coltc_type(Args&&... args) noexcept(std::is_nothrow_constructible_v<type, Args...>)
   {
     return TypeVariant(std::type_identity<type>{}, std::forward<Args>(args)...);
