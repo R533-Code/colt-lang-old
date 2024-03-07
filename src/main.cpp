@@ -33,7 +33,9 @@ void REPL()
 
 int main(int argc, const char** argv)
 {
-  mem::global_on_null([]() noexcept { io::print_fatal("Could not allocate memory!"); });
+  // Register to print a message on allocation failure
+  mem::global_on_null([]() noexcept { io::print_fatal("Compiler could not allocate enough memory!"); });
+  // Parse command line arguments
   cl::parse_command_line_options<CMDs>(argc, argv);
   
   // On debug configuration, runs tests
