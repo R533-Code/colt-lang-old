@@ -1,10 +1,8 @@
 /*****************************************************************//**
  * @file   colt_type_buffer.h
  * @brief  Contains TypeBuffer, responsible for storing types.
- * When compiling, the TypeBuffer is common for all the files
- * representing the program. As this design might change, on debug
- * configuration, the TypeBuffer verifies that the TypeToken is owned
- * by it.
+ * When compiling, the TypeBuffer is shared by all the files
+ * representing the program.
  * 
  * @author RPC
  * @date   March 2024
@@ -24,43 +22,17 @@ namespace clt::lng
     /// @brief Set of types
     IndexedSet<TypeVariant> type_map{};
 
-#ifdef COLT_DEBUG
-    static std::atomic<u32> ID_GENERATOR;
-
-    u32 buffer_id;
-#endif // COLT_DEBUG
-
-    /// @brief Check if a Token is owned by the current TokenBuffer
-    constexpr void owns(TypeToken tkn) const noexcept
-    {
-#ifdef COLT_DEBUG
-      if constexpr (isDebugBuild())
-        assert_true("Token is not owned by this TypeBuffer!", tkn.buffer_id == buffer_id);
-#endif // COLT_DEBUG
-    }
-
     /// @brief Returns the next token to save
     /// @return The token to save
     constexpr TypeToken createToken(size_t sz) const noexcept
     {
       assert_true("Integer overflow!", sz <= std::numeric_limits<u32>::max());
-
-#ifdef COLT_DEBUG
-      return TypeToken(static_cast<u32>(sz), buffer_id);
-#else
       return TypeToken(static_cast<u32>(sz));
-#endif // COLT_DEBUG
     }
 
   public:
     /// @brief Default constructor
-    TypeBuffer() noexcept
-    {
-#ifdef COLT_DEBUG
-      if constexpr (isDebugBuild())
-        buffer_id = ID_GENERATOR.fetch_add(1, std::memory_order_acq_rel);
-#endif // COLT_DEBUG
-    }
+    TypeBuffer() noexcept = default;
 
     /// @brief Saves a type and return its index number
     /// @param variant The type to save

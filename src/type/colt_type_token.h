@@ -12,20 +12,10 @@ namespace clt::lng
   {
     u32 type_index;
 
-    friend class TypeBuffer;
-
-#ifdef COLT_DEBUG
-    /// @brief On debug, we store the ID of the TokenBuffer owning the Token
-    u32 buffer_id;
-
-    constexpr TypeToken(u32 id, u32 buffer_id) noexcept
-      : type_index(id), buffer_id(buffer_id) {}
-
-#else
     constexpr TypeToken(u32 id) noexcept
       : type_index(id) {}
-#endif // COLT_DEBUG
   
+    friend class TypeBuffer;
   public:
     TypeToken() = delete;
     constexpr TypeToken(TypeToken&&) noexcept = default;
