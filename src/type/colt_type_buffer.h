@@ -67,6 +67,46 @@ namespace clt::lng
       return createToken(pair);
     }
 
+    /// @brief Saves a built-in type
+    /// @param id The type ID
+    /// @return The TypeToken representing the type
+    TypeToken addBuiltin(BuiltinID id) noexcept
+    {
+      return addType(ColtBuiltinTypeTable[static_cast<u8>(id)]);
+    }
+
+    /// @brief Saves a pointer to a type
+    /// @param to The type pointed to
+    /// @return The TypeToken representing the pointer
+    TypeToken addPtr(TypeToken to) noexcept
+    {
+      return addType(make_coltc_type<PtrType>(to));
+    }
+    
+    /// @brief Saves a mutable pointer to a type
+    /// @param to The type pointed to
+    /// @return The TypeToken representing the mutable pointer
+    TypeToken addMutPtr(TypeToken to) noexcept
+    {
+      return addType(make_coltc_type<MutPtrType>(to));
+    }
+    
+    /// @brief Saves a pointer to a type
+    /// @param to The type pointed to
+    /// @return The TypeToken representing the pointer
+    TypeToken addOpaquePtr() noexcept
+    {
+      return addType(make_coltc_type<OpaquePtrType>());
+    }
+    
+    /// @brief Saves a mutable pointer to a type
+    /// @param to The type pointed to
+    /// @return The TypeToken representing the mutable pointer
+    TypeToken addMutOpaquePtr() noexcept
+    {
+      return addType(make_coltc_type<MutOpaquePtrType>());
+    }
+
     /// @brief Get a type using its token.
     /// The reference is valid as long as addType was not called!
     /// @param tkn The token whose type to return
