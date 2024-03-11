@@ -1,6 +1,10 @@
 /*****************************************************************//**
  * @file   colt_type_buffer.h
  * @brief  Contains TypeBuffer, responsible for storing types.
+ * When compiling, the TypeBuffer is common for all the files
+ * representing the program. As this design might change, on debug
+ * configuration, the TypeBuffer verifies that the TypeToken is owned
+ * by it.
  * 
  * @author RPC
  * @date   March 2024
