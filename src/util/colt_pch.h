@@ -14,6 +14,8 @@
 #include <thread>
 #include <mutex>
 
+#include <filesystem>
+
 #include "io/print.h"
 #include "io/input.h"
 
@@ -29,5 +31,7 @@
 #include "structs/string.h"
 #include "structs/option.h"
 #include "structs/expect.h"
+#include "structs/map.h"
+#include "structs/set.h"
 
 #endif // !HG_COLT_PCH
