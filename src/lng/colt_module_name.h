@@ -1,3 +1,10 @@
+/*****************************************************************//**
+ * @file   colt_module_name.h
+ * @brief  Contains ModuleName, which represents a colt module name.
+ * 
+ * @author RPC
+ * @date   March 2024
+ *********************************************************************/
 #ifndef HG_COLT_MODULE_NAME
 #define HG_COLT_MODULE_NAME
 
