@@ -12,6 +12,7 @@ set(CMAKE_BUILD_TYPE "Release")
 file(GLOB_RECURSE ColtHeaders "src/*.h")
 file(GLOB_RECURSE ColtUnits "src/*.cpp")
 file(GLOB_RECURSE ColtGithubActions ".github/workflows/*.yml")
+file(GLOB ColtDesignFiles "resources/*.md")
 # Save test files
 file(GLOB_RECURSE ColtASTTestsPath "resources/tests/ast/*.ct")
 file(GLOB_RECURSE ColtLexerTestsPath "resources/tests/lexer/*.ct")
@@ -24,12 +25,12 @@ if (WIN32)
   add_executable(${COLT_EXECUTABLE_NAME}
     ${ColtHeaders} ${ColtUnits} ${ColtASTTestsPath} ${ColtLexerTestsPath}
     "resources/icon/colt.rc"
-    ${ColtGithubActions}
+    ${ColtGithubActions} ${ColtDesignFiles}
   )
 else()
   add_executable(${COLT_EXECUTABLE_NAME}
     ${ColtHeaders} ${ColtUnits} ${ColtASTTestsPath} ${ColtLexerTestsPath}
-    ${ColtGithubActions}
+    ${ColtGithubActions} ${ColtDesignFiles}
   )
 endif()
 
@@ -39,7 +40,7 @@ target_precompile_headers(${COLT_EXECUTABLE_NAME} PUBLIC
 
 # Define COLT_DEBUG_BUILD for debug config
 target_compile_definitions(
-  ${COLT_EXECUTABLE_NAME} PRIVATE $<$<CONFIG:DEBUG>:COLT_DEBUG> $<$<CONFIG:DEBUG>:COLT_DEBUG_BUILD> _CRT_SECURE_NO_WARNINGS
+  ${COLT_EXECUTABLE_NAME} PRIVATE $<$<CONFIG:Debug>:COLT_DEBUG> $<$<CONFIG:Debug>:COLT_DEBUG_BUILD> _CRT_SECURE_NO_WARNINGS
 )
 
 if (MSVC)
@@ -137,6 +138,7 @@ message(STATUS "Found " ${testCountAST} " AST tests and " ${testCountLexer} " Le
 source_group("Colt AST Tests" FILES ${ColtASTTestsPath})
 source_group("Colt Lexer Tests" FILES ${ColtLexerTestsPath})
 source_group("Github Actions" FILES ${ColtGithubActions})
+source_group("Colt Design" FILES ${ColtDesignFiles})
 
 # Testing for CTest
 enable_testing()
