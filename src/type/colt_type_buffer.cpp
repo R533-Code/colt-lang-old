@@ -10,6 +10,7 @@
 namespace clt::lng
 {
 #ifdef COLT_DEBUG
+  // Used on debug to verify that a token is for this TypeBuffer
   std::atomic<u32> TypeBuffer::ID_GENERATOR{};
 #endif // COLT_DEBUG
 }
