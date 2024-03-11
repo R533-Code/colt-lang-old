@@ -9,7 +9,7 @@ Types are represented using a `TypeVariant`. This allows for better control and 
 Types are stored inside a `TypeBuffer`, which contains an array of these `TypeVariants`. As with `TokenBuffer`, a token allows to index that array. A `TypeToken` represents a type: comparing them for equality yields if a type is exactly equal to another.
 
 ## AST:
-The result of parsing is an `AST`. An `AST` contains the nodes and leafs representing a parsed file.
+The result of parsing is an `AST`. An `AST` contains the nodes and leaves representing a parsed file.
 For performance, rather then using pointer to other nodes, we use indices arrays of different nodes.
 The arrays contain unions of different node types of approximately the same size.
 Each file has a matching `AST`.
