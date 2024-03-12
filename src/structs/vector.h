@@ -43,6 +43,22 @@ namespace clt
       return seed;
     }
   };
+  
+  template<typename T> requires meta::is_hashable_v<T>
+  /// @brief clt::hash overload for View
+  struct hash<View<T>>
+  {
+    /// @brief Hashing operator
+    /// @param value The value to hash
+    /// @return Hash
+    constexpr size_t operator()(const View<T>& value) const noexcept
+    {
+      uint64_t seed = 0xCBF29CE484222325;
+      for (auto& i : value)
+        seed = hash_combine(seed, hash_value(i));
+      return seed;
+    }
+  };
 
   template<typename T, auto ALLOCATOR = mem::GlobalAllocatorDescription>
     requires meta::AllocatorScope<ALLOCATOR>
