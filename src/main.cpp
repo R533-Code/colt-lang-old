@@ -8,7 +8,7 @@
 #include <util/colt_pch.h>
 #include "args.h"
 #include "util/run_tests.h"
-#include "type/colt_type_buffer.h"
+#include "ast/parsed_program.h"
 
 using namespace clt;
 
