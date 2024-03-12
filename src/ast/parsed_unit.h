@@ -19,6 +19,12 @@ namespace clt::lng
   {
     /// @brief Contains the global table, and the error reporter
     ParsedProgram& program;
+    /// @brief Contains the parsed lexemes
+    TokenBuffer tokens;
+
+  public:
+    ParsedUnit(ParsedProgram& program) noexcept
+      : program(program) {}
   };
 }
 
