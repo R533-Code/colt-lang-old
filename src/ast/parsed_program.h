@@ -11,6 +11,7 @@
 #include "util/colt_pch.h"
 #include "lng/colt_type_buffer.h"
 #include "lng/colt_module.h"
+#include "err/composable_reporter.h"
 #include "parsed_unit.h"
 #include "structs/map.h"
 
@@ -22,11 +23,24 @@ namespace clt::lng
   class ParsedProgram
   {
     /// @brief Contains all the types of the program
-    TypeBuffer type_buffer;
+    TypeBuffer type_buffer{};
     /// @brief Contains all the modules of the program
-    ModuleBuffer module_buffer;
+    ModuleBuffer module_buffer{};
     /// @brief Contains all the parsed units
-    Map<std::filesystem::path, ParsedUnit> parsed_units;
+    Map<std::filesystem::path, ParsedUnit> parsed_units{};
+    /// @brief The reporter used to generate warnings and errors
+    ErrorReporter& reporter;
+
+  public:
+    /// @brief Constructs a parsed program.
+    /// This does not parse anything.
+    /// @param reporter The reporter used for errors and warnings
+    ParsedProgram(ErrorReporter& reporter) noexcept
+      : reporter(reporter) {}
+
+    /// @brief Returns the reporter used for errors and warnings
+    /// @return The reporter
+    ErrorReporter& getReporter() noexcept { return reporter; }
   };
 }
 

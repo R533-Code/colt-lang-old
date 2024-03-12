@@ -12,9 +12,13 @@
 
 namespace clt::lng
 {
+  // Forward declaration
+  class ParsedProgram;
+
   class ParsedUnit
   {
-
+    /// @brief Contains the global table, and the error reporter
+    ParsedProgram& program;
   };
 }
 
