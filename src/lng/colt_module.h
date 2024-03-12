@@ -5,7 +5,7 @@
 
 #include "colt_module_name.h"
 #include "structs/map.h"
-#include "colt_global.h"
+#include "ast/colt_global.h"
 
 namespace clt::lng
 {
@@ -15,28 +15,29 @@ namespace clt::lng
 
   class ModuleToken
   {
-    /// @brief The module nesting level
-    u8 module_level;
-    u8 module_nb;
+    /// @brief The module index
+    u32 module_nb;
+    /// @brief The module depth (nesting level)
+    u8 nesting;
 
     friend class ModuleBuffer;
     friend class Module;
   
-    constexpr ModuleToken(u8 module_nb, u8 module_level) noexcept
-      : module_level(module_level), module_nb(module_nb) {}
+    constexpr ModuleToken(u32 module_nb, u8 nesting) noexcept
+      : module_nb(module_nb) {}
 
     /// @brief Returns an invalid module token
     /// @return An invalid module token
     static constexpr ModuleToken getInvalid() noexcept
     {
-      return ModuleToken{ ModuleName::max_size(), 0 };
+      return ModuleToken{ std::numeric_limits<u32>::max(), 0 };
     }
 
     /// @brief Check if the current ModuleToken is invalid
     /// @return True if invalid
     constexpr bool isInvalid() const noexcept
     {
-      return module_level == ModuleName::max_size();
+      return module_nb == std::numeric_limits<u32>::max();
     }
   
   public:
@@ -54,11 +55,15 @@ namespace clt::lng
     }    
 
     /// @brief Check if the current module represents the global module
-    /// @return 
+    /// @return True if the ModuleToken represents the global module
     constexpr bool isGlobalModule() const noexcept
     {
-      return module_nb == 0 && module_level == 0;
+      return module_nb == 0;
     }
+
+    /// @brief Check if this module cannot have a submodule
+    /// @return True if this module cannot have a submodule
+    constexpr bool isLeaf() const noexcept { return nesting == ModuleName::max_size(); }
   };
 
   /// @brief Represents a colt module.
@@ -96,7 +101,19 @@ namespace clt::lng
 
     /// @brief Check if the current module is the global module
     /// @return True if parent
-    bool isGlobal() const noexcept { return parent.isGlobalModule(); }
+    bool isGlobal() const noexcept { return parent.isInvalid(); }
+
+    /// @brief Returns the ModuleToken representing the parent of this module
+    /// @return 
+    ModuleToken getParent() const noexcept
+    {
+      assert_true("Global module does not have a parent!", isGlobal());
+      return parent;
+    }
+
+    /// @brief Check if this module cannot have a submodule
+    /// @return True if this module cannot have a submodule
+    bool isLeaf() const noexcept { return parent.nesting + 1 == ModuleName::max_size(); }
   };
 
   class ModuleBuffer
@@ -106,11 +123,79 @@ namespace clt::lng
     // Thus, to represent the parent's relationship of the modules,
     // we will use indices into vectors.
     
-    std::array<Vector<Module>, 8> modules;
+    FlatList<Module> modules{};
 
   public:
+    /// @brief Constructs a module buffer
+    ModuleBuffer()
+    {
+      // Add global module: 0
+      modules.push_back(InPlace, "", ModuleToken::getInvalid());
+    }
 
-  };  
+    ModuleBuffer(ModuleBuffer&&) noexcept = default;
+
+    /// @brief Returns the token representing the global module
+    /// @return The token representing the global module
+    static ModuleToken getGlobalToken() noexcept { return ModuleToken::getGlobalModule(); }
+
+    /// @brief Returns the module represented by ModuleToken
+    /// @param tkn The module token
+    /// @return Module represented by ModuleToken
+    Module& getModule(ModuleToken tkn) noexcept { return modules[tkn.module_nb]; }
+    /// @brief Returns the module represented by ModuleToken
+    /// @param tkn The module token
+    /// @return Module represented by ModuleToken
+    const Module& getModule(ModuleToken tkn) const noexcept { return modules[tkn.module_nb]; }
+    
+    /// @brief Returns the global module
+    /// @return Global module
+    Module& getGlobalModule() noexcept { return modules[0]; }
+    /// @brief Returns the global module
+    /// @return Global module
+    const Module& getGlobalModule() const noexcept { return modules[0]; }
+
+    /// @brief Adds a submodule to a module
+    /// @param add_to The module to which to add a submodule
+    /// @param submodule The submodule to add
+    void addSubmodule(ModuleToken add_to, ModuleToken submodule) noexcept
+    {
+      modules[add_to.module_nb].addSubmodule(submodule);
+    }
+
+    /// @brief Creates a module
+    /// @param name The name of the module
+    /// @param parent The parent of the module
+    /// @return The token representing the module
+    Option<ModuleToken> createModule(StringView name, ModuleToken parent = getGlobalToken()) noexcept
+    {
+      assert_true("Invalid name for module!", !name.empty());
+      assert_true("Integer overflow!", modules.size() < std::numeric_limits<u32>::max());
+      if (parent.isLeaf())
+        return None;
+      ModuleToken tkn = { static_cast<u32>(modules.size()), static_cast<u8>(parent.nesting + 1) };
+      modules.push_back(InPlace, name, parent);
+      return tkn;
+    }
+    
+    /// @brief Returns the parent of the module represented by 'tkn'
+    /// @param tkn The module whose parent to return
+    /// @return The parent of the module
+    const Module& getParent(ModuleToken tkn) const noexcept
+    {
+      assert_true("Global module does not have a parent!", !tkn.isGlobalModule());
+      return modules[getModule(tkn).getParent().module_nb];
+    }
+
+    /// @brief Returns the parent of the module represented by 'tkn'
+    /// @param tkn The module whose parent to return
+    /// @return The parent of the module
+    Module& getParent(ModuleToken tkn) noexcept
+    {
+      assert_true("Global module does not have a parent!", !tkn.isGlobalModule());
+      return modules[getModule(tkn).getParent().module_nb];
+    }
+  };
 
   template<std::forward_iterator It>
   constexpr ModuleName::ModuleName(It begin, It end) noexcept
@@ -119,7 +204,7 @@ namespace clt::lng
     for (; name_size < MAX_NESTING_LEVEL; name_size++)
     {
       if (begin != end)
-        name[i] = *begin++;
+        name[name_size] = *begin++;
       else
         break;
     }
