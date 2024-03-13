@@ -118,11 +118,6 @@ namespace clt::lng
 
   class ModuleBuffer
   {
-    // Realistically, more than 8 nested submodules is not likely.
-    // Moreover, more than 256 modules on the same level is also not likely.
-    // Thus, to represent the parent's relationship of the modules,
-    // we will use indices into vectors.
-    
     FlatList<Module> modules{};
 
   public:
