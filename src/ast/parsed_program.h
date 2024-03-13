@@ -30,17 +30,26 @@ namespace clt::lng
     Map<std::filesystem::path, ParsedUnit> parsed_units{};
     /// @brief The reporter used to generate warnings and errors
     ErrorReporter& reporter;
+    /// @brief The starting file to parse
+    const std::filesystem::path& start_file;
+    /// @brief Represents the include paths of the program
+    const Vector<std::filesystem::path>& includes;
 
   public:
     /// @brief Constructs a parsed program.
     /// This does not parse anything.
     /// @param reporter The reporter used for errors and warnings
-    ParsedProgram(ErrorReporter& reporter) noexcept
-      : reporter(reporter) {}
+    /// @param includes The include path used by the program
+    ParsedProgram(ErrorReporter& reporter, const std::filesystem::path& start, const Vector<std::filesystem::path>& includes) noexcept
+      : reporter(reporter), start_file(start), includes(includes) {}
 
     /// @brief Returns the reporter used for errors and warnings
     /// @return The reporter
     ErrorReporter& getReporter() noexcept { return reporter; }
+
+    /// @brief Adds an import
+    /// @return True if the import was successful, false on failure
+    bool importUnit(StringView import_path) noexcept;
   };
 }
 
