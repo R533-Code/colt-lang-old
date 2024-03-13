@@ -16,11 +16,13 @@ namespace clt::lng
   /// @brief Base class of all types
   class GlobalBase
   {
+  public:
     static constexpr u64 BITS_FOR_ID = 7;
 
     static_assert(clt::reflect<GlobalID>::max() < (u64)clt::pow((u64)2, BITS_FOR_ID),
       "Not enough bits to represent GlobalID!");
 
+  private:
     /// @brief The ID of the type (used for down-casts)
     u8 global_id : BITS_FOR_ID;
     /// @brief True if private, false if public
@@ -95,14 +97,53 @@ namespace clt::lng
       return GLOBAL_ALIAS;
   }
 
+  /// @brief Represents a function
   class FnGlobal
-    final : public GlobalBase {};
+    final : public GlobalBase
+  {
+  public:
+    /// @brief Constructs a global variable
+    /// @param is_private True if private
+    constexpr FnGlobal(bool is_private) noexcept
+      : GlobalBase(TypeToGlobalID<FnGlobal>(), is_private) {}
 
+    constexpr FnGlobal(FnGlobal&&) noexcept = default;
+    constexpr FnGlobal(const FnGlobal&) noexcept = default;
+    constexpr FnGlobal& operator=(FnGlobal&&) noexcept = default;
+    constexpr FnGlobal& operator=(const FnGlobal&) noexcept = default;
+  };
+
+  /// @brief Represents a global variable
   class VarGlobal
-    final : public GlobalBase {};
+    final : public GlobalBase
+  {
+  public:
+    /// @brief Constructs a global variable
+    /// @param is_private True if private
+    constexpr VarGlobal(bool is_private) noexcept
+      : GlobalBase(TypeToGlobalID<VarGlobal>(), is_private) {}
 
+    constexpr VarGlobal(VarGlobal&&) noexcept = default;
+    constexpr VarGlobal(const VarGlobal&) noexcept = default;
+    constexpr VarGlobal& operator=(VarGlobal&&) noexcept = default;
+    constexpr VarGlobal& operator=(const VarGlobal&) noexcept = default;
+  };
+
+  /// @brief Represents a custom type
   class TypeGlobal
-    final : public GlobalBase {};
+    final : public GlobalBase
+  {
+  public:
+    /// @brief Constructs a global type
+    /// @param is_private True if private
+    constexpr TypeGlobal(bool is_private) noexcept
+      : GlobalBase(TypeToGlobalID<TypeGlobal>(), is_private) {}
+
+    constexpr TypeGlobal(TypeGlobal&&) noexcept = default;
+    constexpr TypeGlobal(const TypeGlobal&) noexcept = default;
+    constexpr TypeGlobal& operator=(TypeGlobal&&) noexcept = default;
+    constexpr TypeGlobal& operator=(const TypeGlobal&) noexcept = default;
+  };
 
   /// @brief Represents an alias to another global
   class AliasGlobal
@@ -117,6 +158,11 @@ namespace clt::lng
     /// @param is_private True if private
     constexpr AliasGlobal(GlobalVariant& alias_to, bool is_private) noexcept
       : GlobalBase(TypeToGlobalID<AliasGlobal>(), is_private), alias_to(alias_to) {}
+
+    constexpr AliasGlobal(AliasGlobal&&) noexcept = default;
+    constexpr AliasGlobal(const AliasGlobal&) noexcept = default;
+    constexpr AliasGlobal& operator=(AliasGlobal&&) noexcept = default;
+    constexpr AliasGlobal& operator=(const AliasGlobal&) noexcept = default;
 
     /// @brief Returns the aliased global
     /// @return The aliased global
@@ -195,16 +241,20 @@ namespace clt::lng
     /// @return The ID of the current type
     constexpr GlobalID getGlobalID() const noexcept
     {
-      // We cannot read the value through any of the members
-      // because of UB.
-      // The memcpy is optimized away by the compiler.
-      GlobalID id;
-      if (std::is_constant_evaluated()) // bit_cast is constexpr...
-        id = std::bit_cast<GlobalID>(fn_global);
-      else
-        std::memcpy(&id, &fn_global, sizeof(GlobalID));
-      return id;
+      // No idea if this is UB, but for know leave it as is.
+      return std::bit_cast<GlobalBase>(fn_global).classof();
     }
+
+    /// @brief Check if this global is private
+    /// @return True if private
+    constexpr bool isPrivate() const noexcept
+    {
+      return std::bit_cast<GlobalBase>(fn_global).isPrivate();
+    }
+
+    /// @brief Check if this global is public
+    /// @return True if public
+    constexpr bool isPublic() const noexcept { return !isPrivate(); }
 
     template<ColtGlobal T>
     /// @brief Casts the current type to 'T'
