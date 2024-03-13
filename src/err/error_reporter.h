@@ -27,6 +27,14 @@ namespace clt::lng
   /// @brief Base class for all error reporting mechanism
   class ErrorReporter
   {
+  protected:
+    /// @brief The error count
+    u64 error_count   = 0;
+    /// @brief The warning count
+    u64 warn_count    = 0;
+    /// @brief The message count
+    u64 message_count = 0;
+  
   public:
     /// @brief Reports a message
     /// @param str The message string
@@ -44,6 +52,16 @@ namespace clt::lng
     /// @param msg_nb The error number
     virtual void   error(StringView str, const Option<SourceInfo>& src_info = None, const Option<ReportNumber>& msg_nb = None) noexcept = 0;
     
+    /// @brief Returns the count of errors generated
+    /// @return The count of errors
+    u64 getErrorCount()   const noexcept { return error_count; }
+    /// @brief Returns the count of warnings generated
+    /// @return The count of warnings
+    u64 getWarnCount()    const noexcept { return warn_count; }
+    /// @brief Returns the count of messages generated
+    /// @return The count of messages
+    u64 getMessageCount() const noexcept { return message_count; }
+
     /// @brief Destructor
     virtual ~ErrorReporter() noexcept {};
   };
@@ -61,16 +79,19 @@ namespace clt::lng
 
       void message(StringView str, const Option<SourceInfo>& src_info = None, const Option<ReportNumber>& msg_nb = None) noexcept override
       {
+        ++ErrorReporter::message_count;
         Rep::message(str, src_info, msg_nb);
       }
 
       void warn(StringView str, const Option<SourceInfo>& src_info = None, const Option<ReportNumber>& msg_nb = None) noexcept override
       {
+        ++ErrorReporter::warn_count;
         Rep::warn(str, src_info, msg_nb);
       }
 
       void error(StringView str, const Option<SourceInfo>& src_info = None, const Option<ReportNumber>& msg_nb = None) noexcept override
       {
+        ++ErrorReporter::error_count;
         Rep::error(str, src_info, msg_nb);
       }
 
