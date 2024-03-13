@@ -430,6 +430,28 @@ namespace clt::lng
       return *this == type;
     }
 
+    template<ColtType T>
+    /// @brief Casts the current type to 'T'
+    /// @tparam T The type to cast to
+    /// @return nullptr if the variant does not contain 'T', or valid pointer to 'T'
+    constexpr T* getType() noexcept
+    {
+      if (getTypeID() != TypeToTypeID<T>())
+        return nullptr;
+      return &getUnionMember<T>();
+    }
+
+    template<ColtType T>
+    /// @brief Casts the current type to 'T'
+    /// @tparam T The type to cast to
+    /// @return nullptr if the variant does not contain 'T', or valid pointer to 'T'
+    constexpr const T* getType() const noexcept
+    {
+      if (getTypeID() != TypeToTypeID<T>())
+        return nullptr;
+      return &getUnionMember<T>();
+    }
+
     /// @brief Hashes the current type.
     /// The hash of different type might be equal!
     /// @return The hash of the current type
