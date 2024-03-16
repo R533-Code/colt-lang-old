@@ -1,6 +1,8 @@
 #ifndef HG_COLT_GLOBAL
 #define HG_COLT_GLOBAL
 
+#include "lng/macro_helper.h"
+
 DECLARE_ENUM_WITH_TYPE(u8, clt::lng, GlobalID,
   GLOBAL_FN,
   GLOBAL_VAR,
@@ -9,17 +11,23 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, GlobalID,
 );
 
 /// @brief Macro Type List (with same index as GlobalID declaration!)
-#define COLTC_TYPE_LIST FnGlobal, VarGlobal, TypeGlobal, AliasGlobal
+#define COLTC_GLOBAL_LIST FnGlobal, VarGlobal, TypeGlobal, AliasGlobal
 
 namespace clt::lng
 {
+  // Forward declarations
+  class GlobalVariant;
+  FORWARD_DECLARE_TYPE_LIST(COLTC_GLOBAL_LIST);
+  // TypeToGlobalID
+  CONVERT_TYPE_TO_ENUM(GlobalID, COLTC_GLOBAL_LIST);
+
   /// @brief Base class of all types
   class GlobalBase
   {
   public:
     static constexpr u64 BITS_FOR_ID = 7;
 
-    static_assert(clt::reflect<GlobalID>::max() < (u64)clt::pow((u64)2, BITS_FOR_ID),
+    static_assert(clt::reflect<GlobalID>::max() < (2 << BITS_FOR_ID),
       "Not enough bits to represent GlobalID!");
 
   private:
@@ -72,30 +80,6 @@ namespace clt::lng
   {
     { a.classof() } -> std::same_as<GlobalID>;
   };
-
-  // Forward declarations
-  class FnGlobal;
-  class VarGlobal;
-  class TypeGlobal;
-  class AliasGlobal;
-  class GlobalVariant;
-
-  template<typename T>
-  /// @brief Converts a type to its ID.
-  /// @return The ID representing 'T'
-  constexpr GlobalID TypeToGlobalID() noexcept
-  {
-    using enum GlobalID;
-
-    if constexpr (std::same_as<T, FnGlobal>)
-      return GLOBAL_FN;
-    if constexpr (std::same_as<T, VarGlobal>)
-      return GLOBAL_VAR;
-    if constexpr (std::same_as<T, TypeGlobal>)
-      return GLOBAL_TYPE;
-    if constexpr (std::same_as<T, AliasGlobal>)
-      return GLOBAL_ALIAS;
-  }
 
   /// @brief Represents a function
   class FnGlobal
@@ -150,14 +134,14 @@ namespace clt::lng
     final : public GlobalBase
   {
     /// @brief The aliased global
-    GlobalVariant& alias_to;
+    GlobalVariant* alias_to;
 
   public:
     /// @brief Constructs an alias to another global
     /// @param alias_to The aliased global
     /// @param is_private True if private
     constexpr AliasGlobal(GlobalVariant& alias_to, bool is_private) noexcept
-      : GlobalBase(TypeToGlobalID<AliasGlobal>(), is_private), alias_to(alias_to) {}
+      : GlobalBase(TypeToGlobalID<AliasGlobal>(), is_private), alias_to(&alias_to) {}
 
     constexpr AliasGlobal(AliasGlobal&&) noexcept = default;
     constexpr AliasGlobal(const AliasGlobal&) noexcept = default;
@@ -166,7 +150,7 @@ namespace clt::lng
 
     /// @brief Returns the aliased global
     /// @return The aliased global
-    constexpr GlobalVariant& getAliasTo() const noexcept { return alias_to; }
+    constexpr GlobalVariant& getAliasTo() const noexcept { return *alias_to; }
   };
 
   /// @brief Macro used to generate getUnionMember body
@@ -182,7 +166,7 @@ namespace clt::lng
 
   /// @brief Represents a global.
   /// Rather than using an inheritance, we make use of a variant.
-  struct GlobalVariant
+  class GlobalVariant
   {
     template<typename T, typename... Args>
     /// @brief Helper to construct the union
