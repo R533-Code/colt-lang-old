@@ -9,6 +9,7 @@
 #include "args.h"
 #include "util/run_tests.h"
 #include "ast/parsed_program.h"
+#include "ast/ast.h"
 
 using namespace clt;
 
