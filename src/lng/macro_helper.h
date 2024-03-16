@@ -29,4 +29,11 @@
     COLT_FOR_EACH(IMPL_CONVERT_TYPE_TO_ENUM, type_list) \
   }
 
+/// @brief Expands to default copy/move constructor/assignment operator
+#define MAKE_DEFAULT_COPY_AND_MOVE_FOR(type) \
+  constexpr type(type&&) noexcept = default; \
+  constexpr type(const type&) noexcept = default; \
+  constexpr type& operator=(type&&) noexcept = default; \
+  constexpr type& operator=(const type&) noexcept = default;
+
 #endif // !HG_COLTC_MACRO_HELPER
