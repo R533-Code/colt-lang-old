@@ -13,6 +13,7 @@
 #include "colt_builtin_id.h"
 #include "util/hash.h"
 #include "colt_type_token.h"
+#include "macro_helper.h"
 
 DECLARE_ENUM_WITH_TYPE(u8, clt::lng, TypeID,
   TYPE_ERROR, TYPE_BUILTIN, TYPE_VOID,
@@ -25,6 +26,11 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, TypeID,
 
 namespace clt::lng
 {
+  // Forward declarations
+  FORWARD_DECLARE_TYPE_LIST(COLTC_TYPE_LIST);
+  // TypeToTypeID
+  CONVERT_TYPE_TO_ENUM(TypeID, COLTC_TYPE_LIST);
+
   /// @brief Base class of all types
   class TypeBase
   {
@@ -55,39 +61,7 @@ namespace clt::lng
   {
     { a.classof() } -> std::same_as<TypeID>;
     { a.getHash() } -> std::same_as<size_t>;
-  };
-
-  // Forward declarations
-  class ErrorType;
-  class BuiltinType;
-  class VoidType;
-  class OpaquePtrType;
-  class MutOpaquePtrType;
-  class PtrType;
-  class MutPtrType;
-
-  template<typename T>
-  /// @brief Converts a type to its ID.
-  /// @return The ID representing 'T'
-  constexpr TypeID TypeToTypeID() noexcept
-  {
-    using enum TypeID;
-
-    if constexpr (std::same_as<T, ErrorType>)
-      return TYPE_ERROR;
-    if constexpr (std::same_as<T, BuiltinType>)
-      return TYPE_BUILTIN;
-    if constexpr (std::same_as<T, VoidType>)
-      return TYPE_VOID;
-    if constexpr (std::same_as<T, OpaquePtrType>)
-      return TYPE_OPTR;
-    if constexpr (std::same_as<T, MutOpaquePtrType>)
-      return TYPE_MUT_OPTR;
-    if constexpr (std::same_as<T, PtrType>)
-      return TYPE_PTR;
-    if constexpr (std::same_as<T, MutPtrType>)
-      return TYPE_MUT_PTR;
-  }
+  };  
 
   // Create a type that is default constructible, movable and move assignable
 #define CREATE_TYPE(name) class name final : public TypeBase \
@@ -237,7 +211,7 @@ namespace clt::lng
       seed = hash_combine(seed, hash_value(getPointingTo().getID()));
       return seed;
     }
-  };
+  };  
 
   /// @brief Type List of all Colt Types
   using ColtTypeList = meta::type_list<COLTC_TYPE_LIST>;
