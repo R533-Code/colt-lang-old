@@ -34,6 +34,7 @@ namespace clt::lng
     u32 warn_count  = 0;
 
   public:
+    /// @brief The result of parsing a file
     enum ParseResult
       : u8
     {
@@ -58,7 +59,7 @@ namespace clt::lng
     /// @return The warnings count
     u64 getWarnCount() const noexcept    
     {
-      assert_true("parse must called before this method!", to_parse.capacity() == 0);
+      assert_true("parse must called before this method!", to_parse.capacity() != 0);
       return warn_count;
     }
     
@@ -66,7 +67,7 @@ namespace clt::lng
     /// @return The errors count
     u64 getErrorCount() const noexcept
     {
-      assert_true("parse must called before this method!", to_parse.capacity() == 0);
+      assert_true("parse must called before this method!", to_parse.capacity() != 0);
       return error_count;
     }
   };
