@@ -99,6 +99,42 @@ namespace clt::lng
     constexpr Lexeme getLexeme() const noexcept { return static_cast<Lexeme>(lexeme); }
   };
 
+  /// @brief Represents a range of Token
+  class TokenRange
+  {
+    /// @brief The beginning of the range
+    u32 start_index;
+    /// @brief The end of the range (non-inclusive)
+    u32 end_index;
+
+#ifdef COLT_DEBUG
+    /// @brief On debug, we store the ID of the TokenBuffer owning the Token
+    u32 buffer_id;
+
+    /// @brief Constructs a range of Token
+    /// @param start The start of the range
+    /// @param end The end of the range
+    /// @param buffer_id The buffer ID (used on Debug)
+    constexpr TokenRange(u32 start, u32 end, u32 buffer_id) noexcept
+      : start_index(start), end_index(end), buffer_id(buffer_id) {}
+
+#else
+    /// @brief Constructs a range of Token
+    /// @param start The start of the range
+    /// @param end The end of the range
+    constexpr TokenRange(u32 start, u32 end, u32 buffer_id) noexcept
+      : start_index(start), end_index(end), buffer_id(buffer_id) {}
+#endif // COLT_DEBUG
+    friend class TokenBuffer;
+  
+  public:
+    TokenRange() = delete;
+    constexpr TokenRange(TokenRange&&) noexcept = default;
+    constexpr TokenRange(const TokenRange&) noexcept = default;
+    constexpr TokenRange& operator=(TokenRange&&) noexcept = default;
+    constexpr TokenRange& operator=(const TokenRange&) noexcept = default;
+  };
+
   class TokenBuffer
   {
     /// @brief The array of identifiers
@@ -167,7 +203,7 @@ namespace clt::lng
     /// @param line The line to save
     void addLine(StringView line) noexcept
     {
-      lines.push_back(line);    
+      lines.push_back(line);
     }
 
     /// @brief Generates a Token
@@ -186,6 +222,18 @@ namespace clt::lng
       tokens.push_back(Token{ lexeme, static_cast<u32>(tokens_info.size()) });
       tokens_info.push_back(TokenInfo{ column, size, line, line });
 #endif // COLT_DEBUG
+    }
+
+    TokenRange getRangeFrom(Token start, Token end) const noexcept
+    {
+      assert_true("Invalid range!", start.info_index < end.info_index);
+#ifdef COLT_DEBUG
+      owns(start), owns(end);
+      return TokenRange{ start.info_index, end.info_index, buffer_id };
+#else
+      return TokenRange{ start.info_index, end.info_index };
+#endif // COLT_DEBUG
+
     }
 
     void addIdentifier(StringView value, Lexeme lexeme, u32 line, u32 column, u32 size) noexcept
