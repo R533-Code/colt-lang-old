@@ -18,10 +18,6 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, UnaryOp,
 	OP_DEC,
   /// @brief -...
   OP_NEGATE,
-  /// @brief &...
-	OP_ADDRESS,
-  /// @brief *...
-  OP_DEREF,
   /// @brief !...
   OP_BOOL_NOT,
   /// @brief ~...
@@ -198,12 +194,8 @@ namespace clt::lng
 			return UnaryOp::OP_INC;
 		case TKN_MINUS_MINUS:
 			return UnaryOp::OP_DEC;
-		case TKN_AND:
-			return UnaryOp::OP_ADDRESS;
 		case TKN_MINUS:
 			return UnaryOp::OP_NEGATE;
-		case TKN_STAR:
-			return UnaryOp::OP_DEREF;
 		case TKN_EXCLAM:
 			return UnaryOp::OP_BOOL_NOT;
 		case TKN_TILDE:
@@ -305,10 +297,6 @@ namespace clt::lng
 			return "--";
 		case OP_NEGATE:
 			return "-";
-		case OP_ADDRESS:
-			return "&";
-		case OP_DEREF:
-			return "*";
 		case OP_BOOL_NOT:
 			return "!";
 		case OP_BIT_NOT:
