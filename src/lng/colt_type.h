@@ -29,7 +29,7 @@ namespace clt::lng
   // Forward declarations
   FORWARD_DECLARE_TYPE_LIST(COLTC_TYPE_LIST);
   // TypeToTypeID
-  CONVERT_TYPE_TO_ENUM(TypeID, COLTC_TYPE_LIST);
+  CONVERT_TYPES_TO_ENUM(TypeID, COLTC_TYPE_LIST);
 
   /// @brief Base class of all types
   class TypeBase

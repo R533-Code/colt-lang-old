@@ -22,7 +22,7 @@
 ///         see `colt_type.h`.
 /// This macro relies on the fact that the 'type_list' contains
 /// the types in the same order than the enum they represent.
-#define CONVERT_TYPE_TO_ENUM(enum_name, type_list) template<typename T> \
+#define CONVERT_TYPES_TO_ENUM(enum_name, type_list) template<typename T> \
   consteval enum_name TypeTo##enum_name() noexcept {\
     size_t size = 0; \
     using ty = enum_name; \

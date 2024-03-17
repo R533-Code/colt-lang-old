@@ -19,7 +19,7 @@ namespace clt::lng
   class GlobalVariant;
   FORWARD_DECLARE_TYPE_LIST(COLTC_GLOBAL_LIST);
   // TypeToGlobalID
-  CONVERT_TYPE_TO_ENUM(GlobalID, COLTC_GLOBAL_LIST);
+  CONVERT_TYPES_TO_ENUM(GlobalID, COLTC_GLOBAL_LIST);
 
   /// @brief Base class of all types
   class GlobalBase
