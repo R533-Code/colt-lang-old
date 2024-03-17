@@ -43,11 +43,7 @@ namespace clt::lng
     /// @param id The Global ID
     constexpr GlobalBase(GlobalID id, bool is_private) noexcept
       : global_id(static_cast<u8>(id)), isprivate(is_private) {}
-    // Move constructible and move assignable
-    constexpr GlobalBase(GlobalBase&&) noexcept = default;
-    constexpr GlobalBase(const GlobalBase&) noexcept = default;
-    constexpr GlobalBase& operator=(GlobalBase&&) noexcept = default;
-    constexpr GlobalBase& operator=(const GlobalBase&) noexcept = default;
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(GlobalBase);
 
     /// @brief Check if the current global is private
     /// @return True if private
@@ -91,10 +87,7 @@ namespace clt::lng
     constexpr FnGlobal(bool is_private) noexcept
       : GlobalBase(TypeToGlobalID<FnGlobal>(), is_private) {}
 
-    constexpr FnGlobal(FnGlobal&&) noexcept = default;
-    constexpr FnGlobal(const FnGlobal&) noexcept = default;
-    constexpr FnGlobal& operator=(FnGlobal&&) noexcept = default;
-    constexpr FnGlobal& operator=(const FnGlobal&) noexcept = default;
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(FnGlobal);
   };
 
   /// @brief Represents a global variable
@@ -106,11 +99,8 @@ namespace clt::lng
     /// @param is_private True if private
     constexpr VarGlobal(bool is_private) noexcept
       : GlobalBase(TypeToGlobalID<VarGlobal>(), is_private) {}
-
-    constexpr VarGlobal(VarGlobal&&) noexcept = default;
-    constexpr VarGlobal(const VarGlobal&) noexcept = default;
-    constexpr VarGlobal& operator=(VarGlobal&&) noexcept = default;
-    constexpr VarGlobal& operator=(const VarGlobal&) noexcept = default;
+    
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(VarGlobal);
   };
 
   /// @brief Represents a custom type
@@ -123,10 +113,7 @@ namespace clt::lng
     constexpr TypeGlobal(bool is_private) noexcept
       : GlobalBase(TypeToGlobalID<TypeGlobal>(), is_private) {}
 
-    constexpr TypeGlobal(TypeGlobal&&) noexcept = default;
-    constexpr TypeGlobal(const TypeGlobal&) noexcept = default;
-    constexpr TypeGlobal& operator=(TypeGlobal&&) noexcept = default;
-    constexpr TypeGlobal& operator=(const TypeGlobal&) noexcept = default;
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(TypeGlobal);
   };
 
   /// @brief Represents an alias to another global
@@ -143,10 +130,7 @@ namespace clt::lng
     constexpr AliasGlobal(GlobalVariant& alias_to, bool is_private) noexcept
       : GlobalBase(TypeToGlobalID<AliasGlobal>(), is_private), alias_to(&alias_to) {}
 
-    constexpr AliasGlobal(AliasGlobal&&) noexcept = default;
-    constexpr AliasGlobal(const AliasGlobal&) noexcept = default;
-    constexpr AliasGlobal& operator=(AliasGlobal&&) noexcept = default;
-    constexpr AliasGlobal& operator=(const AliasGlobal&) noexcept = default;
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(AliasGlobal);
 
     /// @brief Returns the aliased global
     /// @return The aliased global

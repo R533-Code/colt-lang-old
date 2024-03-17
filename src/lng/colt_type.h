@@ -43,12 +43,8 @@ namespace clt::lng
     /// @brief Constructs a TypeBase
     /// @param id The Type ID
     constexpr TypeBase(TypeID id) noexcept
-      : type_id(id) {}
-    // Move constructible and move assignable
-    constexpr TypeBase(TypeBase&&) noexcept = default;
-    constexpr TypeBase(const TypeBase&) noexcept = default;
-    constexpr TypeBase& operator=(TypeBase&&) noexcept = default;
-    constexpr TypeBase& operator=(const TypeBase&) noexcept = default;
+      : type_id(id) {}    
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(TypeBase);
 
     /// @brief Returns the ID of the type (used for down-casts)
     /// @return The TypeID of the current type
@@ -68,10 +64,7 @@ namespace clt::lng
                           { \
                           public: \
                             constexpr name() noexcept : TypeBase(TypeToTypeID<name>()) {} \
-                            constexpr name(name&&) noexcept = default; \
-                            constexpr name(const name&) noexcept = default; \
-                            constexpr name& operator=(name&&) noexcept = default; \
-                            constexpr name& operator=(const name&) noexcept = default; \
+                            MAKE_DEFAULT_COPY_AND_MOVE_FOR(name) \
                             constexpr bool operator==(const name&) const { return true; } \
                             constexpr size_t getHash() const noexcept { return hash_value(static_cast<u8>(classof())); } \
                           }
@@ -107,11 +100,7 @@ namespace clt::lng
       : TypeBase(TypeToTypeID<BuiltinType>()), type_id(id) {}
     // No default constructor
     BuiltinType() = delete;
-    // Move constructible and move assignable
-    constexpr BuiltinType(BuiltinType&&) noexcept = default;
-    constexpr BuiltinType& operator=(BuiltinType&&) noexcept = default;
-    constexpr BuiltinType(const BuiltinType&) noexcept = default;
-    constexpr BuiltinType& operator=(const BuiltinType&) noexcept = default;
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(BuiltinType);
 
     /// @brief Check if two built-in types represent the same types
     /// @param b The other built-in type
@@ -147,11 +136,7 @@ namespace clt::lng
       : TypeBase(TypeToTypeID<PtrType>()), type_id(id) {}
     // No default constructor
     PtrType() = delete;
-    // Move constructible and move assignable
-    constexpr PtrType(PtrType&&) noexcept = default;
-    constexpr PtrType& operator=(PtrType&&) noexcept = default;
-    constexpr PtrType(const PtrType&) noexcept = default;
-    constexpr PtrType& operator=(const PtrType&) noexcept = default;
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(PtrType);
 
     /// @brief Check if two ptr types represent the same type
     /// @param b The other pointer type
@@ -187,11 +172,7 @@ namespace clt::lng
       : TypeBase(TypeToTypeID<MutPtrType>()), type_id(id) {}
     // No default constructor
     MutPtrType() = delete;
-    // Move constructible and move assignable
-    constexpr MutPtrType(MutPtrType&&) noexcept = default;
-    constexpr MutPtrType& operator=(MutPtrType&&) noexcept = default;
-    constexpr MutPtrType(const MutPtrType&) noexcept = default;
-    constexpr MutPtrType& operator=(const MutPtrType&) noexcept = default;
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(MutPtrType);
 
     /// @brief Check if two ptr types represent the same type
     /// @param b The other pointer type
