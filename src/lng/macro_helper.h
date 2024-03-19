@@ -36,4 +36,26 @@
   constexpr type& operator=(type&&) noexcept = default; \
   constexpr type& operator=(const type&) noexcept = default;
 
+#define IMPL_MAKE_UNION(a) a _##a;
+#define IMPL_GET_MEMBER(a) if constexpr (std::same_as<T, a>) return _##a;
+
+/// @brief Helper used in variants, see `colt_global.h.
+/// Creates a union containing the types in the type list, with member
+/// name _ followed by the type name.
+#define MAKE_UNION_AND_GET_MEMBER(type_list) \
+  template<typename T, typename... Args> \
+  static constexpr std::monostate construct(T* placement, Args&&... args) \
+  { \
+    std::construct_at(placement, std::forward<Args>(args)...); \
+    return {}; \
+  } \
+  union { \
+    std::monostate _mono_state_; \
+    COLT_FOR_EACH(IMPL_MAKE_UNION, type_list) \
+  }; \
+  template<typename T> \
+  constexpr const auto& getUnionMember() const noexcept { COLT_FOR_EACH(IMPL_GET_MEMBER, type_list) }  \
+  template<typename T> \
+  constexpr auto& getUnionMember() noexcept { COLT_FOR_EACH(IMPL_GET_MEMBER, type_list) }
+
 #endif // !HG_COLTC_MACRO_HELPER

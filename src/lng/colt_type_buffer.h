@@ -43,6 +43,20 @@ namespace clt::lng
       return createToken(pair);
     }
 
+    /// @brief Returns an error type
+    /// @return Error Type
+    TypeToken getErrorType() noexcept
+    {
+      return addType(make_coltc_type<ErrorType>());
+    }
+
+    /// @brief Returns a void type
+    /// @return Void Type
+    TypeToken getVoidType() noexcept
+    {
+      return addType(make_coltc_type<VoidType>());
+    }
+
     /// @brief Saves a built-in type
     /// @param id The type ID
     /// @return The TypeToken representing the type
