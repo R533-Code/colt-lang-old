@@ -137,57 +137,11 @@ namespace clt::lng
     constexpr GlobalVariant& getAliasTo() const noexcept { return *alias_to; }
   };
 
-  /// @brief Macro used to generate getUnionMember body
-#define COLTC_getUnionMember \
-  if constexpr (std::same_as<T, FnGlobal>) \
-    return fn_global; \
-  if constexpr (std::same_as<T, VarGlobal>) \
-    return var_global; \
-  if constexpr (std::same_as<T, TypeGlobal>) \
-    return type_global; \
-  if constexpr (std::same_as<T, AliasGlobal>) \
-    return alias_global;
-
   /// @brief Represents a global.
   /// Rather than using an inheritance, we make use of a variant.
   class GlobalVariant
   {
-    template<typename T, typename... Args>
-    /// @brief Helper to construct the union
-    /// @param placement The pointer to the object to construct
-    /// @param args... The arguments to forward to the constructor
-    /// @return Empty monostate
-    static constexpr std::monostate construct(T* placement, Args&&... args)
-    {
-      // Use construct_at rather than placement new for constexpr
-      std::construct_at(placement, std::forward<Args>(args)...);
-      return {};
-    }
-
-    /// @brief The possible types contained in the variant
-    union
-    {
-      // Helper used in constructor
-      std::monostate   _mono_state_;
-      /// @brief The function global
-      FnGlobal         fn_global;
-      /// @brief The variable global
-      VarGlobal        var_global;
-      /// @brief The type global
-      TypeGlobal       type_global;
-      /// @brief The alias global
-      AliasGlobal      alias_global;
-    };
-
-    template<typename T>
-    /// @brief Returns a reference to the union member of type 'T'
-    /// @return Reference to the union member of type 'T'
-    constexpr const auto& getUnionMember() const noexcept { COLTC_getUnionMember; }
-
-    template<typename T>
-    /// @brief Returns a reference to the union member of type 'T'
-    /// @return Reference to the union member of type 'T'
-    constexpr auto& getUnionMember() noexcept { COLTC_getUnionMember; }
+    MAKE_UNION_AND_GET_MEMBER(COLTC_GLOBAL_LIST);
 
   public:
     template<ColtGlobal Type, typename... Args>
@@ -209,15 +163,15 @@ namespace clt::lng
     /// @return The ID of the current type
     constexpr GlobalID getGlobalID() const noexcept
     {
-      // No idea if this is UB, but for know leave it as is.
-      return std::bit_cast<GlobalBase>(fn_global).classof();
+      // Most likely UB, but for know leave it as is.
+      return std::bit_cast<GlobalBase>(_FnGlobal).classof();
     }
 
     /// @brief Check if this global is private
     /// @return True if private
     constexpr bool isPrivate() const noexcept
     {
-      return std::bit_cast<GlobalBase>(fn_global).isPrivate();
+      return std::bit_cast<GlobalBase>(_FnGlobal).isPrivate();
     }
 
     /// @brief Check if this global is public
@@ -260,7 +214,5 @@ namespace clt::lng
     constexpr bool isAlias() const noexcept { return getGlobalID() == GlobalID::GLOBAL_ALIAS; }
   };
 }
-
-#undef COLTC_getUnionMember
 
 #endif // !HG_COLT_GLOBAL
