@@ -8,6 +8,7 @@
 #ifndef HG_COLT_EXPR
 #define HG_COLT_EXPR
 
+#include "meta/meta_type_list.h"
 #include "lng/macro_helper.h"
 #include "lex/colt_token_buffer.h"
 #include "lng/colt_type_buffer.h"
@@ -36,6 +37,9 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, ExprID,
    FnDeclExpr, FnCallExpr, \
    ScopeExpr, ConditionExpr
 
+#define COLTC_PROD_EXPR_LIST ErrorExpr, LiteralExpr, UnaryExpr, \
+  BinaryExpr, CastExpr, AddressOfExpr, PtrLoadExpr, VarReadExpr, GlobalReadExpr, FnCallExpr
+
 namespace clt::lng
 {
   // Forward declarations
@@ -47,6 +51,10 @@ namespace clt::lng
   /// Can be any of [ErrorExpr, LiteralExpr, UnaryExpr, BinaryExpr, CastExpr,
   /// AddressOfExpr, PtrLoadExpr, VarReadExpr, GlobalReadExpr, FnCallExpr]
   using ProdExprToken = u32;
+  
+  template<typename T>
+  concept ProducerExpr = meta::is_any_of<T, COLTC_PROD_EXPR_LIST>;
+
   /// @brief Represents any of [ErrorExpr, VarDeclExpr, VarWriteExpr,
   /// GlobalDeclExpr, PtrStoreExpr, GlobalWriteExpr, MoveExpr, CopyExpr, CMoveExpr]
   using  VarExprToken = u32;
@@ -214,6 +222,7 @@ namespace clt::lng
     /// @param range The range of tokens
     /// @param type The type to cast to
     /// @param to_cast The expression to cast
+    /// @param is_bit_cast True if bit cast
     constexpr CastExpr(TokenRange range, TypeToken cast_to, ProdExprToken to_cast, bool is_bit_cast) noexcept
       : ExprBase(TypeToExprID<CastExpr>(), cast_to, range, is_bit_cast), to_cast(to_cast) {}
 
@@ -232,11 +241,49 @@ namespace clt::lng
     constexpr bool isBitCast() const noexcept { return ExprBase::padding0; }
   };
 
-  class ExprBuffer
+  /// @brief Returns the address of a variable
+  class AddressOfExpr
+    final : public ExprBase
   {
-  
+    /// @brief The variable declaration whose address to return
+    StmtExprToken name;
+
   public:
+    /// @brief Constructor
+    /// @param range The range of tokens
+    /// @param type The type of the expression
+    /// @param name The declaration of the variable whose address to return
+    constexpr AddressOfExpr(TokenRange range, TypeToken type, StmtExprToken name) noexcept
+      : ExprBase(TypeToExprID<AddressOfExpr>(), type, range), name(name) {}
+
+    /// @brief Returns the declaration of the variable whose address to return
+    /// @return The declaration of the variable whose address to return
+    constexpr StmtExprToken getName() const noexcept { return name; }
   };
+
+  /// @brief Represents a load from a pointer
+  class PtrLoadExpr
+    final : public ExprBase
+  {
+    /// @brief The expression whose result to load from
+    ProdExprToken to_load;
+
+  public:
+    /// @brief Constructor
+    /// @param range The range of tokens
+    /// @param type The resulting type (must be the type pointed by 'load_from')
+    /// @param load_from The expression whose result to load from
+    constexpr PtrLoadExpr(TokenRange range, TypeToken type, ProdExprToken load_from) noexcept
+      : ExprBase(TypeToExprID<PtrLoadExpr>(), type, range), to_load(load_from) {}
+
+    /// @brief Returns the expression pointer from which to load
+    /// @return The expression whose result to load from
+    constexpr ProdExprToken getToLoad() const noexcept { return to_load; }
+  };
+  
+  class VarReadExpr {};
+  class GlobalReadExpr {};
+  class FnCallExpr{};  
 }
 
 #endif // !HG_COLT_EXPR
