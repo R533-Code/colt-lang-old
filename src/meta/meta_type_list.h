@@ -191,6 +191,10 @@ namespace clt::meta
   template<template<typename> typename predicate, typename NOT_FOUND, typename T, typename... Ts>
   /// @brief Finds the first type for which the predicate returned true, or NOT_FOUND if none exist
   using find_first_match_t = typename find_first_match<predicate, NOT_FOUND, T, Ts...>::type;
+
+  template <typename T, typename... U>
+  /// @brief Check if a type is any of a list
+  concept is_any_of = (std::same_as<T, U> || ...);
 }
 
 #endif //!HG_META_TYPE_LIST
