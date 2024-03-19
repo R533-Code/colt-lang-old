@@ -122,8 +122,8 @@ namespace clt::lng
     /// @brief Constructs a range of Token
     /// @param start The start of the range
     /// @param end The end of the range
-    constexpr TokenRange(u32 start, u32 end, u32 buffer_id) noexcept
-      : start_index(start), end_index(end), buffer_id(buffer_id) {}
+    constexpr TokenRange(u32 start, u32 end) noexcept
+      : start_index(start), end_index(end) {}
 #endif // COLT_DEBUG
     friend class TokenBuffer;
   
