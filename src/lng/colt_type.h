@@ -201,29 +201,12 @@ namespace clt::lng
     "ColtTypeList and TypeID count must be equal!");
 
   /// @brief Macro helper to generate function table
-#define COLTC_EXPAND_VARIANT_ARG(template_fn, value) , &template_fn<value>
+#define COLTC_EXPAND_VARIANT_ARG(template_fn, value) , &template_fn<clt::lng:: value>
   /// @brief Macro helper to generate function table
 #define COLTC_TYPE_VARIANT_IMPL_GEN_TABLE(template_fn, first, ...) \
-  std::array{ &template_fn<first> COLT_FOR_EACH_1ARG(COLTC_EXPAND_VARIANT_ARG, template_fn, __VA_ARGS__) }
+  std::array{ &template_fn<clt::lng:: first> COLT_FOR_EACH_1ARG(COLTC_EXPAND_VARIANT_ARG, template_fn, __VA_ARGS__) }
   /// @brief Macro used inside of TypeVariant, see OperatorEqualTable
 #define COLTC_TYPE_VARIANT_GEN_TABLE(template_fn, list) COLTC_TYPE_VARIANT_IMPL_GEN_TABLE(template_fn, list)
-
-  /// @brief Macro used to generate getUnionMember body
-#define COLTC_getUnionMember \
-  if constexpr (std::same_as<T, ErrorType>) \
-    return error_type; \
-  if constexpr (std::same_as<T, VoidType>) \
-    return void_type; \
-  if constexpr (std::same_as<T, OpaquePtrType>) \
-    return opaque_type; \
-  if constexpr (std::same_as<T, MutOpaquePtrType>) \
-    return mut_opaque_type; \
-  if constexpr (std::same_as<T, BuiltinType>) \
-    return builtin_type; \
-  if constexpr (std::same_as<T, PtrType>) \
-    return ptr_type; \
-  if constexpr (std::same_as<T, MutPtrType>) \
-    return mut_ptr_type
 
   /// @brief Represents a type.
   /// Rather than using an inheritance, we make use of a variant.
@@ -231,48 +214,7 @@ namespace clt::lng
   /// function dispatch.
   class TypeVariant
   {
-    template<typename T, typename... Args>
-    /// @brief Helper to construct the union
-    /// @param placement The pointer to the object to construct
-    /// @param args... The arguments to forward to the constructor
-    /// @return Empty monostate
-    static constexpr std::monostate construct(T* placement, Args&&... args)
-    {
-      // Use construct_at rather than placement new for constexpr
-      std::construct_at(placement, std::forward<Args>(args)...);
-      return {};
-    }
-
-    /// @brief The possible types contained in the variant
-    union
-    {
-      // Helper used in constructor
-      std::monostate   _mono_state_;
-      /// @brief Access through ErrorType
-      ErrorType        error_type;
-      /// @brief Access through VoidType
-      VoidType         void_type;
-      /// @brief Access through OpaquePtrType
-      OpaquePtrType    opaque_type;
-      /// @brief Access through MutOpaquePtrType
-      MutOpaquePtrType mut_opaque_type;
-      /// @brief Access through BuiltinType
-      BuiltinType      builtin_type;
-      /// @brief Access through PtrType
-      PtrType          ptr_type;
-      /// @brief Access through MutPtrType
-      MutPtrType       mut_ptr_type;      
-    };
-
-    template<typename T>
-    /// @brief Returns a reference to the union member of type 'T'
-    /// @return Reference to the union member of type 'T'
-    constexpr const auto& getUnionMember() const noexcept { COLTC_getUnionMember; }
-    
-    template<typename T>
-    /// @brief Returns a reference to the union member of type 'T'
-    /// @return Reference to the union member of type 'T'
-    constexpr auto& getUnionMember() noexcept { COLTC_getUnionMember; }
+    MAKE_UNION_AND_GET_MEMBER(COLTC_TYPE_LIST);
 
     // Generates a dispatch table for using table_operator_equal.
     // The generated dispatch table can be indexed by getTypeID().
@@ -324,11 +266,15 @@ namespace clt::lng
       // The memcpy is optimized away by the compiler.
       TypeID id;
       if (std::is_constant_evaluated()) // bit_cast is constexpr...
-        id = std::bit_cast<TypeID>(error_type);
+        id = std::bit_cast<TypeID>(_ErrorType);
       else
-        std::memcpy(&id, &error_type, sizeof(TypeID));
+        std::memcpy(&id, &_ErrorType, sizeof(TypeID));
       return id;
     }
+
+    /// @brief Returns the type ID of the current type
+    /// @return The ID of the current type
+    constexpr TypeID classof() const noexcept { return getTypeID(); }
 
     /// @brief Check if the type is a pointer to mutable
     /// @return True if TYPE_MUT_OPTR or TYPE_MUT_PTR
@@ -344,6 +290,20 @@ namespace clt::lng
       return getTypeID() == TypeID::TYPE_OPTR || getTypeID() == TypeID::TYPE_PTR;
     }
 
+    /// @brief Check if the type is a pointer (optionally to mutable)
+    /// @return True if isPtr or isMutPtr
+    constexpr bool isAnyPtr() const noexcept
+    {
+      return isMutPtr() || isPtr();
+    }
+
+    /// @brief Check if the type is an opaque (possibly mutable) pointer 
+    /// @return True if mut? opaque pointer
+    constexpr bool isAnyOpaquePtr() const noexcept
+    {
+      return getTypeID() == TypeID::TYPE_OPTR || getTypeID() == TypeID::TYPE_MUT_OPTR;
+    }
+    
     /// @brief Check if the current type is built-in and 'check' its ID.
     /// The check is performed with the built-in ID only if the current type
     /// is built-in.
@@ -352,7 +312,7 @@ namespace clt::lng
     constexpr bool isBuiltinAnd(BuilinTypeCheck_t check) const noexcept
     {
       return getTypeID() == TypeID::TYPE_BUILTIN
-        && check(builtin_type.typeID());
+        && check(_BuiltinType.typeID());
     }
 
     /// @brief Check if the current type is void
@@ -459,7 +419,6 @@ namespace clt
   };
 }
 
-#undef COLTC_getUnionMember
 #undef COLTC_TYPE_VARIANT_GEN_TABLE
 #undef COLTC_TYPE_VARIANT_IMPL_GEN_TABLE
 #undef COLTC_EXPAND_VARIANT_ARG
