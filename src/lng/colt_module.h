@@ -5,7 +5,7 @@
 
 #include "colt_module_name.h"
 #include "structs/map.h"
-#include "ast/colt_global.h"
+#include "lng/colt_global.h"
 
 namespace clt::lng
 {
