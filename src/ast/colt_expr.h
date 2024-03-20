@@ -281,9 +281,66 @@ namespace clt::lng
     constexpr ProdExprToken getToLoad() const noexcept { return to_load; }
   };
   
-  class VarReadExpr {};
-  class GlobalReadExpr {};
-  class FnCallExpr{};  
+  /// @brief Represents a local variable read
+  class VarReadExpr
+    final : public ExprBase
+  {
+    /// @brief The declaration of the variable from which to read
+    StmtExprToken decl;
+
+  public:
+    /// @brief Constructor
+    /// @param range The range of tokens
+    /// @param type The result of the read
+    /// @param decl The variable declaration from which to read
+    constexpr VarReadExpr(TokenRange range, TypeToken type, StmtExprToken decl) noexcept
+      : ExprBase(TypeToExprID<VarReadExpr>(), type, range), decl(decl) {}
+
+    /// @brief Returns the declaration from which to read.
+    /// The returned StmtExprToken always represents a VarDeclExpr.
+    /// @return The declaration from which to read
+    constexpr StmtExprToken getDecl() const noexcept { return decl; }
+  };
+  
+  /// @brief Represents a global variable read
+  class GlobalReadExpr
+    final : public ExprBase
+  {
+    /// @brief The declaration of the variable from which to read
+    StmtExprToken decl;
+
+  public:
+    /// @brief Constructor
+    /// @param range The range of tokens
+    /// @param type The result of the read
+    /// @param decl The variable declaration from which to read
+    constexpr GlobalReadExpr(TokenRange range, TypeToken type, StmtExprToken decl) noexcept
+      : ExprBase(TypeToExprID<VarReadExpr>(), type, range), decl(decl) {}
+
+    /// @brief Returns the declaration from which to read.
+    /// The returned StmtExprToken always represents a GlobalDeclExpr.
+    /// @return The declaration from which to read
+    constexpr StmtExprToken getDecl() const noexcept { return decl; }
+  };
+  
+  // TODO: add FnCallToken type.
+  using FnCallToken = u32;
+
+  /// @brief Represents a function call
+  class FnCallExpr
+    final : public ExprBase
+  {
+    /// @brief Contains all the informations about the function call
+    FnCallToken payload;
+
+  public:
+    /// @brief Constructor
+    /// @param range The range of tokens
+    /// @param type The return type of the function (can be void)
+    /// @param call The function call informations
+    constexpr FnCallExpr(TokenRange range, TypeToken type, FnCallToken call) noexcept
+      : ExprBase(TypeToExprID<FnCallExpr>(), type, range), payload(call) {}
+  };
 }
 
 #endif // !HG_COLT_EXPR

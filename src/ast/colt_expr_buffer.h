@@ -46,25 +46,25 @@ namespace clt::lng
   class ExprBuffer
   {
     TypeBuffer& types;
-    FlatList<ProdExprVariant, 512> prod_exprs;
+    FlatList<ProdExprVariant, 512> prod_expr;
 
     /// @brief Returns the next ProdExprToken.
-    /// A push_back to prod_exprs must follow this call.
+    /// A push_back to prod_expr must follow this call.
     /// @return The next ProdExprToken
     ProdExprToken getNextProd() noexcept
     {
-      assert_true("Integer overflow!", prod_exprs.size() <= std::numeric_limits<u32>::max());
-      return ProdExprToken{ static_cast<u32>(prod_exprs.size()) };
+      assert_true("Integer overflow!", prod_expr.size() <= std::numeric_limits<u32>::max());
+      return ProdExprToken{ static_cast<u32>(prod_expr.size()) };
     }
 
     template<ProducerExpr T, typename... Args>
-    /// @brief Emplaces a new ProducerExpr at the end of 'prod_exprs'
+    /// @brief Emplaces a new ProducerExpr at the end of 'prod_expr'
     /// @param args... The arguments used to forward to the constructor
     /// @return The ProdExprToken representing the new expression
     ProdExprToken addNewProd(Args&&... args) noexcept
     {
       auto to_ret = getNextProd();
-      prod_exprs.push_back(InPlace, std::type_identity<T>{}, std::forward<Args>(args)...);
+      prod_expr.push_back(InPlace, std::type_identity<T>{}, std::forward<Args>(args)...);
       return to_ret;
     }
 
@@ -72,11 +72,11 @@ namespace clt::lng
     /// @brief Returns the expression represented by 'prod'
     /// @param prod The producer expression token
     /// @return Reference to the expression represented by 'prod'
-    ProdExprVariant& getExpr(ProdExprToken prod) noexcept { return prod_exprs[prod]; }
+    ProdExprVariant& getExpr(ProdExprToken prod) noexcept { return prod_expr[prod]; }
     /// @brief Returns the expression represented by 'prod'
     /// @param prod The producer expression token
     /// @return Reference to the expression represented by 'prod'
-    const ProdExprVariant& getExpr(ProdExprToken prod) const noexcept { return prod_exprs[prod]; }
+    const ProdExprVariant& getExpr(ProdExprToken prod) const noexcept { return prod_expr[prod]; }
 
     /// @brief Returns the type of an expression
     /// @param prod The producer expression token
@@ -165,6 +165,16 @@ namespace clt::lng
       return addNewProd<CastExpr>(range, cast_to, to_cast, true);
     }
 
+    /// @brief Creates an address of expression.
+    /// @param range The range of tokens
+    /// @param decl The variable declaration whose address to return
+    /// @return AddressOfExpr
+    ProdExprToken addAddressOf(TokenRange range, StmtExprToken decl) noexcept
+    {
+      //TODO: add body
+      unreachable("NOT IMPLEMENTED!");
+    }
+
     /// @brief Creates a pointer load.
     /// @param range The range of tokens
     /// @param to_cast The expression from which to load (of pointer type)
@@ -179,6 +189,32 @@ namespace clt::lng
       if (auto ptr = ref.getType<PtrType>(); ptr)
         return addNewProd<PtrLoadExpr>(range, ptr->getPointingTo(), to_cast);      
       clt::unreachable("Invalid type!");
+    }
+
+    /// @brief Creates a read from a variable.
+    /// @param range The range of tokens
+    /// @param var_decl The variable declaration from which to read
+    /// @return VarReadExpr
+    ProdExprToken addVarRead(TokenRange range, StmtExprToken var_decl) noexcept
+    {
+      //TODO: add body
+      unreachable("NOT IMPLEMENTED!");
+    }
+    
+    /// @brief Creates a read from a variable.
+    /// @param range The range of tokens
+    /// @param var_decl The variable declaration from which to read
+    /// @return VarReadExpr
+    ProdExprToken addGlobalRead(TokenRange range, StmtExprToken var_decl) noexcept
+    {
+      //TODO: add body
+      unreachable("NOT IMPLEMENTED!");
+    }
+
+    ProdExprToken addFnCall() noexcept
+    {
+      // TODO: add body
+      unreachable("NOT IMPLEMENTED!");
     }
   };
 }
