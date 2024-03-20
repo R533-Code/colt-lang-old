@@ -40,6 +40,11 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, ExprID,
 #define COLTC_PROD_EXPR_LIST ErrorExpr, LiteralExpr, UnaryExpr, \
   BinaryExpr, CastExpr, AddressOfExpr, PtrLoadExpr, VarReadExpr, GlobalReadExpr, FnCallExpr
 
+#define COLTC_SINK_EXPR_LIST ErrorExpr, VarWriteExpr, \
+  PtrStoreExpr, GlobalWriteExpr, MoveExpr, CopyExpr, CMoveExpr
+
+#define COLTC_STMT_EXPR_LIST ErrorExpr, VarDeclExpr, GlobalDeclExpr, ScopeExpr, ConditionExpr
+
 namespace clt::lng
 {
   // Forward declarations
@@ -51,15 +56,22 @@ namespace clt::lng
   /// Can be any of [ErrorExpr, LiteralExpr, UnaryExpr, BinaryExpr, CastExpr,
   /// AddressOfExpr, PtrLoadExpr, VarReadExpr, GlobalReadExpr, FnCallExpr]
   using ProdExprToken = u32;
-  
+
   template<typename T>
   concept ProducerExpr = meta::is_any_of<T, COLTC_PROD_EXPR_LIST>;
 
-  /// @brief Represents any of [ErrorExpr, VarDeclExpr, VarWriteExpr,
-  /// GlobalDeclExpr, PtrStoreExpr, GlobalWriteExpr, MoveExpr, CopyExpr, CMoveExpr]
-  using  VarExprToken = u32;
-  /// @brief Represents any of [ErrorExpr, ScopeExpr, ConditionExpr]
+  /// @brief Represents any of [ErrorExpr, VarWriteExpr,
+  /// PtrStoreExpr, GlobalWriteExpr, MoveExpr, CopyExpr, CMoveExpr]
+  using SinkExprToken = u32;
+
+  template<typename T>
+  concept SinkExpr = meta::is_any_of<T, COLTC_SINK_EXPR_LIST>;
+
+  /// @brief Represents any of [ErrorExpr, VarDeclExpr, GlobalDeclExpr, ScopeExpr, ConditionExpr]
   using StmtExprToken = u32;
+
+  template<typename T>
+  concept StatementExpr = meta::is_any_of<T, COLTC_STMT_EXPR_LIST>;
 
   /// @brief Base class of all expressions
   class ExprBase
@@ -70,7 +82,7 @@ namespace clt::lng
     TokenRange range;
     /// @brief The ID of the expression
     ExprID expr_id;
-  
+
   protected:
     /// @brief Byte that can be used for anything
     u8 padding0 = 0;
@@ -94,7 +106,7 @@ namespace clt::lng
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(ExprBase);
 
     /// @brief Returns the range of tokens representing the expression
-    /// @return Range of tokens reprsenting the expression
+    /// @return Range of tokens representing the expression
     constexpr TokenRange getTokenRange() const noexcept { return range; }
     /// @brief Returns the type of the expression.
     /// @return The type of the expression
@@ -103,7 +115,7 @@ namespace clt::lng
     /// @brief Returns the expression ID
     /// @return The expression ID
     constexpr ExprID classof() const noexcept { return expr_id; }
-    
+
     /// @brief Check if the current expression represents an ErrorExpr
     /// @return True if ErrorExpr
     constexpr bool isError() const noexcept { return classof() == ExprID::EXPR_ERROR; }
@@ -169,7 +181,7 @@ namespace clt::lng
     /// @brief Returns the expression on which the unary operation is applied.
     /// @return The expression on which the unary operation is applied
     constexpr ProdExprToken getExpr() const noexcept { return expr; }
-    
+
     /// @brief Returns the operation applied on the expression
     /// @return Any unary op
     constexpr UnaryOp getOp() const noexcept { return static_cast<UnaryOp>(ExprBase::padding0); }
@@ -256,6 +268,8 @@ namespace clt::lng
     constexpr AddressOfExpr(TokenRange range, TypeToken type, StmtExprToken name) noexcept
       : ExprBase(TypeToExprID<AddressOfExpr>(), type, range), name(name) {}
 
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(AddressOfExpr);
+
     /// @brief Returns the declaration of the variable whose address to return
     /// @return The declaration of the variable whose address to return
     constexpr StmtExprToken getName() const noexcept { return name; }
@@ -276,11 +290,13 @@ namespace clt::lng
     constexpr PtrLoadExpr(TokenRange range, TypeToken type, ProdExprToken load_from) noexcept
       : ExprBase(TypeToExprID<PtrLoadExpr>(), type, range), to_load(load_from) {}
 
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(PtrLoadExpr);
+
     /// @brief Returns the expression pointer from which to load
     /// @return The expression whose result to load from
     constexpr ProdExprToken getToLoad() const noexcept { return to_load; }
   };
-  
+
   /// @brief Represents a local variable read
   class VarReadExpr
     final : public ExprBase
@@ -296,12 +312,14 @@ namespace clt::lng
     constexpr VarReadExpr(TokenRange range, TypeToken type, StmtExprToken decl) noexcept
       : ExprBase(TypeToExprID<VarReadExpr>(), type, range), decl(decl) {}
 
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(VarReadExpr);
+
     /// @brief Returns the declaration from which to read.
     /// The returned StmtExprToken always represents a VarDeclExpr.
     /// @return The declaration from which to read
     constexpr StmtExprToken getDecl() const noexcept { return decl; }
   };
-  
+
   /// @brief Represents a global variable read
   class GlobalReadExpr
     final : public ExprBase
@@ -317,12 +335,14 @@ namespace clt::lng
     constexpr GlobalReadExpr(TokenRange range, TypeToken type, StmtExprToken decl) noexcept
       : ExprBase(TypeToExprID<VarReadExpr>(), type, range), decl(decl) {}
 
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(GlobalReadExpr);
+
     /// @brief Returns the declaration from which to read.
     /// The returned StmtExprToken always represents a GlobalDeclExpr.
     /// @return The declaration from which to read
     constexpr StmtExprToken getDecl() const noexcept { return decl; }
   };
-  
+
   // TODO: add FnCallToken type.
   using FnCallToken = u32;
 
@@ -340,6 +360,176 @@ namespace clt::lng
     /// @param call The function call informations
     constexpr FnCallExpr(TokenRange range, TypeToken type, FnCallToken call) noexcept
       : ExprBase(TypeToExprID<FnCallExpr>(), type, range), payload(call) {}
+
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(FnCallExpr);
+  };
+
+  /// @brief Represents a write to a local variable
+  class VarWriteExpr
+    final : public ExprBase
+  {
+    /// @brief The declaration of the variable to which to write
+    StmtExprToken decl;
+    /// @brief The value to write to the variable
+    ProdExprToken value;
+
+  public:
+    /// @brief Constructor
+    /// @param range The range of tokens
+    /// @param type The type (must be void)
+    /// @param decl The declaration of the variable from which to write
+    /// @param value The value to write to the variable
+    constexpr VarWriteExpr(TokenRange range, TypeToken type, StmtExprToken decl, ProdExprToken value) noexcept
+      : ExprBase(TypeToExprID<VarWriteExpr>(), type, range), decl(decl), value(value) {}
+
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(VarWriteExpr);
+
+    /// @brief Returns the declaration of the variable from which to write
+    /// @return The declaration of the variable from which to write
+    constexpr StmtExprToken getDecl() const noexcept { return decl; }
+
+    /// @brief Returns the value to write to the variable
+    /// @return The value to write to the variable
+    constexpr ProdExprToken getToWrite() const noexcept { return value; }
+  };
+
+  /// @brief Represents a write to a global variable
+  class GlobalWriteExpr
+    final : public ExprBase
+  {
+    /// @brief The declaration of the variable to which to write
+    StmtExprToken decl;
+    /// @brief The value to write to the variable
+    ProdExprToken value;
+
+  public:
+    /// @brief Constructor
+    /// @param range The range of tokens
+    /// @param type The type (must be void)
+    /// @param decl The declaration of the variable from which to write
+    /// @param value The value to write to the variable
+    constexpr GlobalWriteExpr(TokenRange range, TypeToken type, StmtExprToken decl, ProdExprToken value) noexcept
+      : ExprBase(TypeToExprID<GlobalWriteExpr>(), type, range), decl(decl), value(value) {}
+
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(GlobalWriteExpr);
+
+    /// @brief Returns the declaration of the variable from which to write
+    /// @return The declaration of the variable from which to write
+    constexpr StmtExprToken getDecl() const noexcept { return decl; }
+
+    /// @brief Returns the value to write to the variable
+    /// @return The value to write to the variable
+    constexpr ProdExprToken getToWrite() const noexcept { return value; }
+  };
+
+  /// @brief Represents a store through a pointer
+  class PtrStoreExpr
+    final : public ExprBase
+  {
+    /// @brief The pointer in which to write
+    ProdExprToken where;
+    /// @brief The value to write to store
+    ProdExprToken value;
+
+  public:
+    /// @brief Constructor
+    /// @param range The range of tokens
+    /// @param type The type (must be void)
+    /// @param where The pointer to which to write
+    /// @param value The value to store to the pointer
+    constexpr PtrStoreExpr(TokenRange range, TypeToken type, ProdExprToken where, ProdExprToken value) noexcept
+      : ExprBase(TypeToExprID<PtrStoreExpr>(), type, range), where(where), value(value) {}
+
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(PtrStoreExpr);
+
+    /// @brief Returns the pointer to which to store
+    /// @return The pointer to which to store
+    constexpr ProdExprToken getWhere() const noexcept { return where; }
+
+    /// @brief Returns the value to store
+    /// @return The value to store
+    constexpr ProdExprToken getToStore() const noexcept { return value; }
+  };
+
+  /// @brief Represents a move
+  class MoveExpr
+    final : public ExprBase
+  {
+    /// @brief The declaration from which to move
+    StmtExprToken decl;
+    /// @brief The declaration to which to move
+    StmtExprToken to;
+
+  public:
+    /// @brief Constructor
+    /// @param range The range of tokens
+    /// @param type The type (should be move)
+    /// @param decl The declaration from which to move
+    constexpr MoveExpr(TokenRange range, TypeToken type, StmtExprToken decl, StmtExprToken to) noexcept
+      : ExprBase(TypeToExprID<MoveExpr>(), type, range), decl(decl), to(to) {}
+
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(MoveExpr);
+
+    /// @brief Returns the declaration of the variable from which to move
+    /// @return The declaration of the variable from which to move
+    constexpr StmtExprToken getToMove() const noexcept { return decl; }
+    /// @brief Returns the declaration of the variable to which to move
+    /// @return The declaration of the variable to which to move
+    constexpr StmtExprToken getMoveTo() const noexcept { return to; }
+  };
+  
+  /// @brief Represents a copy
+  class CopyExpr
+    final : public ExprBase
+  {
+    /// @brief The declaration from which to copy
+    StmtExprToken decl;
+    /// @brief The declaration to which to copy
+    StmtExprToken to;
+
+  public:
+    /// @brief Constructor
+    /// @param range The range of tokens
+    /// @param type The type (should be copy)
+    /// @param decl The declaration from which to copy
+    constexpr CopyExpr(TokenRange range, TypeToken type, StmtExprToken decl, StmtExprToken to) noexcept
+      : ExprBase(TypeToExprID<CopyExpr>(), type, range), decl(decl), to(to) {}
+
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(CopyExpr);
+
+    /// @brief Returns the declaration of the variable from which to copy
+    /// @return The declaration of the variable from which to copy
+    constexpr StmtExprToken getToCopy() const noexcept { return decl; }
+    /// @brief Returns the declaration of the variable to which to copy
+    /// @return The declaration of the variable to which to copy
+    constexpr StmtExprToken getCopyTo() const noexcept { return to; }
+  };
+  
+  /// @brief Represents a conditional move
+  class CMoveExpr
+    final : public ExprBase
+  {
+    /// @brief The declaration from which to conditional move
+    StmtExprToken decl;
+    /// @brief The declaration to which to conditional move
+    StmtExprToken to;
+
+  public:
+    /// @brief Constructor
+    /// @param range The range of tokens
+    /// @param type The type (should be conditional move)
+    /// @param decl The declaration from which to conditional move
+    constexpr CMoveExpr(TokenRange range, TypeToken type, StmtExprToken decl, StmtExprToken to) noexcept
+      : ExprBase(TypeToExprID<CMoveExpr>(), type, range), decl(decl), to(to) {}
+
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(CMoveExpr);
+
+    /// @brief Returns the declaration of the variable from which to conditional move
+    /// @return The declaration of the variable from which to conditional move
+    constexpr StmtExprToken getToCMove() const noexcept { return decl; }
+    /// @brief Returns the declaration of the variable to which to conditional move
+    /// @return The declaration of the variable to which to conditional move
+    constexpr StmtExprToken getCMoveTo() const noexcept { return to; }
   };
 }
 

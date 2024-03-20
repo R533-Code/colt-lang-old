@@ -33,7 +33,7 @@ namespace clt::lng
     constexpr TokenRange getTokenRange() const noexcept
     {
       return std::bit_cast<ExprBase>(_ErrorExpr).getTokenRange();
-    }
+    }    
 
     /// @brief Returns the expression ID
     /// @return The expression ID (used for downcasts)
@@ -41,11 +41,34 @@ namespace clt::lng
     {
       return std::bit_cast<ExprBase>(_ErrorExpr).classof();
     }
+
+    template<ProducerExpr T>
+    /// @brief Downcasts the variant to 'T'
+    /// @return nullptr if type does not match else pointer to the type
+    constexpr T* getExpr() noexcept
+    {
+      if (classof() != TypeToExprID<T>())
+        return nullptr;
+      return &getUnionMember<T>();
+    }
+    
+    template<ProducerExpr T>
+    /// @brief Downcasts the variant to 'T'
+    /// @return nullptr if type does not match else pointer to the type
+    constexpr const T* getExpr() const noexcept
+    {
+      if (classof() != TypeToExprID<T>())
+        return nullptr;
+      return &getUnionMember<T>();
+    }
   };
 
+  /// @brief Class responsible of the lifetimes of all expressions
   class ExprBuffer
   {
+    /// @brief The buffer of types
     TypeBuffer& types;
+    /// @brief The list of producer expression
     FlatList<ProdExprVariant, 512> prod_expr;
 
     /// @brief Returns the next ProdExprToken.
