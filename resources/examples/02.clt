@@ -1,4 +1,18 @@
-import std.io;
+import std.reflect;
+
+type Point
+{
+  var x: u32;
+  var y: u32;
+};
+
+size_t hash(a: in Point)
+{
+  var info = std::reflect<Point>();
+  var ret: size_t = 0;
+  for (var member_info : info.members)
+    ret += hash(reflect::get_member(member_info, a));
+}
 
 fn main()
 {
