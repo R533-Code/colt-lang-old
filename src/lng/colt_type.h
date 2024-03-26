@@ -17,12 +17,15 @@
 
 DECLARE_ENUM_WITH_TYPE(u8, clt::lng, TypeID,
   TYPE_ERROR, TYPE_BUILTIN, TYPE_VOID,
-  TYPE_PTR, TYPE_MUT_PTR, TYPE_OPTR, TYPE_MUT_OPTR
+  TYPE_PTR, TYPE_MUT_PTR, TYPE_OPTR, TYPE_MUT_OPTR, TYPE_FN
 );
 
 /// @brief Macro Type List (with same index as TypeID declaration!)
 #define COLTC_TYPE_LIST ErrorType, BuiltinType, VoidType, \
-   PtrType, MutPtrType, OpaquePtrType, MutOpaquePtrType
+   PtrType, MutPtrType, OpaquePtrType, MutOpaquePtrType, FnType
+
+DECLARE_ENUM_WITH_TYPE(u8, clt::lng, ArgSpecifier,
+  ARG_IN, ARG_OUT, ARG_INOUT, ARG_MOVE);
 
 namespace clt::lng
 {
@@ -192,7 +195,58 @@ namespace clt::lng
       seed = hash_combine(seed, hash_value(getPointingTo().getID()));
       return seed;
     }
-  };  
+  };
+
+  /// @brief Represents a function type argument
+  struct FnTypeArgument
+  {
+    /// @brief The type of the function
+    TypeToken type;
+    /// @brief The specifier applied to the type
+    ArgSpecifier specifier;
+  };
+
+  /// @brief Represents the payload of a function type.
+  /// To keep the size of the TypeVariant small, we make
+  /// use of an array of FnTypePayload (stored in TypeBuffer)
+  /// and only an index into that array is stored in FnType.
+  struct FnTypePayload
+  {
+    /// @brief True if the function uses C variadic
+    u8 is_variadic : 1;
+    /// @brief The return type of the function (which can be void)
+    TypeToken return_type;
+    //TODO: Replace by SmallVector
+    /// @brief The function arguments
+    Vector<FnTypeArgument> arguments_type;
+
+    /// @brief Compares for equality
+    /// @param b The object to compare against
+    /// @return True if both objects are equal
+    constexpr bool operator==(const FnTypePayload& b) const noexcept = default;
+  };
+
+  /// @brief Represents a function type
+  class FnType
+    final : public TypeBase
+  {
+    /// @brief Index into the set of FnTypePayload
+    u32 payload_index;
+  
+  public:
+    /// @brief Constructor
+    /// @param payload_index The index into the set of FnTypePayload
+    constexpr FnType(u32 payload_index) noexcept
+      : TypeBase(TypeToTypeID<FnType>()), payload_index(payload_index) {}
+    // No default constructor
+    FnType() = delete;
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(FnType);
+
+    /// @brief Check if two ptr types represent the same type
+    /// @param b The other pointer type
+    /// @return True if both types point to the same type
+    constexpr bool operator==(const FnType& b) const noexcept { return payload_index == b.payload_index; }
+  };
 
   /// @brief Type List of all Colt Types
   using ColtTypeList = meta::type_list<COLTC_TYPE_LIST>;
@@ -261,9 +315,7 @@ namespace clt::lng
     /// @return The ID of the current type
     constexpr TypeID getTypeID() const noexcept
     {
-      // We cannot read the value through any of the members
-      // because of UB.
-      // The memcpy is optimized away by the compiler.
+      // This is likely UB...
       TypeID id;
       if (std::is_constant_evaluated()) // bit_cast is constexpr...
         id = std::bit_cast<TypeID>(_ErrorType);
@@ -415,6 +467,31 @@ namespace clt
     constexpr size_t operator()(const lng::TypeVariant& var) noexcept
     {
       return var.getHash();
+    }
+  };
+
+  template<>
+  struct hash<lng::FnTypeArgument>
+  {
+    constexpr size_t operator()(const lng::FnTypeArgument& var) noexcept
+    {
+      size_t seed = 0;
+      seed = hash_combine(seed, hash_value((u8)var.specifier));
+      seed = hash_combine(seed, hash_value(var.type.getID()));
+      return seed;
+    }
+  };
+  
+  template<>
+  struct hash<lng::FnTypePayload>
+  {
+    constexpr size_t operator()(const lng::FnTypePayload& var) noexcept
+    {
+      size_t seed = 0;
+      seed = hash_combine(seed, hash_value(var.is_variadic));
+      seed = hash_combine(seed, hash_value(var.return_type.getID()));
+      seed = hash_combine(seed, hash_value(var.arguments_type.to_view()));
+      return seed;
     }
   };
 }
