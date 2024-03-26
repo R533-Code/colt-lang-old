@@ -245,6 +245,16 @@ namespace clt::lng
     /// @param b The other pointer type
     /// @return True if both types point to the same type
     constexpr bool operator==(const FnType& b) const noexcept { return payload_index == b.payload_index; }
+
+    /// @brief Hashes the current type
+    /// @return The hash of the current type
+    constexpr size_t getHash() const noexcept
+    {
+      size_t seed = 0;
+      seed = hash_combine(seed, hash_value(static_cast<u8>(classof())));
+      seed = hash_combine(seed, hash_value(payload_index));
+      return seed;
+    }
   };
 
   /// @brief Type List of all Colt Types
