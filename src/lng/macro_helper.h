@@ -24,6 +24,7 @@
 /// the types in the same order than the enum they represent.
 #define CONVERT_TYPES_TO_ENUM(enum_name, type_list) template<typename T> \
   consteval enum_name TypeTo##enum_name() noexcept {\
+    /*static_assert(clt::reflect<enum_name>::count() == meta::type_list<type_list>::size, "Check the sizes of arguments!");*/ \
     size_t size = 0; \
     using ty = enum_name; \
     COLT_FOR_EACH(IMPL_CONVERT_TYPE_TO_ENUM, type_list) \
@@ -57,5 +58,7 @@
   constexpr const auto& getUnionMember() const noexcept { COLT_FOR_EACH(IMPL_GET_MEMBER, type_list) }  \
   template<typename T> \
   constexpr auto& getUnionMember() noexcept { COLT_FOR_EACH(IMPL_GET_MEMBER, type_list) }
+
+
 
 #endif // !HG_COLTC_MACRO_HELPER
