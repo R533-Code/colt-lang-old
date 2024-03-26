@@ -221,9 +221,8 @@ namespace clt::lng
     Vector<FnTypeArgument> arguments_type;
 
     /// @brief Compares for equality
-    /// @param b The object to compare against
     /// @return True if both objects are equal
-    constexpr bool operator==(const FnTypePayload& b) const noexcept = default;
+    constexpr bool operator==(const FnTypePayload&) const noexcept = default;
   };
 
   /// @brief Represents a function type
