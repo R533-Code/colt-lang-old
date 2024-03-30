@@ -468,7 +468,7 @@ namespace clt
     /// @tparam  SFINAE helper
     /// @param key The value to insert
     /// @return Pair of pointer to the inserted slot or the existent one, and SUCESS on insertion or EXISTS if the key already exists
-    constexpr std::pair<T*, InsertionResult> insert(T&& key)
+    constexpr std::pair<u64, InsertionResult> insert(T&& key)
       noexcept(std::is_nothrow_move_constructible_v<T>) requires (!std::is_trivial_v<T>)
     {
       if (will_reallocate())
@@ -476,7 +476,7 @@ namespace clt
 
       const size_t key_hash = hash_value(key);
       size_t prob_index;
-      if (find_key(key_hash, key, prob_index, sentinel_metadata, slots_ptr, slots_capacity))
+      if (find_key(key_hash, key, prob_index, sentinel_metadata, list, slots_ptr, slots_capacity))
       {
         size_t to_ret = list.size();
         list.push_back(std::move(key));
