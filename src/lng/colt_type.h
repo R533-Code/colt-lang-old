@@ -204,6 +204,10 @@ namespace clt::lng
     TypeToken type;
     /// @brief The specifier applied to the type
     ArgSpecifier specifier;
+
+    /// @brief Compares for equality
+    /// @return True if both objects are equal
+    constexpr bool operator==(const FnTypeArgument&) const noexcept = default;
   };
 
   /// @brief Represents the payload of a function type.

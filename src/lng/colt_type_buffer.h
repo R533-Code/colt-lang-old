@@ -21,6 +21,8 @@ namespace clt::lng
   {
     /// @brief Set of types
     IndexedSet<TypeVariant> type_map{};
+    /// @brief The set of function payloads (used by function types)
+    IndexedSet<FnTypePayload> fn_payloads{};
 
     /// @brief Returns the next token to save
     /// @return The token to save
@@ -95,6 +97,18 @@ namespace clt::lng
     TypeToken addMutOpaquePtr() noexcept
     {
       return addType(make_coltc_type<MutOpaquePtrType>());
+    }
+
+    /// @brief Creates a function type
+    /// @param return_type The return type of the function
+    /// @param arguments_type The arguments type of the function
+    /// @param is_c_variadic True if the function uses C variadic arguments
+    /// @return The TypeToken representing the function
+    TypeToken addFn(TypeToken return_type, Vector<FnTypeArgument>&& arguments_type, bool is_c_variadic = false) noexcept
+    {
+      auto [pair, insert] = fn_payloads.insert({ is_c_variadic, return_type, std::move(arguments_type) });
+      assert_true("Integer overflow detected!", pair <= std::numeric_limits<u32>::max());
+      return addType(make_coltc_type<FnType>(pair));
     }
 
     /// @brief Get a type using its token.
