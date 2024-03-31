@@ -23,7 +23,7 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, ExprID,
   // PTR RELATED
   EXPR_PTR_LOAD, EXPR_PTR_STORE,
   // FN RELATED
-  EXPR_DECL_FN, EXPR_CALL_FN,
+  EXPR_CALL_FN,
   // OTHER
   EXPR_SCOPE, EXPR_CONDITION
 );
@@ -34,21 +34,21 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, ExprID,
    GlobalDeclExpr, GlobalReadExpr, GlobalWriteExpr, \
    MoveExpr, CopyExpr, CMoveExpr, \
    PtrLoadExpr, PtrStoreExpr, \
-   FnDeclExpr, FnCallExpr, \
+   FnCallExpr, \
    ScopeExpr, ConditionExpr
 
 #define COLTC_PROD_EXPR_LIST ErrorExpr, LiteralExpr, UnaryExpr, \
   BinaryExpr, CastExpr, AddressOfExpr, PtrLoadExpr, VarReadExpr, GlobalReadExpr, \
   FnCallExpr, VarWriteExpr, PtrStoreExpr, GlobalWriteExpr, MoveExpr, CopyExpr, CMoveExpr
 
-#define COLTC_STMT_EXPR_LIST ErrorExpr, VarDeclExpr, GlobalDeclExpr, ScopeExpr, ConditionExpr
+#define COLTC_STMT_EXPR_LIST VarDeclExpr, GlobalDeclExpr, ScopeExpr, ConditionExpr
 
 namespace clt::lng
 {
   // Forward declarations
   FORWARD_DECLARE_TYPE_LIST(COLTC_EXPR_LIST);
   // TypeToExprID
-  CONVERT_TYPES_TO_ENUM(ExprID, COLTC_EXPR_LIST);
+  CONVERT_TYPES_TO_ENUM(ExprID, COLTC_EXPR_LIST);  
 
   // Forward declarations
   class ExprBuffer;
@@ -56,35 +56,13 @@ namespace clt::lng
 
   /// @brief Represents any expression that produces a value (or writes).
   /// Can be any of [COLTC_PROD_EXPR_LIST]
-  class ProdExprToken
-  {
-    /// @brief Index into the array table
-    u32 index;
-
-    constexpr ProdExprToken(u32 index) noexcept
-      : index(index) {}
-
-    friend class ExprBuffer;
-    friend class ExprBase;
-  public:
-    MAKE_DEFAULT_COPY_AND_MOVE_FOR(ProdExprToken);
-  };
+  CREATE_TOKEN_TYPE(ProdExprToken, u32,
+    std::numeric_limits<u32>::max() - 1, ExprBuffer, ExprBase);
   
   /// @brief Represents a statement.
   /// Can be any of [COLTC_STMT_EXPR_LIST]
-  class StmtExprToken
-  {
-    /// @brief Index into the array table
-    u32 index;
-
-    constexpr StmtExprToken(u32 index) noexcept
-      : index(index) {}
-
-    friend class ExprBuffer;
-    friend class ExprBase;
-  public:
-    MAKE_DEFAULT_COPY_AND_MOVE_FOR(StmtExprToken);
-  };
+  CREATE_TOKEN_TYPE(StmtExprToken, u32,
+    std::numeric_limits<u32>::max() - 1, ExprBuffer, ExprBase);
 }
 
 #endif //HG_COLT_EXPR_TOKEN
