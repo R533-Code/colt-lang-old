@@ -11,6 +11,7 @@
 
 #include "util/assertions.h"
 #include "util/types.h"
+#include "lng/colt_builtin_id.h"
 
 namespace clt::lng
 {
@@ -308,6 +309,15 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, Lexeme,
 
 namespace clt::lng
 {	
+	/// @brief Transforms a literal token to a built-in ID
+	/// @param tkn The token
+	/// @return BuiltinID equivalent of the literal token
+	constexpr BuiltinID LiteralToBuiltinID(Lexeme tkn) noexcept
+	{
+		assert_true("Token must be TKN_.*_L", Lexeme::TKN_BOOL_L <= tkn, tkn <= Lexeme::TKN_DOUBLE_L);
+		return static_cast<BuiltinID>((u8)(tkn) - (u8)(Lexeme::TKN_BOOL_L));
+	}
+
 	/// @brief Check if a Lexeme represents any assignment Lexeme (=, +=, ...)
 	/// @param tkn The token to check for
 	/// @return True if the Lexeme is an assignment Lexeme
