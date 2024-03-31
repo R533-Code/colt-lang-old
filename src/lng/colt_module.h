@@ -24,7 +24,7 @@ namespace clt::lng
     friend class Module;
   
     constexpr ModuleToken(u32 module_nb, u8 nesting) noexcept
-      : module_nb(module_nb) {}
+      : module_nb(module_nb), nesting(nesting) {}
 
     /// @brief Returns an invalid module token
     /// @return An invalid module token
@@ -104,7 +104,7 @@ namespace clt::lng
     bool isGlobal() const noexcept { return parent.isInvalid(); }
 
     /// @brief Returns the ModuleToken representing the parent of this module
-    /// @return 
+    /// @return The ModuleToken representing the parent of this module
     ModuleToken getParent() const noexcept
     {
       assert_true("Global module does not have a parent!", isGlobal());
@@ -116,6 +116,7 @@ namespace clt::lng
     bool isLeaf() const noexcept { return parent.nesting + 1 == ModuleName::max_size(); }
   };
 
+  /// @brief Class responsible of storing modules
   class ModuleBuffer
   {
     FlatList<Module> modules{};
