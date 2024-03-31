@@ -8,6 +8,7 @@
 #ifndef HG_COLT_ERROR_REPORTER
 #define HG_COLT_ERROR_REPORTER
 
+#include "structs/list.h"
 #include "structs/string.h"
 #include "structs/unique_ptr.h"
 #include "structs/option.h"
