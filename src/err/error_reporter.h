@@ -27,6 +27,9 @@ namespace clt::lng
   /// @brief Base class for all error reporting mechanism
   class ErrorReporter
   {
+    /// @brief The list of strings
+    FlatList<String, 256> report_str{};
+
   protected:
     /// @brief The error count
     u64 error_count   = 0;
@@ -36,6 +39,15 @@ namespace clt::lng
     u64 message_count = 0;
   
   public:
+    template<typename... Args>
+    StringView fmt(clt::io::fmt_str<Args...> fmt, Args&&... args) noexcept
+    {
+      String str;
+      fmt::format_to(std::back_inserter(str), fmt, std::forward<Args>(args)...);
+      report_str.push_back(std::move(str));
+      return report_str.back();
+    }
+
     /// @brief Reports a message
     /// @param str The message string
     /// @param src_info The source information
