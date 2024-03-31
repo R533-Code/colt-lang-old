@@ -10,6 +10,7 @@
 #define HG_COLTC_MACRO_HELPER
 
 #include "util/macros.h"
+#include "util/token_helper.h"
 
 #define IMPL_FORWARD_DECLARE_TYPE_LIST(a) class a;
 #define IMPL_CONVERT_TYPE_TO_ENUM(a) if (std::same_as<T, a>) return static_cast<ty>(size); else ++size;
@@ -29,13 +30,6 @@
     using ty = enum_name; \
     COLT_FOR_EACH(IMPL_CONVERT_TYPE_TO_ENUM, type_list) \
   }
-
-/// @brief Expands to default copy/move constructor/assignment operator
-#define MAKE_DEFAULT_COPY_AND_MOVE_FOR(type) \
-  constexpr type(type&&) noexcept = default; \
-  constexpr type(const type&) noexcept = default; \
-  constexpr type& operator=(type&&) noexcept = default; \
-  constexpr type& operator=(const type&) noexcept = default;
 
 #define IMPL_MAKE_UNION(a) a _##a;
 #define IMPL_GET_MEMBER(a) if constexpr (std::same_as<T, a>) return _##a;
