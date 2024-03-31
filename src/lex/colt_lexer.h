@@ -246,7 +246,7 @@ namespace clt::lng
 		template<typename... Args>
 		StringView fmt(clt::io::fmt_str<Args...> fmt, Args&&... args) noexcept
 		{
-			return buffer.fmt(fmt, std::forward<Args>(args)...);
+			return reporter.fmt(fmt, std::forward<Args>(args)...);
 		}
 
 		constexpr char getNext() noexcept
