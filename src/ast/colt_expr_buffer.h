@@ -5,7 +5,7 @@
 
 namespace clt::lng
 {
-  /// @brief Variant of expression that produce a value
+  /// @brief Represents any expression that produces a value (or writes).
   class ProdExprVariant
   {
     MAKE_UNION_AND_GET_MEMBER(COLTC_PROD_EXPR_LIST);
@@ -33,7 +33,7 @@ namespace clt::lng
     constexpr TokenRange getTokenRange() const noexcept
     {
       return std::bit_cast<ExprBase>(_ErrorExpr).getTokenRange();
-    }    
+    }
 
     /// @brief Returns the expression ID
     /// @return The expression ID (used for downcasts)
@@ -51,7 +51,7 @@ namespace clt::lng
         return nullptr;
       return &getUnionMember<T>();
     }
-    
+
     template<ProducerExpr T>
     /// @brief Downcasts the variant to 'T'
     /// @return nullptr if type does not match else pointer to the type
@@ -63,20 +63,98 @@ namespace clt::lng
     }
   };
 
+  /// @brief Variant of statement
+  class StmtExprVariant
+  {
+    MAKE_UNION_AND_GET_MEMBER(COLTC_STMT_EXPR_LIST);
+
+  public:
+    template<StatementExpr Type, typename... Args>
+    /// @brief Constructor
+    /// @param args... The arguments to forward to the constructor
+    constexpr StmtExprVariant(std::type_identity<Type>, Args&&... args)
+      noexcept(std::is_nothrow_constructible_v<Type, Args...>)
+      : _mono_state_(construct<Type>(&getUnionMember<Type>(), std::forward<Args>(args)...))
+    {
+      // The ugly code above is used to keep the constructor constexpr
+    }
+
+    /// @brief Returns the type of the current expression
+    /// @return The type of the current expression
+    constexpr TypeToken getType() const noexcept
+    {
+      // UB...
+      return ((const ExprBase*)&_ConditionExpr)->getType();
+    }
+
+    /// @brief Returns the range of tokens representing the current expression
+    /// @return The range of tokens
+    constexpr TokenRange getTokenRange() const noexcept
+    {
+      // UB...
+      return ((const ExprBase*)&_ConditionExpr)->getTokenRange();
+    }
+
+    /// @brief Returns the expression ID
+    /// @return The expression ID (used for downcasts)
+    constexpr ExprID classof() const noexcept
+    {
+      // UB...
+      return ((const ExprBase*)&_ConditionExpr)->classof();
+    }
+
+    template<StatementExpr T>
+    /// @brief Downcasts the variant to 'T'
+    /// @return nullptr if type does not match else pointer to the type
+    constexpr T* getExpr() noexcept
+    {
+      if (classof() != TypeToExprID<T>())
+        return nullptr;
+      return &getUnionMember<T>();
+    }
+
+    template<StatementExpr T>
+    /// @brief Downcasts the variant to 'T'
+    /// @return nullptr if type does not match else pointer to the type
+    constexpr const T* getExpr() const noexcept
+    {
+      if (classof() != TypeToExprID<T>())
+        return nullptr;
+      return &getUnionMember<T>();
+    }
+
+    /// @brief Check if the current expression is a local variable declaration
+    /// @return True if classof() returns EXPR_VAR_DECL
+    constexpr bool isVarDecl() const noexcept { return classof() == ExprID::EXPR_VAR_DECL; }
+    /// @brief Check if the current expression is a local variable declaration
+    /// @return True if classof() returns EXPR_GLOBAL_DECL
+    constexpr bool isGlobalDecl() const noexcept { return classof() == ExprID::EXPR_GLOBAL_DECL; }
+    /// @brief Check if the current expression is a scope
+    /// @return True if classof() returns EXPR_SCOPE
+    constexpr bool isScope() const noexcept { return classof() == ExprID::EXPR_SCOPE; }
+  };
+
+  // Ensure all the types are divided between Prod and Stmt
+  static_assert(meta::type_list<COLTC_PROD_EXPR_LIST>::size + meta::type_list<COLTC_STMT_EXPR_LIST>::size
+    == meta::type_list<COLTC_EXPR_LIST>::size,
+    "Some types are missing from COLTC_PROD_EXPR_LIST or COLTC_STMT_EXPR_LIST");
+
   /// @brief Class responsible of the lifetimes of all expressions
   class ExprBuffer
   {
     /// @brief The buffer of types
     TypeBuffer& types;
-    /// @brief The list of producer expression
-    FlatList<ProdExprVariant, 512> prod_expr;
+    /// @brief The list of ProducerExpr
+    FlatList<ProdExprVariant, 512> prod_expr{};
+    /// @brief The list of StatementExpr
+    FlatList<StmtExprVariant, 512> stmt_expr{};
 
     /// @brief Returns the next ProdExprToken.
     /// A push_back to prod_expr must follow this call.
     /// @return The next ProdExprToken
     ProdExprToken getNextProd() noexcept
     {
-      assert_true("Integer overflow!", prod_expr.size() <= std::numeric_limits<u32>::max());
+      assert_true("Integer overflow!", prod_expr.size() <= ProdExprToken::MAX_VALUE);
       return ProdExprToken{ static_cast<u32>(prod_expr.size()) };
     }
 
@@ -90,16 +168,50 @@ namespace clt::lng
       prod_expr.push_back(InPlace, std::type_identity<T>{}, std::forward<Args>(args)...);
       return to_ret;
     }
+    
+    /// @brief Returns the next StmtExprToken.
+    /// A push_back to prod_expr must follow this call.
+    /// @return The next ProdExprToken
+    StmtExprToken getNextStmt() noexcept
+    {
+      assert_true("Integer overflow!", stmt_expr.size() <= StmtExprToken::MAX_VALUE);
+      return StmtExprToken{ static_cast<u32>(stmt_expr.size()) };
+    }
+
+    template<StatementExpr T, typename... Args>
+    /// @brief Emplaces a new ProducerExpr at the end of 'prod_expr'
+    /// @param args... The arguments used to forward to the constructor
+    /// @return The ProdExprToken representing the new expression
+    StmtExprToken addNewStmt(Args&&... args) noexcept
+    {
+      auto to_ret = getNextStmt();
+      prod_expr.push_back(InPlace, std::type_identity<T>{}, std::forward<Args>(args)...);
+      return to_ret;
+    }
 
   public:
+    /// @brief Constructor
+    /// @param types Reference to the global type buffer
+    ExprBuffer(TypeBuffer& types) noexcept
+      : types(types) {}
+
     /// @brief Returns the expression represented by 'prod'
     /// @param prod The producer expression token
     /// @return Reference to the expression represented by 'prod'
-    ProdExprVariant& getExpr(ProdExprToken prod) noexcept { return prod_expr[prod]; }
+    ProdExprVariant& getExpr(ProdExprToken prod) noexcept { return prod_expr[prod.index]; }
     /// @brief Returns the expression represented by 'prod'
     /// @param prod The producer expression token
     /// @return Reference to the expression represented by 'prod'
-    const ProdExprVariant& getExpr(ProdExprToken prod) const noexcept { return prod_expr[prod]; }
+    const ProdExprVariant& getExpr(ProdExprToken prod) const noexcept { return prod_expr[prod.index]; }
+
+    /// @brief Returns the expression represented by 'stmt'
+    /// @param stmt The statement expression token
+    /// @return Reference to the expression represented by 'stmt'
+    const StmtExprVariant& getExpr(StmtExprToken stmt) const noexcept { return stmt_expr[stmt.index]; }
+    /// @brief Returns the expression represented by 'stmt'
+    /// @param stmt The statement expression token
+    /// @return Reference to the expression represented by 'stmt'
+    StmtExprVariant& getExpr(StmtExprToken stmt) noexcept { return stmt_expr[stmt.index]; }
 
     /// @brief Returns the type of an expression
     /// @param prod The producer expression token
@@ -194,10 +306,17 @@ namespace clt::lng
     /// @return AddressOfExpr
     ProdExprToken addAddressOf(TokenRange range, StmtExprToken decl) noexcept
     {
-      //TODO: add body
-      unreachable("NOT IMPLEMENTED!");
-    }
+      auto& ref = getExpr(decl);
+      if (auto ptr = ref.getExpr<VarDeclExpr>(); ptr)
+        return addNewProd<AddressOfExpr>(range,
+          ptr->isMut() ? types.addMutPtr(ptr->getType()) : types.addPtr(ptr->getType()), decl);
+      if (auto ptr = ref.getExpr<GlobalDeclExpr>(); ptr)
+        return addNewProd<AddressOfExpr>(range,
+          ptr->isMut() ? types.addMutPtr(ptr->getType()) : types.addPtr(ptr->getType()), decl);
 
+      clt::unreachable("Expected a variable declaration!");
+    }
+     
     /// @brief Creates a pointer load.
     /// @param range The range of tokens
     /// @param to_cast The expression from which to load (of pointer type)
@@ -220,24 +339,140 @@ namespace clt::lng
     /// @return VarReadExpr
     ProdExprToken addVarRead(TokenRange range, StmtExprToken var_decl) noexcept
     {
-      //TODO: add body
-      unreachable("NOT IMPLEMENTED!");
+      assert_true("Expected a VarDeclExpr!", getExpr(var_decl).isVarDecl());
+      return addNewProd<VarReadExpr>(range, getExpr(var_decl).getType(), var_decl);
     }
     
     /// @brief Creates a read from a variable.
     /// @param range The range of tokens
     /// @param var_decl The variable declaration from which to read
-    /// @return VarReadExpr
+    /// @return GlobalReadExpr
     ProdExprToken addGlobalRead(TokenRange range, StmtExprToken var_decl) noexcept
     {
-      //TODO: add body
-      unreachable("NOT IMPLEMENTED!");
+      assert_true("Expected a GlobalDeclExpr!", getExpr(var_decl).isGlobalDecl());
+      return addNewProd<GlobalReadExpr>(range, getExpr(var_decl).getType(), var_decl);
     }
 
     ProdExprToken addFnCall() noexcept
     {
       // TODO: add body
       unreachable("NOT IMPLEMENTED!");
+    }
+
+    /// @brief Creates a write to a variable
+    /// @param range The range of tokens
+    /// @param var_decl The variable declaration
+    /// @param value The value to write
+    /// @return VarWriteExpr
+    ProdExprToken addVarWrite(TokenRange range, StmtExprToken var_decl, ProdExprToken value) noexcept
+    {
+      assert_true("Expected a VarDeclExpr!", getExpr(var_decl).isVarDecl());
+      assert_true("Types must match!", getExpr(var_decl).getType() == getTypeToken(value));
+      return addNewProd<VarWriteExpr>(range, types.getVoidType(), var_decl, value);
+    }
+    
+    /// @brief Creates a write to a global variable
+    /// @param range The range of tokens
+    /// @param var_decl The variable declaration
+    /// @param value The value to write
+    /// @return GlobalWriteExpr
+    ProdExprToken addGlobalWrite(TokenRange range, StmtExprToken var_decl, ProdExprToken value) noexcept
+    {
+      assert_true("Expected a GlobalDeclExpr!", getExpr(var_decl).isGlobalDecl());
+      assert_true("Types must match!", getExpr(var_decl).getType() == getTypeToken(value));
+      return addNewProd<GlobalWriteExpr>(range, types.getVoidType(), var_decl, value);
+    }
+
+    /// @brief Creates a store to a pointer
+    /// @param range The range of tokens
+    /// @param write_to The pointer to which to write
+    /// @param to_write The value to write to that pointer
+    /// @return PtrStoreExpr
+    ProdExprToken addPtrStore(TokenRange range, ProdExprToken write_to, ProdExprToken to_write) noexcept
+    {
+      assert_true("Expected a non-opaque pointer to mutable type!", getType(write_to).isMutPtr()
+        && !getType(write_to).isAnyOpaquePtr());
+      assert_true("Types must match!", getType(write_to).getType<MutPtrType>()->getPointingTo() == getTypeToken(to_write));
+      return addNewProd<PtrStoreExpr>(range, types.getVoidType(), write_to, to_write);
+    }
+
+    /// @brief Creates a move from a variable to another
+    /// @param range The range of tokens
+    /// @param from The variable to move from
+    /// @param to The variable to move to
+    /// @return MoveExpr
+    ProdExprToken addMove(TokenRange range, StmtExprToken from, StmtExprToken to) noexcept
+    {
+      assert_true("Expected two local variable declarations!", getExpr(from).isVarDecl(), getExpr(to).isVarDecl());
+      return addNewProd<MoveExpr>(range, types.getVoidType(), from, to);
+    }
+    
+    /// @brief Creates a copy from a variable to another
+    /// @param range The range of tokens
+    /// @param from The variable to copy from
+    /// @param to The variable to copy to
+    /// @return CopyExpr
+    ProdExprToken addCopy(TokenRange range, StmtExprToken from, StmtExprToken to) noexcept
+    {
+      assert_true("Expected two variable declarations!",
+        getExpr(from).isVarDecl() || getExpr(from).isGlobalDecl(),
+        getExpr(to).isVarDecl() || getExpr(to).isGlobalDecl());
+      return addNewProd<CopyExpr>(range, types.getVoidType(), from, to);
+    }
+    
+    /// @brief Creates a conditional move from a variable to another
+    /// @param range The range of tokens
+    /// @param from The variable to conditionally move from
+    /// @param to The variable to move to
+    /// @return CMoveExpr
+    ProdExprToken addCMove(TokenRange range, StmtExprToken from, StmtExprToken to) noexcept
+    {
+      assert_true("Expected two variable declarations!",
+        getExpr(from).isVarDecl() || getExpr(from).isGlobalDecl(),
+        getExpr(to).isVarDecl() || getExpr(to).isGlobalDecl());
+      return addNewProd<CMoveExpr>(range, types.getVoidType(), from, to);
+    }
+
+    /// @brief Creates a scope
+    /// @param range The range of tokens
+    /// @return ScopeExpr
+    StmtExprToken addScope(TokenRange range) noexcept
+    {
+      return addNewStmt<ScopeExpr>(range, types.getVoidType());
+    }
+
+
+    /// @brief Creates a scope
+    /// @param range The range of tokens
+    /// @param parent The parent of the scope
+    /// @return ScopeExpr
+    StmtExprToken addScope(TokenRange range, StmtExprToken parent) noexcept
+    {
+      assert_true("Expected a scope as a parent!", getExpr(parent).isScope());
+      return addNewStmt<ScopeExpr>(range, types.getVoidType(), parent);
+    }
+
+    /// @brief Creates a condition
+    /// @param range The range of tokens
+    /// @param if_cond The if condition
+    /// @param if_stmt The if statement
+    /// @return ConditionExpr
+    StmtExprToken addCondition(TokenRange range, ProdExprToken if_cond, StmtExprToken if_stmt) noexcept
+    {
+      assert_true("Expected bool type!", getType(if_cond).isBuiltinAnd(&isBool));
+      return addNewStmt<ScopeExpr>(range, types.getVoidType(), if_cond, if_stmt);
+    }
+    
+    /// @brief Creates a condition
+    /// @param range The range of tokens
+    /// @param if_cond The if condition
+    /// @param if_stmt The if statement
+    /// @param else_stmt The else statement
+    /// @return ConditionExpr
+    StmtExprToken addCondition(TokenRange range, ProdExprToken if_cond, StmtExprToken if_stmt, StmtExprToken else_stmt) noexcept
+    {
+      assert_true("Expected bool type!", getType(if_cond).isBuiltinAnd(&isBool));
+      return addNewStmt<ScopeExpr>(range, types.getVoidType(), if_cond, if_stmt, else_stmt);
     }
   };
 }

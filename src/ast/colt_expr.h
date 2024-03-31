@@ -8,67 +8,12 @@
 #ifndef HG_COLT_EXPR
 #define HG_COLT_EXPR
 
-#include "meta/meta_type_list.h"
-#include "lng/macro_helper.h"
-#include "lex/colt_token_buffer.h"
-#include "lng/colt_type_buffer.h"
-
-DECLARE_ENUM_WITH_TYPE(u8, clt::lng, ExprID,
-  EXPR_ERROR, EXPR_LITERAL, EXPR_UNARY, EXPR_BINARY, EXPR_CAST,
-  // VARIABLE RELATED
-  EXPR_ADDRESSOF,
-  EXPR_VAR_DECL, EXPR_VAR_READ, EXPR_VAR_WRITE,
-  EXPR_GLOBAL_DECL, EXPR_GLOBAL_READ, EXPR_GLOBAL_WRITE,
-  EXPR_MOVE, EXPR_COPY, EXPR_CMOVE,
-  // PTR RELATED
-  EXPR_PTR_LOAD, EXPR_PTR_STORE,
-  // FN RELATED
-  EXPR_DECL_FN, EXPR_CALL_FN,
-  // OTHER
-  EXPR_SCOPE, EXPR_CONDITION
-);
-
-/// @brief Macro Expr List (with same index as ExprID declaration!)
-#define COLTC_EXPR_LIST ErrorExpr, LiteralExpr, UnaryExpr, BinaryExpr, CastExpr, \
-   AddressOfExpr, VarDeclExpr, VarReadExpr, VarWriteExpr, \
-   GlobalDeclExpr, GlobalReadExpr, GlobalWriteExpr, \
-   MoveExpr, CopyExpr, CMoveExpr, \
-   PtrLoadExpr, PtrStoreExpr, \
-   FnDeclExpr, FnCallExpr, \
-   ScopeExpr, ConditionExpr
-
-#define COLTC_PROD_EXPR_LIST ErrorExpr, LiteralExpr, UnaryExpr, \
-  BinaryExpr, CastExpr, AddressOfExpr, PtrLoadExpr, VarReadExpr, GlobalReadExpr, FnCallExpr
-
-#define COLTC_SINK_EXPR_LIST ErrorExpr, VarWriteExpr, \
-  PtrStoreExpr, GlobalWriteExpr, MoveExpr, CopyExpr, CMoveExpr
-
-#define COLTC_STMT_EXPR_LIST ErrorExpr, VarDeclExpr, GlobalDeclExpr, ScopeExpr, ConditionExpr
+#include "colt_expr_token.h"
 
 namespace clt::lng
 {
-  // Forward declarations
-  FORWARD_DECLARE_TYPE_LIST(COLTC_EXPR_LIST);
-  // TypeToExprID
-  CONVERT_TYPES_TO_ENUM(ExprID, COLTC_EXPR_LIST);
-
-  /// @brief Represents any expression that produces a value.
-  /// Can be any of [ErrorExpr, LiteralExpr, UnaryExpr, BinaryExpr, CastExpr,
-  /// AddressOfExpr, PtrLoadExpr, VarReadExpr, GlobalReadExpr, FnCallExpr]
-  using ProdExprToken = u32;
-
   template<typename T>
   concept ProducerExpr = meta::is_any_of<T, COLTC_PROD_EXPR_LIST>;
-
-  /// @brief Represents any of [ErrorExpr, VarWriteExpr,
-  /// PtrStoreExpr, GlobalWriteExpr, MoveExpr, CopyExpr, CMoveExpr]
-  using SinkExprToken = u32;
-
-  template<typename T>
-  concept SinkExpr = meta::is_any_of<T, COLTC_SINK_EXPR_LIST>;
-
-  /// @brief Represents any of [ErrorExpr, VarDeclExpr, GlobalDeclExpr, ScopeExpr, ConditionExpr]
-  using StmtExprToken = u32;
 
   template<typename T>
   concept StatementExpr = meta::is_any_of<T, COLTC_STMT_EXPR_LIST>;
@@ -90,6 +35,10 @@ namespace clt::lng
     u8 padding1 = 0;
     /// @brief Byte that can be used for anything
     u8 padding2 = 0;
+
+    static constexpr ProdExprToken INVALID_PROD = ProdExprToken{ std::numeric_limits<u32>::max() };
+    
+    static constexpr StmtExprToken INVALID_STMT = StmtExprToken{ std::numeric_limits<u32>::max() };
 
   public:
     /// @brief Constructor
@@ -463,7 +412,7 @@ namespace clt::lng
   public:
     /// @brief Constructor
     /// @param range The range of tokens
-    /// @param type The type (should be move)
+    /// @param type The type (should be void)
     /// @param decl The declaration from which to move
     constexpr MoveExpr(TokenRange range, TypeToken type, StmtExprToken decl, StmtExprToken to) noexcept
       : ExprBase(TypeToExprID<MoveExpr>(), type, range), decl(decl), to(to) {}
@@ -490,7 +439,7 @@ namespace clt::lng
   public:
     /// @brief Constructor
     /// @param range The range of tokens
-    /// @param type The type (should be copy)
+    /// @param type The type (should be void)
     /// @param decl The declaration from which to copy
     constexpr CopyExpr(TokenRange range, TypeToken type, StmtExprToken decl, StmtExprToken to) noexcept
       : ExprBase(TypeToExprID<CopyExpr>(), type, range), decl(decl), to(to) {}
@@ -517,7 +466,7 @@ namespace clt::lng
   public:
     /// @brief Constructor
     /// @param range The range of tokens
-    /// @param type The type (should be conditional move)
+    /// @param type The type (should be void)
     /// @param decl The declaration from which to conditional move
     constexpr CMoveExpr(TokenRange range, TypeToken type, StmtExprToken decl, StmtExprToken to) noexcept
       : ExprBase(TypeToExprID<CMoveExpr>(), type, range), decl(decl), to(to) {}
@@ -530,6 +479,202 @@ namespace clt::lng
     /// @brief Returns the declaration of the variable to which to conditional move
     /// @return The declaration of the variable to which to conditional move
     constexpr StmtExprToken getCMoveTo() const noexcept { return to; }
+  };
+
+  /// @brief Represents a local variable declaration
+  class VarDeclExpr
+    final : public ExprBase
+  {
+    /// @brief The name of the variable
+    StringView name;
+    /// @brief The assigned value
+    ProdExprToken value;
+    /// @brief The local ID of the variable
+    u32 local_id;
+
+  public:
+    /// @brief Constructor, for uninitialized variables
+    /// @param range The range of tokens
+    /// @param type The type of the variable
+    /// @param local_id The local ID of the variable
+    /// @param name The name of the variable
+    /// @param is_mut True if the variable is mutable
+    constexpr VarDeclExpr(TokenRange range, TypeToken type, u32 local_id, StringView name, bool is_mut) noexcept
+      : ExprBase(TypeToExprID<VarDeclExpr>(), type, range, false, is_mut), name(name), value(ExprBase::INVALID_PROD), local_id(local_id) {}
+    
+    /// @brief Constructor, for initialized variables
+    /// @param range The range of tokens
+    /// @param type The type of the variable
+    /// @param local_id The local ID of the variable
+    /// @param name The name of the variable
+    /// @param init The initial value of the variable
+    /// @param is_mut True if the variable is mutable
+    constexpr VarDeclExpr(TokenRange range, TypeToken type, u32 local_id, StringView name, ProdExprToken init, bool is_mut) noexcept
+      : ExprBase(TypeToExprID<VarDeclExpr>(), type, range, true, is_mut), name(name), value(init), local_id(local_id) {}
+
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(VarDeclExpr);
+
+    /// @brief Check if the variable was declared with an initial value.
+    /// @return True if the variable was declared with an initial value
+    constexpr bool isInit() const noexcept { return padding0; }
+
+    /// @brief Returns the initial value of the declared variable
+    /// @pre isInit()
+    /// @return The initial value of the variable
+    constexpr ProdExprToken getInit() const noexcept
+    {
+      assert_true("isInit must return true before getInit!", isInit());
+      return value;
+    }
+
+    /// @brief Returns the local ID of the variable.
+    /// This is the "depth" in the spaghetti stack of variable declaration.
+    /// @return The local ID of the variable
+    constexpr u32 getLocalID() const noexcept { return local_id; }
+
+    /// @brief Check if the variable is mutable
+    /// @return True if mutable
+    constexpr bool isMut() const noexcept { return padding1; }
+    /// @brief Check if the variable is const
+    /// @return True if not mutable
+    constexpr bool isConst() const noexcept { return !isMut(); }
+  };
+  
+  /// @brief Represents a global variable
+  class GlobalDeclExpr
+    final : public ExprBase
+  {
+    /// @brief The name of the variable
+    StringView name;
+    /// @brief The assigned value
+    ProdExprToken value;
+
+  public:
+    /// @brief Constructor
+    /// @param range The range of tokens
+    /// @param type The type of the variable
+    /// @param name The name of the variable
+    /// @param init The initial value of the variable
+    /// @param is_mut True if the variable is mutable
+    constexpr GlobalDeclExpr(TokenRange range, TypeToken type, StringView name, ProdExprToken init, bool is_mut) noexcept
+      : ExprBase(TypeToExprID<GlobalDeclExpr>(), type, range, is_mut), name(name), value(init) {}
+
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(GlobalDeclExpr);
+
+    /// @brief Returns the initial value of the declared variable
+    /// @pre isInit()
+    /// @return The initial value of the variable
+    constexpr ProdExprToken getInit() const noexcept { return value; }
+
+    /// @brief Check if the variable is mutable
+    /// @return True if mutable
+    constexpr bool isMut() const noexcept { return padding0; }
+    /// @brief Check if the variable is const
+    /// @return True if not mutable
+    constexpr bool isConst() const noexcept { return !isMut(); }
+  };
+
+  /// @brief Represents a scope
+  class ScopeExpr
+    final : public ExprBase
+  {
+    /// @brief The parent (or INVALID_STMT)
+    StmtExprToken parent_expr;
+    /// @brief The local variable declarations
+    Vector<const VarDeclExpr*> decl{};
+    /// @brief The statements contained in the scope (in the order of their declarations)
+    Vector<ProdExprToken> expressions{};
+
+  public:
+    /// @brief Constructs a scope with no parents.
+    /// @param range The range of tokens
+    /// @param type The type (must be void)
+    constexpr ScopeExpr(TokenRange range, TypeToken type) noexcept
+      : ExprBase(TypeToExprID<ScopeExpr>(), type, range, false), parent_expr(ExprBase::INVALID_STMT) {}
+
+    /// @brief Constructs a scope with a parent
+    /// @param range The range of tokens
+    /// @param type The type (must be void)
+    /// @param parent The parent of the scope
+    constexpr ScopeExpr(TokenRange range, TypeToken type, StmtExprToken parent) noexcept
+      : ExprBase(TypeToExprID<ScopeExpr>(), type, range, true), parent_expr(parent) {}
+
+    /// @brief Check if the current scope has a parent
+    /// @return True if the scope has a parent
+    constexpr bool hasParent() const noexcept { return padding0; }
+
+    /// @brief Returns the parent of the current scope.
+    /// @pre hasParent()
+    /// @return The parent of the current scope
+    constexpr StmtExprToken getParent() const noexcept
+    {
+      assert_true("hasParent must return true before getParent", hasParent());
+      return parent_expr;
+    }
+
+    /// @brief Returns the local variable declarations of the current scope
+    /// @return The declarations
+    constexpr Vector<const VarDeclExpr*>& getDecls() noexcept { return decl; }
+    /// @brief Returns the local variable declarations of the current scope
+    /// @return The declarations
+    constexpr const Vector<const VarDeclExpr*>& getDecls() const noexcept { return decl; }
+    /// @brief Returns the expressions contained in the scope
+    /// @return The expressions
+    constexpr Vector<ProdExprToken>& getExprs() noexcept { return expressions; }
+    /// @brief Returns the expressions contained in the scope
+    /// @return The expressions
+    constexpr const Vector<ProdExprToken>& getExprs() const noexcept { return expressions; }
+  };
+
+  /// @brief Represents a conditional expression
+  class ConditionExpr
+    final : public ExprBase
+  {
+    /// @brief The if condition
+    ProdExprToken if_cond;
+    /// @brief The if statement
+    StmtExprToken if_stmt;
+    /// @brief The else statement (can be invalid)
+    StmtExprToken else_stmt;
+
+  public:
+    /// @brief Constructs a condition expression that does not have an else branch
+    /// @param range The range of tokens
+    /// @param type The type (must be void)
+    /// @param if_cond The if condition (must evaluate to bool)
+    /// @param if_stmt The scope to execute if the condition evaluates to true
+    constexpr ConditionExpr(TokenRange range, TypeToken type, ProdExprToken if_cond, StmtExprToken if_stmt)
+      : ExprBase(TypeToExprID<ConditionExpr>(), type, range, false), if_cond(if_cond), if_stmt(if_stmt), else_stmt(ExprBase::INVALID_STMT) {}
+    
+    /// @brief Constructs a condition expression that has an else branch
+    /// @param range The range of tokens
+    /// @param type The type (must be void)
+    /// @param if_cond The if condition (must evaluate to bool)
+    /// @param if_stmt The scope to execute if the condition evaluates to true
+    /// @param else_stmt The scope to execute if the condition evaluates to false
+    constexpr ConditionExpr(TokenRange range, TypeToken type, ProdExprToken if_cond, StmtExprToken if_stmt, StmtExprToken else_stmt)
+      : ExprBase(TypeToExprID<ConditionExpr>(), type, range, true), if_cond(if_cond), if_stmt(if_stmt), else_stmt(else_stmt) {}
+
+    /// @brief Check if this condition has an else branch
+    /// @return True if this condition has an else branch
+    constexpr bool hasElse() const noexcept { return padding0; }
+
+    /// @brief Returns the else statement of the condition.
+    /// @pre hasElse()
+    /// @return The else statement
+    constexpr StmtExprToken getElseStmt() const noexcept
+    {
+      assert_true("hasParent must return true before getParent", hasElse());
+      return else_stmt;
+    }
+    
+    /// @brief Returns the if statement of the condition
+    /// @return The if statement
+    constexpr StmtExprToken getIfStmt() const noexcept { return if_stmt; }
+
+    /// @brief Returns the if condition of the condition
+    /// @return The if condition
+    constexpr ProdExprToken getIfCondition() const noexcept { return if_cond; }
   };
 }
 
