@@ -141,8 +141,6 @@ namespace clt::lng
     StableSet<StringView>             identifiers{};
     /// @brief The array of lines
     FlatList<StringView, 256>         lines{};
-    /// @brief The list of strings
-    FlatList<String, 256>             report_str{};
     /// @brief The array of string literals
     FlatList<UniquePtr<String>, 256>  str_literals{};
     /// @brief The array of literal numbers (including f32/f64)
@@ -162,6 +160,15 @@ namespace clt::lng
 
     /// @brief Check if a Token is owned by the current TokenBuffer
     constexpr void owns(Token tkn) const noexcept
+    {
+#ifdef COLT_DEBUG
+      if constexpr (isDebugBuild())
+        assert_true("Token is not owned by this TokenBuffer!", tkn.buffer_id == buffer_id);
+#endif // COLT_DEBUG
+    }
+    
+    /// @brief Check if a TokenRange is owned by the current TokenBuffer
+    constexpr void owns(TokenRange tkn) const noexcept
     {
 #ifdef COLT_DEBUG
       if constexpr (isDebugBuild())
@@ -192,7 +199,6 @@ namespace clt::lng
     void unsafeClear() noexcept
     {
       lines.clear();
-      report_str.clear();
       str_literals.clear();
       nb_literals.clear();
       tokens_info.clear();
@@ -264,16 +270,7 @@ namespace clt::lng
       tokens.push_back(Token{ lexeme, static_cast<u32>(tokens_info.size()), static_cast<u32>(ret) });
       tokens_info.push_back(TokenInfo{ column, size, line, line });
 #endif // COLT_DEBUG
-    }
-
-    template<typename... Args>
-    StringView fmt(clt::io::fmt_str<Args...> fmt, Args&&... args) noexcept
-    {
-      String str;
-      fmt::format_to(std::back_inserter(str), fmt, std::forward<Args>(args)...);
-      report_str.push_back(std::move(str));
-      return report_str.back();
-    }
+    }    
 
     /// @brief Returns a StringView over the line in which the token appears
     /// @param tkn The Token whose line to return
@@ -325,6 +322,23 @@ namespace clt::lng
       return tokens_info[tkn.info_index].size;
     }
 
+    /// @brief Constructs a source information from a token range
+    /// @param range The token range
+    /// @return SourceInfo represented by the token range
+    SourceInfo makeSourceInfo(TokenRange range) const noexcept
+    {
+      owns(range);
+      auto& tkn1_info = tokens_info[range.start_index];
+      auto& tkn2_info = tokens_info[range.end_index];
+      auto line = StringView{ lines[tkn1_info.line_start].data(),
+        lines[tkn2_info.line_end].data() + lines[tkn2_info.line_end].size() };
+      auto expr = StringView{ lines[tkn1_info.line_start].data() + tkn1_info.column,
+        lines[tkn2_info.line_end].data() + tkn2_info.size + tkn2_info.column };
+      return SourceInfo{ tkn1_info.line_start, tkn2_info.line_end, expr, line };
+    }
+
+    /// @brief Returns the list of tokens
+    /// @return List of tokens
     auto& getTokens() const noexcept { return tokens; }
   };
 }
