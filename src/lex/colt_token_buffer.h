@@ -337,6 +337,18 @@ namespace clt::lng
       return SourceInfo{ tkn1_info.line_start, tkn2_info.line_end, expr, line };
     }
 
+    /// @brief Constructs a source information from a token
+    /// @param tkn The token
+    /// @return SourceInfo represented by the token
+    SourceInfo makeSourceInfo(Token tkn) const noexcept
+    {
+      owns(tkn);
+      auto& tkn_info = tokens_info[tkn.info_index];
+      auto expr = StringView{ lines[tkn_info.line_start].data() + tkn_info.column,
+        lines[tkn_info.line_end].data() + tkn_info.size + tkn_info.column};
+      return SourceInfo{ tkn_info.line_start, expr, lines[tkn_info.line_start] };
+    }
+
     /// @brief Returns the list of tokens
     /// @return List of tokens
     auto& getTokens() const noexcept { return tokens; }
