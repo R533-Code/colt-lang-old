@@ -54,6 +54,21 @@ namespace clt
 {
   namespace details
   {
+    template<typename To, typename From>
+    /// @brief Helper to converts a pointer to a type to a pointer to another type
+    /// @tparam To The type to convert
+    /// @tparam From The type to convert from
+    /// @param frm The value to convert
+    /// @return Converted value
+    constexpr To ptr_to(From frm) noexcept
+      requires std::is_pointer_v<To>&& std::is_pointer_v<From>
+    {
+      return static_cast<To>(
+        static_cast<
+        meta::match_cv_t<std::remove_pointer_t<From>, void>*
+        >(frm));
+    }
+
     template<typename T> requires (!std::is_reference_v<T>) && (!std::is_const_v<T>)
     /// @brief Represents an out parameter (with runtime checks)
     class OutDebug
@@ -127,6 +142,81 @@ namespace clt
       /// @return Reference to the object
       [[nodiscard]]
       constexpr T& get() const noexcept { return obj; }
+    };
+
+    template<typename T> requires (!std::is_reference_v<T>) && (!std::is_const_v<T>)
+      /// @brief Represents an out parameter (with runtime checks)
+      class UninitDebug
+    {
+      /// @brief The object
+      alignas(T) char buffer[sizeof(T)];
+      /// @brief Source location of the object
+      std::source_location loc;
+      /// @brief True if the object was constructed
+      mutable bool is_constructed = false;
+
+      constexpr T& val() noexcept { return *ptr_to<T*>(buffer); }
+      constexpr const T& val() const noexcept { return *ptr_to<T*>(buffer); }
+
+    public:
+      /// @brief Constructs the out parameter
+      /// @param ref The uninitialized object
+      /// @param src The source location
+      constexpr UninitDebug(std::source_location src = std::source_location::current()) noexcept
+        : loc(src) {}
+
+      template<typename... Args>
+      constexpr T& init(Args&&... args) const noexcept(std::is_nothrow_constructible_v<T, Args...>)
+      {
+        if (!is_constructed)
+        {
+          new(&buffer) T(std::forward<Args>(args)...);
+          is_constructed = true;
+          return val();
+        }
+
+        clt::unreachable("Double initialization of 'uninit' parameter!", loc);
+      }
+
+      /// @brief Returns the object (validating that it is constructed)
+      /// @return Reference to the object
+      [[nodiscard]]
+      constexpr T& get() const noexcept
+      {
+        if (is_constructed)
+          return val();
+        clt::unreachable("Use of uninitialized 'uninit' parameter!", loc);
+      }
+
+      ~UninitDebug()
+      {
+        if (!is_constructed)
+          clt::unreachable("Missing 'init' call of 'uninit' parameter!", loc);
+      }
+    };
+
+    template<typename T> requires (!std::is_reference_v<T>) && (!std::is_const_v<T>)
+      /// @brief Represents an out parameter (but without any runtime checks)
+      class UninitRelease
+    {
+      /// @brief The object
+      alignas(T) char buffer[sizeof(T)];
+
+    public:
+      /// @brief Constructs an out parameter
+      /// @param ref The object
+      constexpr UninitRelease() noexcept {}
+
+      template<typename... Args>
+      constexpr T& init(Args&&... args) const noexcept(std::is_nothrow_constructible_v<T, Args...>)
+      {        
+        return *(new(&buffer) T(std::forward<Args>(args)...));
+      }
+
+      /// @brief Returns the object (validating that it is constructed)
+      /// @return Reference to the object
+      [[nodiscard]]
+      constexpr T& get() const noexcept { return *ptr_to<T*>(buffer); }
     };
 
     /// @brief Represents an Error (with runtime checks)
@@ -240,22 +330,7 @@ namespace clt
       /// @brief Check if the state represents a success
       [[nodiscard]]
       explicit constexpr operator bool() const noexcept { return is_success(); }
-    };
-
-    template<typename To, typename From>
-    /// @brief Helper to converts a pointer to a type to a pointer to another type
-    /// @tparam To The type to convert
-    /// @tparam From The type to convert from
-    /// @param frm The value to convert
-    /// @return Converted value
-    constexpr To ptr_to(From frm) noexcept
-      requires std::is_pointer_v<To> && std::is_pointer_v<From>
-    {
-      return static_cast<To>(
-        static_cast<
-        meta::match_cv_t<std::remove_pointer_t<From>, void>*
-        >(frm));
-    }
+    };    
   }
 
   template<typename T> requires (!std::is_reference_v<T>) && (!std::is_const_v<T>)
@@ -264,8 +339,14 @@ namespace clt
   /// @tparam T The type of the out parameter
   using out = std::add_const_t<std::conditional_t<isDebugBuild(), details::OutDebug<T>, details::OutRelease<T>>>&;
 
+  template<typename T> requires (!std::is_reference_v<T>) && (!std::is_const_v<T>)
+  /// @brief An uninitialized variable.
+  /// @tparam T The type of the uninitialized variable
+  using uninit = std::conditional_t<isDebugBuild(), details::UninitDebug<T>, details::UninitRelease<T>>;
+
   /// @brief Boolean that represents a success/failure state that must be checked.
   using ErrorFlag = std::conditional_t<isDebugBuild(), details::ErrorDebug, details::ErrorRelease>;
+
 
   namespace meta
   {
