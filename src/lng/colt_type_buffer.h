@@ -117,7 +117,7 @@ namespace clt::lng
     /// @return The type represented by 'tkn'
     const TypeVariant& getType(TypeToken tkn) const noexcept
     {
-      return type_map.internal_list()[tkn.type_index];
+      return type_map.internal_list()[tkn.getID()];
     }
   };
 }
