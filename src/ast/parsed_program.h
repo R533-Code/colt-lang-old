@@ -28,6 +28,8 @@ namespace clt::lng
     ModuleBuffer module_buffer{};
     /// @brief Contains all the parsed units
     Map<std::filesystem::path, ParsedUnit> parsed_units{};
+    /// @brief The set of all literal strings in the program
+    StableSet<String> literal_str{};
     /// @brief The reporter used to generate warnings and errors
     ErrorReporter& reporter;
     /// @brief The starting file to parse
@@ -46,6 +48,23 @@ namespace clt::lng
     /// @brief Returns the reporter used for errors and warnings
     /// @return The reporter
     ErrorReporter& getReporter() noexcept { return reporter; }
+    /// @brief Returns the reporter used for errors and warnings
+    /// @return The reporter
+    const ErrorReporter& getReporter() const noexcept { return reporter; }
+    
+    /// @brief Returns the type buffer used for errors and warnings
+    /// @return The type buffer
+    TypeBuffer& getTypes() noexcept { return type_buffer; }
+    /// @brief Returns the type buffer used for errors and warnings
+    /// @return The type buffer
+    const TypeBuffer& getTypes() const noexcept { return type_buffer; }
+
+    /// @brief Returns the set of literal strings in the program
+    /// @return Set of literal strings in the program
+    StableSet<String>& getStrLiterals() noexcept { return literal_str; }    
+    /// @brief Returns the set of literal strings in the program
+    /// @return Set of literal strings in the program
+    const StableSet<String>& getStrLiterals() const noexcept { return literal_str; }
 
     /// @brief Adds an import
     /// @return True if the import was successful, false on failure
