@@ -132,6 +132,13 @@ namespace clt::lng
     /// @brief Check if the current expression is a scope
     /// @return True if classof() returns EXPR_SCOPE
     constexpr bool isScope() const noexcept { return classof() == ExprID::EXPR_SCOPE; }
+
+    /// @brief Destructor
+    ~StmtExprVariant()
+    {
+      if (classof() == ExprID::EXPR_SCOPE)
+        getUnionMember<ScopeExpr>().~ScopeExpr();
+    }
   };
 
   // Ensure all the types are divided between Prod and Stmt
