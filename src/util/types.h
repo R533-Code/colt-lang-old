@@ -282,6 +282,9 @@ namespace clt
       [[nodiscard]]
       explicit constexpr operator bool() const noexcept { return is_success(); }
 
+      /// @brief Discards the value
+      constexpr void discard() const noexcept { is_checked = true; }
+
       /// @brief Ensures the state was at least read once
       ~ErrorDebug()
       {
@@ -326,6 +329,9 @@ namespace clt
       /// @brief Check if the state represents a success
       [[nodiscard]]
       constexpr bool is_success() const noexcept { return !iserror; }
+
+      /// @brief Does nothing on Release config
+      constexpr void discard() const noexcept {}
 
       /// @brief Check if the state represents a success
       [[nodiscard]]
