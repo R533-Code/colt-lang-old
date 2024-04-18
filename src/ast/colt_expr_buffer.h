@@ -10,6 +10,12 @@ namespace clt::lng
   {
     MAKE_UNION_AND_GET_MEMBER(COLTC_PROD_EXPR_LIST);
 
+    template<typename... Args>
+    constexpr bool is_classof_any_of(meta::type_list<Args...>) const noexcept
+    {
+      return (... || (classof() == TypeToExprID<Args>()));
+    }
+
   public:
     template<ProducerExpr Type, typename... Args>
     /// @brief Constructor
@@ -61,6 +67,24 @@ namespace clt::lng
         return nullptr;
       return &getUnionMember<T>();
     }
+    
+    template<typename T>
+    /// @brief Downcasts the variant to 'T'
+    /// @return nullptr if type does not match else pointer to the type
+    constexpr const T* getExpr() const noexcept
+    {
+      static_assert(producer_group_requirements_t<T>::size != 0, "Group must be inherited from!");
+      if (is_classof_any_of(producer_group_requirements_t<T>{}))
+        return nullptr;
+      return (const T*)_mono_state_;
+    }
+    
+    /// @brief Check if the current expression is an error
+    /// @return True if error
+    constexpr bool isError() const noexcept { return classof() == ExprID::EXPR_ERROR; }
+    /// @brief Check if the current expression is a read var/global
+    /// @return True if VarReadExpr or GlobalReadExpr
+    constexpr bool isRead() const noexcept { return classof() == ExprID::EXPR_VAR_READ || classof() == ExprID::EXPR_GLOBAL_READ; }
   };
 
   /// @brief Variant of statement
@@ -238,7 +262,7 @@ namespace clt::lng
     /// @brief Creates an error expression
     /// @param range The range of tokens
     /// @return ErrorExpr
-    ProdExprToken addProdError(TokenRange range) noexcept
+    ProdExprToken addError(TokenRange range) noexcept
     {
       return addNewProd<ErrorExpr>(range, types.getErrorType());
     }
