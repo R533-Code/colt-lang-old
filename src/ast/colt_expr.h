@@ -246,50 +246,60 @@ namespace clt::lng
     constexpr ProdExprToken getToLoad() const noexcept { return to_load; }
   };
 
-  /// @brief Represents a local variable read
-  class VarReadExpr
-    final : public ExprBase
+  class ReadExpr
+    : public ExprBase
   {
     /// @brief The declaration of the variable from which to read
     StmtExprToken decl;
 
+  public:
+    /// @brief Constructor
+    /// @param range The range of tokens
+    /// @param type The result of the read
+    /// @param decl The variable declaration from which to read
+    /// @param expr The ID of the expression
+    constexpr ReadExpr(TokenRange range, TypeToken type, StmtExprToken decl, ExprID expr) noexcept
+      : ExprBase(expr, type, range), decl(decl) {}
+
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(ReadExpr);
+
+    /// @brief Returns the declaration from which to read.
+    /// The returned StmtExprToken always represents a VarDeclExpr.
+    /// @return The declaration from which to read
+    constexpr StmtExprToken getDecl() const noexcept { return decl; }
+
+    /// @brief The class that inherited from this class
+    static constexpr auto VALID_DOWNCAST = std::array{ TypeToExprID<VarReadExpr>(), TypeToExprID<GlobalReadExpr>() };
+  };
+
+  /// @brief Represents a local variable read
+  class VarReadExpr
+    final : public ReadExpr
+  {   
   public:
     /// @brief Constructor
     /// @param range The range of tokens
     /// @param type The result of the read
     /// @param decl The variable declaration from which to read
     constexpr VarReadExpr(TokenRange range, TypeToken type, StmtExprToken decl) noexcept
-      : ExprBase(TypeToExprID<VarReadExpr>(), type, range), decl(decl) {}
+      : ReadExpr(range, type, decl, TypeToExprID<VarReadExpr>()) {}
 
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(VarReadExpr);
-
-    /// @brief Returns the declaration from which to read.
-    /// The returned StmtExprToken always represents a VarDeclExpr.
-    /// @return The declaration from which to read
-    constexpr StmtExprToken getDecl() const noexcept { return decl; }
   };
 
   /// @brief Represents a global variable read
   class GlobalReadExpr
-    final : public ExprBase
+    final : public ReadExpr
   {
-    /// @brief The declaration of the variable from which to read
-    StmtExprToken decl;
-
   public:
     /// @brief Constructor
     /// @param range The range of tokens
     /// @param type The result of the read
     /// @param decl The variable declaration from which to read
     constexpr GlobalReadExpr(TokenRange range, TypeToken type, StmtExprToken decl) noexcept
-      : ExprBase(TypeToExprID<VarReadExpr>(), type, range), decl(decl) {}
+      : ReadExpr(range, type, decl, TypeToExprID<GlobalReadExpr>()) {}
 
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(GlobalReadExpr);
-
-    /// @brief Returns the declaration from which to read.
-    /// The returned StmtExprToken always represents a GlobalDeclExpr.
-    /// @return The declaration from which to read
-    constexpr StmtExprToken getDecl() const noexcept { return decl; }
   };
 
   // TODO: add FnCallToken type.
@@ -676,6 +686,21 @@ namespace clt::lng
     /// @return The if condition
     constexpr ProdExprToken getIfCondition() const noexcept { return if_cond; }
   };
+
+  template<typename T>
+  struct producer_group_requirements
+  {
+    template<typename Ty>
+    struct base_of
+    {
+      static constexpr bool value = std::is_base_of_v<T, Ty>;
+    };
+
+    using type = meta::type_list<COLTC_PROD_EXPR_LIST>::remove_if_not<base_of>;
+  };
+  
+  template<typename T>
+  using producer_group_requirements_t = typename producer_group_requirements<T>::type;
 }
 
 #endif // !HG_COLT_EXPR
