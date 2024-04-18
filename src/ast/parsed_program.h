@@ -14,6 +14,7 @@
 #include "err/composable_reporter.h"
 #include "parsed_unit.h"
 #include "structs/map.h"
+#include "err/warn.h"
 
 namespace clt::lng
 {
@@ -36,14 +37,16 @@ namespace clt::lng
     const std::filesystem::path& start_file;
     /// @brief Represents the include paths of the program
     const Vector<std::filesystem::path>& includes;
+    /// @brief Dictates which warnings to generate
+    WarnFor& warn_for;
 
   public:
     /// @brief Constructs a parsed program.
     /// This does not parse anything.
     /// @param reporter The reporter used for errors and warnings
     /// @param includes The include path used by the program
-    ParsedProgram(ErrorReporter& reporter, const std::filesystem::path& start, const Vector<std::filesystem::path>& includes) noexcept
-      : reporter(reporter), start_file(start), includes(includes) {}
+    ParsedProgram(ErrorReporter& reporter, const std::filesystem::path& start, const Vector<std::filesystem::path>& includes, WarnFor& warn_for) noexcept
+      : reporter(reporter), start_file(start), includes(includes), warn_for(warn_for) {}
 
     /// @brief Returns the reporter used for errors and warnings
     /// @return The reporter
@@ -65,6 +68,13 @@ namespace clt::lng
     /// @brief Returns the set of literal strings in the program
     /// @return Set of literal strings in the program
     const StableSet<String>& getStrLiterals() const noexcept { return literal_str; }
+
+    /// @brief Returns what to warn for
+    /// @return What to warn for
+    WarnFor& getWarnFor() noexcept { return warn_for; }
+    /// @brief Returns what to warn for
+    /// @return What to warn for
+    const WarnFor& getWarnFor() const noexcept { return warn_for; }
 
     /// @brief Adds an import
     /// @return True if the import was successful, false on failure
