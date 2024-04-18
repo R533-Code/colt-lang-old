@@ -51,8 +51,7 @@ namespace clt::lng
       COMP_ERROR
     };
 
-    ParsedUnit(ParsedProgram& program, const std::filesystem::path& path) noexcept
-      : program(program), path(path), exprs(program.getTypes()) {}
+    ParsedUnit(ParsedProgram& program, const std::filesystem::path& path) noexcept;      
 
     /// @brief Parses the current unit
     /// @return The parsing result
@@ -76,10 +75,10 @@ namespace clt::lng
 
     /// @brief Returns the error reporter
     /// @return The error reporter
-    const ErrorReporter& getReporter() const noexcept { return program.getReporter(); }
+    const ErrorReporter& getReporter() const noexcept;
     /// @brief Returns the error reporter
     /// @return The error reporter
-    ErrorReporter& getReporter() noexcept { return program.getReporter(); }
+    ErrorReporter& getReporter() noexcept;
 
     /// @brief Returns the program that is being parsed
     /// @return The program that is being parsed

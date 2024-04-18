@@ -11,6 +11,9 @@
 
 namespace clt::lng
 {
+  ParsedUnit::ParsedUnit(ParsedProgram& program, const std::filesystem::path& path) noexcept
+    : program(program), path(path), exprs(program.getTypes()) {}
+
   ParsedUnit::ParseResult ParsedUnit::parse() noexcept
   {
     assert_true("parse must only be called once!", to_parse.capacity() != 0);
@@ -37,5 +40,15 @@ namespace clt::lng
     warn_count = static_cast<u32>(reporter.getWarnCount() - warn_c);
 
     return error_count ? ParseResult::COMP_ERROR : ParseResult::SUCCESS;
+  }
+  
+  const ErrorReporter& ParsedUnit::getReporter() const noexcept
+  {
+    return program.getReporter();
+  }
+  
+  ErrorReporter& ParsedUnit::getReporter() noexcept
+  {
+    return program.getReporter();
   }
 }
