@@ -145,7 +145,8 @@ namespace clt
     };
 
     template<typename T> requires (!std::is_reference_v<T>) && (!std::is_const_v<T>)
-      /// @brief Represents an out parameter (with runtime checks)
+      && std::is_trivially_destructible_v<T>
+      /// @brief Represents an uninitialized variable (with runtime checks)
       class UninitDebug
     {
       /// @brief The object
@@ -155,8 +156,19 @@ namespace clt
       /// @brief True if the object was constructed
       mutable bool is_constructed = false;
 
-      constexpr T& val() noexcept { return *ptr_to<T*>(buffer); }
-      constexpr const T& val() const noexcept { return *ptr_to<T*>(buffer); }
+      constexpr T& val() noexcept
+      {
+        if (is_constructed)
+          return *ptr_to<T*>(buffer);
+        clt::unreachable("Use of uninitialized 'uninit' parameter!", loc);
+      }
+
+      constexpr const T& val() const noexcept
+      {
+        if (is_constructed)
+          return *ptr_to<const T*>(buffer);
+        clt::unreachable("Use of uninitialized 'uninit' parameter!", loc);
+      }
 
     public:
       /// @brief Constructs the out parameter
@@ -178,15 +190,34 @@ namespace clt
         clt::unreachable("Double initialization of 'uninit' parameter!", loc);
       }
 
+      /// @brief Initializes the uninitialized memory
+      /// @param construct The value to initialize with
+      /// @return Reference to the constructed object
+      constexpr T& operator=(const T& construct) noexcept(std::is_nothrow_copy_constructible_v<T>)
+      {
+        return init(construct);
+      }
+
+      /// @brief Initializes the uninitialized memory
+      /// @param construct The value to initialize with
+      /// @return Reference to the constructed object
+      constexpr T& operator=(T&& construct) noexcept(std::is_nothrow_copy_constructible_v<T>)
+      {
+        return init(std::move(construct));
+      }
+
       /// @brief Returns the object (validating that it is constructed)
       /// @return Reference to the object
       [[nodiscard]]
-      constexpr T& get() const noexcept
-      {
-        if (is_constructed)
-          return val();
-        clt::unreachable("Use of uninitialized 'uninit' parameter!", loc);
-      }
+      constexpr const T& get() const noexcept { return val(); }
+      
+      /// @brief Returns the object (validating that it is constructed)
+      /// @return Reference to the object
+      [[nodiscard]]
+      constexpr T& get() noexcept { return val(); }
+
+      constexpr operator T& () { return val(); }
+      constexpr operator const T& () const { return val(); }
 
       ~UninitDebug()
       {
@@ -196,6 +227,7 @@ namespace clt
     };
 
     template<typename T> requires (!std::is_reference_v<T>) && (!std::is_const_v<T>)
+      && std::is_trivially_destructible_v<T>
       /// @brief Represents an out parameter (but without any runtime checks)
       class UninitRelease
     {
@@ -216,7 +248,30 @@ namespace clt
       /// @brief Returns the object (validating that it is constructed)
       /// @return Reference to the object
       [[nodiscard]]
+      constexpr const T& get() const noexcept { return *ptr_to<const T*>(buffer); }
+      /// @brief Returns the object (validating that it is constructed)
+      /// @return Reference to the object
+      [[nodiscard]]
       constexpr T& get() const noexcept { return *ptr_to<T*>(buffer); }
+
+      /// @brief Initializes the uninitialized memory
+      /// @param construct The value to initialize with
+      /// @return Reference to the constructed object
+      constexpr T& operator=(const T& construct) noexcept(std::is_nothrow_copy_constructible_v<T>)
+      {
+        return *(new(&buffer) T(construct));
+      }
+      
+      /// @brief Initializes the uninitialized memory
+      /// @param construct The value to initialize with
+      /// @return Reference to the constructed object
+      constexpr T& operator=(T&& construct) noexcept(std::is_nothrow_copy_constructible_v<T>)
+      {
+        return *(new(&buffer) T(std::move(construct)));
+      }
+
+      constexpr operator T& () { return get(); }
+      constexpr operator const T& () const { return get(); }
     };
 
     /// @brief Represents an Error (with runtime checks)
