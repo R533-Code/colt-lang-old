@@ -54,9 +54,18 @@ namespace clt::lng
       : index(tkn.getID()) {}
     /// @brief Constructor
     constexpr OptTok(decltype(None)) noexcept
-      : index(T::MAX_VALUE + 1) {}
+      : index(INVALID) {}
 
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(OptTok);
+
+    /// @brief Assigns a value to the optional
+    /// @param t The value to assign
+    /// @return this
+    constexpr OptTok& operator=(T t) noexcept { index = t; }
+    /// @brief Clears the optional
+    /// @param  None
+    /// @return this
+    constexpr OptTok& operator=(decltype(None)) noexcept { index = INVALID; }
 
     /// @brief Check if the optional does not contain a value
     /// @return True if the optional is empty
