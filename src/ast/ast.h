@@ -43,8 +43,8 @@ namespace clt::lng
   {
     /// @brief The if branch
     StmtExprToken if_branch;
-    /// @brief The else branch (can be null)
-    StmtExprToken else_branch;
+    /// @brief The else branch
+    OptTok<StmtExprToken> else_branch;
     /// @brief True if the 'if' branch is not initialized
     bool is_if_uninit;
   };
@@ -127,7 +127,11 @@ namespace clt::lng
     /// @return The current token
     Token current() const noexcept { return to_parse.getTokenBuffer().getTokens()[current_tkn]; }
     /// @brief Advances to the next token    
-    void consume_current() noexcept { ++current_tkn; }
+    void consume_current() noexcept
+    {
+      assert_true("Already reached EOF!", current() == Lexeme::TKN_EOF);
+      ++current_tkn;
+    }
 
     /// @brief Helper to generate TokenRange
     class TokenRangeGenerator
@@ -140,7 +144,7 @@ namespace clt::lng
     public:
       /// @brief Constructor
       /// @param ast The ASTMaker whose state to use to generate the range
-      constexpr TokenRangeGenerator(const ASTMaker& ast) noexcept
+      TokenRangeGenerator(const ASTMaker& ast) noexcept
         : ast(ast), current(ast.current()) {}
 
       /// @brief Creates a token range from the current ASTMaker state.
@@ -148,7 +152,7 @@ namespace clt::lng
       /// TokenRangeGenerator is constructed to the current token
       /// in the ASTMaker (non-inclusive)
       /// @return The TokenRange
-      constexpr TokenRange getRange() const noexcept
+      TokenRange getRange() const noexcept
       {
         return ast.getTokenBuffer().getRangeFrom(current, ast.current());
       }
@@ -181,7 +185,10 @@ namespace clt::lng
     void report(TokenRange range, panic_consume_t consume, io::fmt_str<Args...> fmt, Args&&... args) noexcept;
 
     template<report_as AS, typename... Args>
-    void report_current(Token tkn, panic_consume_t consume, io::fmt_str<Args...> fmt, Args&&... args) noexcept;
+    void report(Token tkn, panic_consume_t consume, io::fmt_str<Args...> fmt, Args&&... args) noexcept;
+
+    template<report_as AS, typename... Args>
+    void report_current(panic_consume_t consume, io::fmt_str<Args...> fmt, Args&&... args) noexcept;
 
     template<typename... Args>
     ErrorFlag check_consume(Lexeme expected, io::fmt_str<Args...> fmt, Args&&... args) noexcept;
@@ -189,26 +196,80 @@ namespace clt::lng
     template<typename... Args>
     ErrorFlag check_consume(Lexeme expected, panic_consume_t consume, io::fmt_str<Args...> fmt, Args&&... args) noexcept;
 
+    template<typename... Args>
+    bool is_current_one_of(Args&&... args) const noexcept;
+
+    /*----------------------
+     | CONSUMING FUNCTIONS |
+     ----------------------*/
+
+    /// @brief Consumes all tokens till a semicolon is hit
+    void panic_consume_semicolon() noexcept;
+
     /*--------------------
      | PARSING FUNCTIONS |
      --------------------*/
 
+    /// @brief Parses a primary expression.
+    /// A primary expression is a read from a variable, a literal,
+    /// unary or binary expression, or function call.
+    /// @param accepts_conv True if the primary expression can be followed by a 'as' or 'bit_as' conversion
+    /// @return Parsed expression
     ProdExprToken parse_primary(bool accepts_conv = true);
 
-    ProdExprToken parse_unary();
+    /// @brief Parses a unary expression.
+    /// A unary expression is a unary operator (!, ~, *, &) applied
+    /// to a primary expression. It can result also result
+    /// in a AddressOf and PtrRead expression.
+    /// @return Parsed expression
+    ProdExprToken parse_unary();   
 
     template<Lexeme begin, Lexeme end, typename RetT, typename... Args>
-    RetT parse_enclosed(StringView start_error, StringView end_error, panic_consume_t panic, RetT(ASTMaker::* method_ptr)(Args...), Args&&... args) noexcept;
+    /// @brief Parses an expression that enclosed by 'begin' and 'end'
+    /// @tparam begin The starting lexeme
+    /// @tparam end The end lexeme
+    /// @tparam RetT The return type of the parsing function
+    /// @tparam Args... The arguments taken by the parsing function
+    /// @param start_error The error to print if the starting token is missing
+    /// @param end_error The error to print if the end token is missing
+    /// @param panic The panic consumer to call on errors
+    /// @param method_ptr The method pointer that parses the expression enclosed
+    /// @param args... The arguments to forward to 'method_ptr'
+    /// @return The return of 'method_ptr'
+    RetT parse_enclosed(io::fmt_str<> start_error, io::fmt_str<> end_error, panic_consume_t panic, RetT(ASTMaker::* method_ptr)(Args...), Args&&... args) noexcept;
+
+    template<typename RetT, typename... Args>
+    /// @brief Parses an expression enclosed in parenthesis
+    /// @tparam RetT The return type of the parsing function
+    /// @tparam Args... The arguments taken by the parsing function
+    /// @param method_ptr The method pointer that parses the expression enclosed
+    /// @param args... The arguments to forward to 'method_ptr'
+    RetT parse_parenthesis(RetT(ASTMaker::* method_ptr)(Args...), Args&&... args) noexcept;
+    
+    template<typename RetT, typename... Args>
+    /// @brief Parses an expression enclosed in parenthesis
+    /// @tparam RetT The return type of the parsing function
+    /// @tparam Args... The arguments taken by the parsing function
+    /// @param consume The panic consumer to call on errors
+    /// @param method_ptr The method pointer that parses the expression enclosed
+    /// @param args... The arguments to forward to 'method_ptr'
+    RetT parse_parenthesis(panic_consume_t consume, RetT(ASTMaker::* method_ptr)(Args...), Args&&... args) noexcept;
+
+    /// @brief Convert a read from a variable to a declaration
+    /// @param expr The expression (can be any expression)
+    /// @return None or VarDeclExpr or GlobalDeclExpr
+    OptTok<StmtExprToken> decl_from_read(ProdExprToken expr) const noexcept;
   };
   
   template<ASTMaker::report_as AS, typename ...Args>
   void ASTMaker::report(TokenRange range, panic_consume_t consume, io::fmt_str<Args...> fmt, Args&&... args) noexcept
   {
     auto source_info = getTokenBuffer().makeSourceInfo(range);
+    StringView str;
     if constexpr (sizeof...(Args) == 0)
-      StringView str = fmt;
+      str = fmt;
     else
-      StringView str = getReporter().fmt(fmt, std::forward<Args>(args)...);
+      str = getReporter().fmt(fmt, std::forward<Args>(args)...);
 
     if constexpr (AS == ERROR)
       getReporter().error(str, source_info);
@@ -221,13 +282,14 @@ namespace clt::lng
   }
 
   template<ASTMaker::report_as AS, typename ...Args>
-  void ASTMaker::report_current(Token tkn, panic_consume_t consume, io::fmt_str<Args...> fmt, Args && ...args) noexcept
+  void ASTMaker::report(Token tkn, panic_consume_t consume, io::fmt_str<Args...> fmt, Args && ...args) noexcept
   {
     auto source_info = getTokenBuffer().makeSourceInfo(tkn);
+    StringView str;
     if constexpr (sizeof...(Args) == 0)
-      StringView str = fmt;
+      str = fmt;
     else
-      StringView str = getReporter().fmt(fmt, std::forward<Args>(args)...);
+      str = getReporter().fmt(fmt, std::forward<Args>(args)...);
 
     if constexpr (AS == ERROR)
       getReporter().error(str, source_info);
@@ -237,6 +299,12 @@ namespace clt::lng
       getReporter().error(str, source_info);
     if (consume != nullptr)
       (*this.*consume)();
+  }
+
+  template<ASTMaker::report_as AS, typename ...Args>
+  void ASTMaker::report_current(panic_consume_t consume, io::fmt_str<Args...> fmt, Args&&... args) noexcept
+  {
+    report<AS>(current(), consume, fmt, std::forward<Args>(args)...);
   }
 
   template<typename ...Args>
@@ -247,8 +315,15 @@ namespace clt::lng
       consume_current();
       return ErrorFlag::success();
     }
-    report_current<ERROR>(current(), consume, fmt, std::forward<Args>(args)...);
+    report<ERROR>(current(), consume, fmt, std::forward<Args>(args)...);
     return ErrorFlag::error();
+  }
+
+  template<typename ...Args>
+  bool ASTMaker::is_current_one_of(Args&&... args) const noexcept
+  {
+    auto tkn = current();
+    return (... || (tkn == args));
   }
 
   template<typename ...Args>
@@ -258,9 +333,39 @@ namespace clt::lng
   }  
 
   template<Lexeme begin, Lexeme end, typename RetT, typename ...Args>
-  RetT ASTMaker::parse_enclosed(StringView start_error, StringView end_error, panic_consume_t panic, RetT(ASTMaker::* method_ptr)(Args...), Args && ...args) noexcept
+  RetT ASTMaker::parse_enclosed(io::fmt_str<> start_error, io::fmt_str<> end_error, panic_consume_t panic, RetT(ASTMaker::* method_ptr)(Args...), Args && ...args) noexcept
   {
-    
+    auto start = current();
+    check_consume(begin, start_error).discard();
+    if constexpr (std::is_same_v<RetT, void>)
+    {
+      (*this.*method_ptr)(std::forward<Args>(args)...);
+      if (current() != end)
+        report<ERROR>(start, panic, end_error);
+      else
+        consume_current();
+    }
+    else
+    {
+      auto to_ret = (*this.*method_ptr)(std::forward<Args>(args)...);
+      if (current() != end)
+        report<ERROR>(start, panic, end_error);
+      else
+        consume_current();
+      return to_ret;
+    }
+  }
+
+  template<typename RetT, typename... Args>
+  RetT ASTMaker::parse_parenthesis(RetT(ASTMaker::* method_ptr)(Args...), Args&&... args) noexcept
+  {
+    return parse_enclosed<Token::TKN_LEFT_PAREN, Token::TKN_RIGHT_PAREN>("Expected a '(!", "Expected a ')!", nullptr, method_ptr, std::forward<Args>(args)...);
+  }
+  
+  template<typename RetT, typename... Args>
+  RetT ASTMaker::parse_parenthesis(panic_consume_t consume, RetT(ASTMaker::* method_ptr)(Args...), Args&&... args) noexcept
+  {
+    return parse_enclosed<Token::TKN_LEFT_PAREN, Token::TKN_RIGHT_PAREN>("Expected a '(!", "Expected a ')!", consume, method_ptr, std::forward<Args>(args)...);
   }
 }
 

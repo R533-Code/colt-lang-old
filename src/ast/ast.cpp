@@ -7,6 +7,11 @@ namespace clt::lng
 
   }
 
+  void ASTMaker::panic_consume_semicolon() noexcept
+  {
+
+  }
+
   ProdExprToken ASTMaker::parse_primary(bool accepts_conv)
   {
     using enum Lexeme;
@@ -23,19 +28,17 @@ namespace clt::lng
       QWORD_t value = getTokenBuffer().getLiteral(literal_tkn);
       //Consume the literal token
       consume_current();
-      to_ret.init(
-        getExprBuffer().addLiteral(range.getRange(), value, LiteralToBuiltinID(literal_tkn))
+      to_ret = getExprBuffer().addLiteral(
+        range.getRange(), value, LiteralToBuiltinID(literal_tkn)
       );
     }
     else if (isUnaryToken(current()))
-      to_ret.init(parse_unary());
-    else if (current() == TKN_LEFT_PAREN)
-      to_ret.init(parse_parenthesis(&ASTMaker::parse_binary, as<u8>(0)));
-    else if (current() == TKN_IDENTIFIER)
     {
-      to_ret = parse_identifier(line_state);
-      if (is_a<WhileLoopExpr>(to_ret))
-        return to_ret;
+      to_ret = parse_unary();
+    }
+    else if (current() == TKN_LEFT_PAREN)
+    {
+      to_ret = parse_parenthesis(&ASTMaker::parse_binary, static_cast<u8>(0));
     }
     else
     {
@@ -43,14 +46,89 @@ namespace clt::lng
       if (current() == TKN_ERROR)
         consume_current();
       else
-        generate_current<ERROR>(&ASTMaker::panic_consume_semicolon,
-          "Expected an expression!"); //TESTED
-      to_ret = Expr::CreateError(ctx, line_state.to_src_info());
+        report_current<ERROR>(&ASTMaker::panic_consume_semicolon, "Expected an expression!");
+      
+      to_ret = getExprBuffer().addError(range.getRange());
     }
 
     //If the primary expression accepts a conversion, check for as/bit_as.
-    if (cnv && (current_tkn == TKN_KEYWORD_AS || current_tkn == TKN_KEYWORD_BIT_AS))
+    if (accepts_conv && is_current_one_of(TKN_KEYWORD_bit_as, TKN_KEYWORD_as))
       return parse_conversion(to_ret, line_state);
     return to_ret;
+  }
+
+  ProdExprToken ASTMaker::parse_unary()
+  {
+    using enum Lexeme;
+    auto range = startRange();
+
+    uninit<ProdExprToken> to_ret;
+
+    //Save the operator
+    Token op = current();
+    consume_current(); //consume the unary operator
+
+    //Parse the child expression, without handling conversions:
+    // '-5 as i32' is equivalent to '(-5) as i32'
+    ProdExprToken child = parse_primary(false);
+    if (getExprBuffer().getExpr(child).isError())
+      return child;
+
+    switch (op)
+    {
+    case TKN_PLUS_PLUS:
+    case TKN_MINUS_MINUS:
+    case TKN_PLUS: // +
+      report<ERROR>(range.getRange(), &ASTMaker::panic_consume_semicolon, "Unary '+' is not supported!");
+      to_ret = getExprBuffer().addError(range.getRange());
+
+    break; case TKN_AND: // \&
+    {
+      auto pchild = decl_from_read(child);
+      if (pchild.isNone())
+      {
+        report<ERROR>(range.getRange(), &ASTMaker::panic_consume_semicolon,
+          "Unary '&' can only be applied on a variable!");
+        to_ret = getExprBuffer().addError(range.getRange());
+      }
+      else
+        to_ret = getExprBuffer().addAddressOf(range.getRange(), pchild.getValue());
+    }
+
+    break; case TKN_STAR: // *
+      if (!getExprBuffer().getType(child).isAnyOpaquePtr())
+      {
+        report<ERROR>(range.getRange(), &ASTMaker::panic_consume_semicolon,
+          "Unary '*' can only be applied on a non-opaque pointer!");
+        to_ret = getExprBuffer().addError(range.getRange());
+      }
+      else if (!getExprBuffer().getType(child).isAnyPtr())
+      {
+        report<ERROR>(range.getRange(), &ASTMaker::panic_consume_semicolon,
+          "Unary '*' can only be applied on pointer types!");
+        to_ret = getExprBuffer().addError(range.getRange());
+      }
+      else
+        to_ret = getExprBuffer().addPtrLoad(range.getRange(), child);
+    
+    break; default:
+      //if (!child->type()->supports(TokenToUnary(op)))
+      //{
+      //  generate<ERROR>(line_state.to_src_info(), &ASTMaker::panic_consume_semicolon,
+      //    "'{}' does not support '{}' operator!", type_name(ctx, child->type()), op_symbol); //TESTED
+      //  to_ret = Expr::CreateError(ctx, line_state.to_src_info());
+      //}
+      //else
+        to_ret = getExprBuffer().addUnary(range.getRange(), TokenToUnary(op), child);
+    }
+    return to_ret;
+  }
+  
+  OptTok<StmtExprToken> ASTMaker::decl_from_read(ProdExprToken expr) const noexcept
+  {
+    auto& read = getExprBuffer().getExpr(expr);
+    if (!read.isRead())
+      return None;
+    return read.getExpr<ReadExpr>()->getDecl();
   }
 }
