@@ -1,3 +1,10 @@
+/*****************************************************************//**
+ * @file   token_helper.h
+ * @brief  Contains macros to simplify creating tokens.
+ * 
+ * @author RPC
+ * @date   April 2024
+ *********************************************************************/
 #ifndef HG_COLT_TOKEN_HELPER
 #define HG_COLT_TOKEN_HELPER
 
@@ -10,6 +17,7 @@
 
 #define IMPL_CREATE_TOKEN_FRIEND_CLASS(a) friend class a;
 
+/// @brief Creates a token class
 #define CREATE_TOKEN_TYPE(name, type, max_value, friend1, ...) \
   struct name \
   { \
@@ -33,16 +41,18 @@ namespace clt::lng
     && std::same_as<std::remove_cv_t<typename T::storage_t>, std::remove_cv_t<decltype(std::declval<T>().getID())>>;
 
   template<TokenType T>
+  /// @brief Represents an optional token
   class OptTok
   {
     static_assert(T::MAX_VALUE < std::numeric_limits<typename T::storage_t>::max(),
       "Use Option<> as OptTok cannot take advantage of stored data!");
-
+    /// @brief The storage type
     using ty = typename T::storage_t;
 
     /// @brief The index
     ty index;
 
+    /// @brief The invalid value used to represent None
     static constexpr ty INVALID = T::MAX_VALUE + 1;
 
   public:
