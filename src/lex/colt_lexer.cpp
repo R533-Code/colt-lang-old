@@ -56,6 +56,7 @@ namespace clt::lng
       {
         lexer.getNext(); // consume '/'
         lexer.next = lexer.getNext();
+        lexer.comment_depth--;
         return;
       }
       lexer.next = lexer.getNext();
