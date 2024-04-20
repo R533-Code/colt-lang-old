@@ -1,9 +1,17 @@
+/*****************************************************************//**
+ * @file   ast.h
+ * @brief  Contains the Abstract Syntax Tree related codes.
+ * 
+ * @author RPC
+ * @date   April 2024
+ *********************************************************************/
 #ifndef HG_COLT_AST
 #define HG_COLT_AST
 
 #include "parsed_program.h"
 #include "parsed_unit.h"
 #include "colt_expr.h"
+#include "util/exit_recursion.h"
 
 namespace clt::lng
 {
@@ -62,16 +70,21 @@ namespace clt::lng
 
   struct ASTMaker
   {
+    /// @brief The maximum recursion depth allowed
+    static constexpr u16 MAX_RECURSION_DEPTH = 256;
+
+    /// @brief The unit that is being parsed
+    ParsedUnit& to_parse;
+
     /// @brief The current token offset
     u32 current_tkn = 0;
-    
+    /// @brief The recursion depth
+    u16 recurse_depth = 0;    
     /// @brief True if parsing a private section
     u8 is_private : 1 = true;
     /// @brief The current function being parsed
     FnGlobal* current_fn = nullptr;
-
-    /// @brief The unit that is being parsed
-    ParsedUnit& to_parse;
+    
     /// @brief The local variable table
     Vector<LocalVarInfo> local_var_table = {};
 
@@ -80,13 +93,18 @@ namespace clt::lng
      -------------------------*/
 
     /// @brief Contains the 'using module' declarations
-    Vector<Module*> using_modules{};
+    Vector<Module*> using_modules = {};
     /// @brief Contains the module in which to lookup.
     /// When parsing an identifier, if MODULE1::MODULE2::IDENTIFIER
     /// is parsed, then force_lookup should contain 0:MODULE1 1:MODULE2.
     /// The `lookup` method will then use these information.
     ModuleName forced_lookup = ModuleName::getGlobalModule();
     
+    /// @brief Constructor
+    /// @param unit The unit to parse
+    ASTMaker(ParsedUnit& unit) noexcept
+      : to_parse(unit) {}
+
     /*------------------
      | USEFUL GETTERS  |
      ------------------*/
@@ -163,6 +181,43 @@ namespace clt::lng
     /// @return The range generator.
     TokenRangeGenerator startRange() const noexcept { return { *this }; }
 
+    /// @brief Helper to check for recursion depth
+    class RecursionDepthChecker
+    {
+      /// @brief The ASTMaker whose data to use
+      ASTMaker& ast;
+
+    public:
+      /// @brief Constructs a checker, see `addDepth`
+      /// @param ast The ASTMaker whose data to use
+      RecursionDepthChecker(ASTMaker& ast)
+        : ast(ast)
+      {
+        ast.recurse_depth++;
+        if (ast.recurse_depth == ASTMaker::MAX_RECURSION_DEPTH)
+        {
+          ast.recurse_depth = 0;
+          ast.getReporter().error("Exceeded recursion depth!");
+          throw ExitRecursionExcept();
+        }
+      }
+
+      /// @brief Destructor, restores the recursion depth to its previous value
+      ~RecursionDepthChecker() noexcept
+      {
+        ast.recurse_depth--;
+      }
+    };
+
+    /// @brief Returns an object responsible of checking for recursion depth.
+    /// When constructed, the object increments the 'recurse_depth' member of the
+    /// ASTMaker. On destruction, the object decrements 'recurse_depth'.
+    /// If 'recurse_depth' equals to MAX_RECURSION_DEPTH, an ExitRecursionExcept
+    /// is thrown.
+    /// Care must be taken: the function calling this method must not be noexcept.   
+    /// @return RecursionDepthChecker
+    RecursionDepthChecker addDepth() { return RecursionDepthChecker{ *this }; }
+
     /*------------------
      | ERROR REPORTING |
      ------------------*/
@@ -182,12 +237,32 @@ namespace clt::lng
     };
 
     template<report_as AS, typename... Args>
+    /// @brief Reports a message/warning/error
+    /// @tparam AS How to report the message (can be any of ERROR, WARNING, MESSAGE)
+    /// @tparam Args... The arguments to format
+    /// @param range The range of tokens to highlight
+    /// @param consume The panic method to call (can be null)
+    /// @param fmt The message/warning/error format
+    /// @param args... The arguments to format
     void report(TokenRange range, panic_consume_t consume, io::fmt_str<Args...> fmt, Args&&... args) noexcept;
 
     template<report_as AS, typename... Args>
+    /// @brief Reports a message/warning/error
+    /// @tparam AS How to report the message (can be any of ERROR, WARNING, MESSAGE)
+    /// @tparam Args... The arguments to format
+    /// @param tkn The token to highlight
+    /// @param consume The panic method to call (can be null)
+    /// @param fmt The message/warning/error format
+    /// @param args... The arguments to format
     void report(Token tkn, panic_consume_t consume, io::fmt_str<Args...> fmt, Args&&... args) noexcept;
 
     template<report_as AS, typename... Args>
+    /// @brief Reports a message/warning/error for the current token
+    /// @tparam AS How to report the message (can be any of ERROR, WARNING, MESSAGE)
+    /// @tparam Args... The arguments to format
+    /// @param consume The panic method to call (can be null)
+    /// @param fmt The message/warning/error format
+    /// @param args... The arguments to format
     void report_current(panic_consume_t consume, io::fmt_str<Args...> fmt, Args&&... args) noexcept;
 
     template<typename... Args>
@@ -197,6 +272,9 @@ namespace clt::lng
     ErrorFlag check_consume(Lexeme expected, panic_consume_t consume, io::fmt_str<Args...> fmt, Args&&... args) noexcept;
 
     template<typename... Args>
+    /// @brief Check if the current token is any of 'args...'
+    /// @param args... The token to compare against
+    /// @return True if the current token is equal to any of 'args...'
     bool is_current_one_of(Args&&... args) const noexcept;
 
     /*----------------------
@@ -215,14 +293,48 @@ namespace clt::lng
     /// unary or binary expression, or function call.
     /// @param accepts_conv True if the primary expression can be followed by a 'as' or 'bit_as' conversion
     /// @return Parsed expression
+    /// @throw ExitRecursionExcept
     ProdExprToken parse_primary(bool accepts_conv = true);
+
+    /// @brief Parses a literal token.
+    /// This is a leaf function, and thus cannot throw `ExitRecursionExcept`.
+    /// @param range The token range representing the expression
+    /// @return LiteralExpr
+    /// @pre `isLiteralToken(current())`
+    ProdExprToken parse_primary_literal(TokenRange range) noexcept;
+    
+    /// @brief Handles an invalid primary expression.
+    /// Avoids reporting an error if the lexer already did.
+    /// This is a leaf function, and thus cannot throw `ExitRecursionExcept`.
+    /// @param range The token range representing the expression
+    /// @return ErrorExpr
+    ProdExprToken parse_primary_invalid(TokenRange range) noexcept;
 
     /// @brief Parses a unary expression.
     /// A unary expression is a unary operator (!, ~, *, &) applied
     /// to a primary expression. It can result also result
     /// in a AddressOf and PtrRead expression.
-    /// @return Parsed expression
+    /// @return Parsed expression or ErrorExpr
+    /// @throw ExitRecursionExcept
     ProdExprToken parse_unary();   
+
+    /// @brief Handles an AddressOf expression
+    /// This is a leaf function, and thus cannot throw `ExitRecursionExcept`.
+    /// @param child The child whose address to return
+    /// @return AddressOfExpr or ErrorExpr if 'child' is not a 'ReadExpr'
+    /// @pre The previously parsed unary operator must be '&'
+    ProdExprToken parse_unary_and(ProdExprToken child, TokenRange range) noexcept;
+    
+    /// @brief Handles a PtrLoad expression
+    /// This is a leaf function, and thus cannot throw `ExitRecursionExcept`.
+    /// @param child The child from which to load
+    /// @return AddressOfExpr or ErrorExpr if 'child' is not a pointer
+    /// @pre The previously parsed unary operator must be '*'
+    ProdExprToken parse_unary_star(ProdExprToken child, TokenRange range) noexcept;
+
+    /*------------------------------
+     | TEMPLATED PARSING FUNCTIONS |
+     -----------------------------*/
 
     template<Lexeme begin, Lexeme end, typename RetT, typename... Args>
     /// @brief Parses an expression that enclosed by 'begin' and 'end'
@@ -236,7 +348,7 @@ namespace clt::lng
     /// @param method_ptr The method pointer that parses the expression enclosed
     /// @param args... The arguments to forward to 'method_ptr'
     /// @return The return of 'method_ptr'
-    RetT parse_enclosed(io::fmt_str<> start_error, io::fmt_str<> end_error, panic_consume_t panic, RetT(ASTMaker::* method_ptr)(Args...), Args&&... args) noexcept;
+    RetT parse_enclosed(io::fmt_str<> start_error, io::fmt_str<> end_error, panic_consume_t panic, RetT(ASTMaker::*method_ptr)(Args...), Args&&... args) noexcept;
 
     template<typename RetT, typename... Args>
     /// @brief Parses an expression enclosed in parenthesis
@@ -254,6 +366,10 @@ namespace clt::lng
     /// @param method_ptr The method pointer that parses the expression enclosed
     /// @param args... The arguments to forward to 'method_ptr'
     RetT parse_parenthesis(panic_consume_t consume, RetT(ASTMaker::* method_ptr)(Args...), Args&&... args) noexcept;
+
+    /*----------------
+     | STATE HELPERS |
+     ---------------*/
 
     /// @brief Convert a read from a variable to a declaration
     /// @param expr The expression (can be any expression)
