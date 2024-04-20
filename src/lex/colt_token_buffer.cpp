@@ -1,3 +1,10 @@
+/*****************************************************************//**
+ * @file   colt_token_buffer.cpp
+ * @brief  Contains the implementation of 'colt_token_buffer.h'.
+ * 
+ * @author RPC
+ * @date   April 2024
+ *********************************************************************/
 #include "colt_token_buffer.h"
 #include "colt_lexer.h"
 
@@ -15,13 +22,13 @@ namespace clt::lng
   }
 
   void Lex(TokenBuffer& buffer, ErrorReporter& reporter, StringView to_parse) noexcept
-  {    
+  {
     CreateLines(to_parse, buffer);
-    Lexer lex = { reporter, buffer };
-
+    Lexer lex = { reporter, buffer };   
+    
     lex.next = lex.getNext();
     while (lex.next != EOF)
-      Lexer::LexingTable[(u8)lex.next](lex);
+      Lexer::LexingTable[(u8)lex.next](lex);    
     // Add EOF (even if there is already an EOF)
     buffer.addToken(Lexeme::TKN_EOF, lex.line_nb, 0, 0);
   }
