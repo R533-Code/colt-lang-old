@@ -82,7 +82,7 @@ namespace clt::lng
     constexpr bool isNone() const noexcept { return index == INVALID; }
     /// @brief Check if the optional contains a value
     /// @return True if the optional is not empty
-    constexpr bool isValue() const noexcept { return !isNone; }
+    constexpr bool isValue() const noexcept { return !isNone(); }
 
     /// @brief Returns the value, isValue must be true.
     /// @return The value
