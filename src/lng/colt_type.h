@@ -11,6 +11,7 @@
 #include "util/types.h"
 #include "meta/meta_type_list.h"
 #include "colt_builtin_id.h"
+#include "structs/vector.h"
 #include "util/hash.h"
 #include "colt_type_token.h"
 #include "macro_helper.h"
@@ -226,7 +227,11 @@ namespace clt::lng
 
     /// @brief Compares for equality
     /// @return True if both objects are equal
-    constexpr bool operator==(const FnTypePayload&) const noexcept = default;
+    constexpr bool operator==(const FnTypePayload& b) const noexcept
+    {
+      return is_variadic == b.is_variadic || return_type == b.return_type
+        || arguments_type == b.arguments_type.to_view();
+    }
   };
 
   /// @brief Represents a function type
