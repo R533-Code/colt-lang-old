@@ -108,7 +108,7 @@ namespace clt::lng
     {
       auto [pair, insert] = fn_payloads.insert({ is_c_variadic, return_type, std::move(arguments_type) });
       assert_true("Integer overflow detected!", pair <= std::numeric_limits<u32>::max());
-      return addType(make_coltc_type<FnType>(pair));
+      return addType(make_coltc_type<FnType>(static_cast<u32>(pair)));
     }
 
     /// @brief Get a type using its token.
