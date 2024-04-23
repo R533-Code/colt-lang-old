@@ -75,6 +75,7 @@ namespace clt::lng
   class ErrorExpr
     final : public ExprBase
   {
+  public:
     /// @brief Constructor
     /// @param id The ID of the expression
     /// @param type The type of the expression
