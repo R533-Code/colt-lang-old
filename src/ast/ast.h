@@ -68,10 +68,41 @@ namespace clt::lng
     VarStateFlag state;
   };
 
+  template<typename T>
+  /// @brief Represents an assignment that will restore the previous value
+  /// of a variable at the end of the scope
+  class ScopedAssignment
+  {
+    /// @brief The previous value
+    T previous;
+    /// @brief The variable to assign to
+    T& to_assign;
+
+  public:
+    template<typename Ty>
+    /// @brief Constructor
+    /// @param to_assign The value to assign to, whose previous to save
+    /// @param value The value to assign for the current scope
+    ScopedAssignment(T& to_assign, Ty&& value) noexcept
+      : previous(std::move(to_assign)), to_assign(to_assign)
+    {
+      to_assign = std::forward<Ty>(value);
+    }
+
+    /// @brief Restores the previous value of 'to_assign'
+    ~ScopedAssignment()
+    {
+      to_assign = std::move(to_assign);
+    }
+  };
+
   struct ASTMaker
   {
     /// @brief The maximum recursion depth allowed
     static constexpr u16 MAX_RECURSION_DEPTH = 256;
+
+    /// @brief Type of methods consuming tokens
+    using panic_consume_t = void(ASTMaker::*)() noexcept;
 
     /// @brief The unit that is being parsed
     ParsedUnit& to_parse;
@@ -99,6 +130,8 @@ namespace clt::lng
     /// is parsed, then force_lookup should contain 0:MODULE1 1:MODULE2.
     /// The `lookup` method will then use these information.
     ModuleName forced_lookup = ModuleName::getGlobalModule();
+    /// @brief The current panic function
+    panic_consume_t current_panic = nullptr;
     
     /// @brief Constructor
     /// @param unit The unit to parse
@@ -181,6 +214,15 @@ namespace clt::lng
     /// @return The range generator.
     TokenRangeGenerator startRange() const noexcept { return { *this }; }
 
+    /// @brief Registers 'new_value' as the current panic function
+    /// for the current scope.
+    /// @param new_value The new panic function
+    /// @return RAII helper
+    ScopedAssignment<panic_consume_t> scopedSetPanic(panic_consume_t new_value) noexcept
+    {
+      return ScopedAssignment<panic_consume_t>{ current_panic, new_value };
+    }
+
     /// @brief Helper to check for recursion depth
     class RecursionDepthChecker
     {
@@ -220,10 +262,7 @@ namespace clt::lng
 
     /*------------------
      | ERROR REPORTING |
-     ------------------*/
-
-    /// @brief Type of methods consuming tokens
-    using panic_consume_t = void(ASTMaker::*)() noexcept;
+     ------------------*/    
 
     /// @brief Enum used to specify output type (for 'generate')
     enum report_as
@@ -281,8 +320,22 @@ namespace clt::lng
      | CONSUMING FUNCTIONS |
      ----------------------*/
 
+    /**
+    * ALL OF THE CONSUME METHODS MUST BE IDEMPOTENT: calling
+    * the same method more than once won't do anything.
+    */
+
     /// @brief Consumes all tokens till a semicolon is hit
     void panic_consume_semicolon() noexcept;
+
+    /// @brief Consumes all tokens till a left parenthesis is hit
+    void panic_consume_lparen() noexcept;
+
+    /// @brief Propagates an error, calling the current panic function
+    /// @param err The error to propagate
+    /// @return 'err'
+    /// @pre 'err' must be an error expression
+    ProdExprToken consume_propagate(ProdExprToken err) noexcept;
 
     /*--------------------
      | PARSING FUNCTIONS |
@@ -331,6 +384,14 @@ namespace clt::lng
     /// @return AddressOfExpr or ErrorExpr if 'child' is not a pointer
     /// @pre The previously parsed unary operator must be '*'
     ProdExprToken parse_unary_star(ProdExprToken child, TokenRange range) noexcept;
+
+    ProdExprToken parse_binary(u8 precedence);
+
+    ProdExprToken parse_conversion(ProdExprToken to_conv, const TokenRangeGenerator& range);
+
+    ProdExprToken parse_assignment(ProdExprToken assign_to, const TokenRangeGenerator& range);
+    
+    ProdExprToken parse_comparison(ProdExprToken lhs, const TokenRangeGenerator& range);
 
     /*------------------------------
      | TEMPLATED PARSING FUNCTIONS |
@@ -383,7 +444,7 @@ namespace clt::lng
     auto source_info = getTokenBuffer().makeSourceInfo(range);
     StringView str;
     if constexpr (sizeof...(Args) == 0)
-      str = fmt;
+      str = StringView{ fmt.get().data(), fmt.get().size() };
     else
       str = getReporter().fmt(fmt, std::forward<Args>(args)...);
 
@@ -403,7 +464,7 @@ namespace clt::lng
     auto source_info = getTokenBuffer().makeSourceInfo(tkn);
     StringView str;
     if constexpr (sizeof...(Args) == 0)
-      str = fmt;
+      str = StringView{ fmt.get().data(), fmt.get().size() };
     else
       str = getReporter().fmt(fmt, std::forward<Args>(args)...);
 
@@ -475,13 +536,17 @@ namespace clt::lng
   template<typename RetT, typename... Args>
   RetT ASTMaker::parse_parenthesis(RetT(ASTMaker::* method_ptr)(Args...), Args&&... args) noexcept
   {
-    return parse_enclosed<Token::TKN_LEFT_PAREN, Token::TKN_RIGHT_PAREN>("Expected a '(!", "Expected a ')!", nullptr, method_ptr, std::forward<Args>(args)...);
+    using enum Lexeme;
+    auto panic = scopedSetPanic(&ASTMaker::panic_consume_lparen);
+    return parse_enclosed<TKN_LEFT_PAREN, TKN_RIGHT_PAREN>("Expected a '(!", "Expected a ')!", nullptr, method_ptr, std::forward<Args>(args)...);
   }
   
   template<typename RetT, typename... Args>
   RetT ASTMaker::parse_parenthesis(panic_consume_t consume, RetT(ASTMaker::* method_ptr)(Args...), Args&&... args) noexcept
   {
-    return parse_enclosed<Token::TKN_LEFT_PAREN, Token::TKN_RIGHT_PAREN>("Expected a '(!", "Expected a ')!", consume, method_ptr, std::forward<Args>(args)...);
+    using enum Lexeme;
+    auto panic = scopedSetPanic(&ASTMaker::panic_consume_lparen);
+    return parse_enclosed<TKN_LEFT_PAREN, TKN_RIGHT_PAREN>("Expected a '(!", "Expected a ')!", consume, method_ptr, std::forward<Args>(args)...);
   }
 }
 

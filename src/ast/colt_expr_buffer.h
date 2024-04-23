@@ -76,7 +76,7 @@ namespace clt::lng
       static_assert(producer_group_requirements_t<T>::size != 0, "Group must be inherited from!");
       if (is_classof_any_of(producer_group_requirements_t<T>{}))
         return nullptr;
-      return (const T*)_mono_state_;
+      return (const T*)&_mono_state_;
     }
     
     /// @brief Check if the current expression is an error
@@ -216,7 +216,7 @@ namespace clt::lng
     StmtExprToken addNewStmt(Args&&... args) noexcept
     {
       auto to_ret = getNextStmt();
-      prod_expr.push_back(InPlace, std::type_identity<T>{}, std::forward<Args>(args)...);
+      stmt_expr.push_back(InPlace, std::type_identity<T>{}, std::forward<Args>(args)...);
       return to_ret;
     }
 
@@ -491,7 +491,7 @@ namespace clt::lng
     StmtExprToken addCondition(TokenRange range, ProdExprToken if_cond, StmtExprToken if_stmt) noexcept
     {
       assert_true("Expected bool type!", getType(if_cond).isBuiltinAnd(&isBool));
-      return addNewStmt<ScopeExpr>(range, types.getVoidType(), if_cond, if_stmt);
+      return addNewStmt<ConditionExpr>(range, types.getVoidType(), if_cond, if_stmt);
     }
     
     /// @brief Creates a condition
@@ -503,7 +503,7 @@ namespace clt::lng
     StmtExprToken addCondition(TokenRange range, ProdExprToken if_cond, StmtExprToken if_stmt, StmtExprToken else_stmt) noexcept
     {
       assert_true("Expected bool type!", getType(if_cond).isBuiltinAnd(&isBool));
-      return addNewStmt<ScopeExpr>(range, types.getVoidType(), if_cond, if_stmt, else_stmt);
+      return addNewStmt<ConditionExpr>(range, types.getVoidType(), if_cond, if_stmt, else_stmt);
     }
   };
 }

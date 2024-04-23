@@ -53,6 +53,8 @@ namespace clt::lng
 
     ParsedUnit(ParsedProgram& program, const std::filesystem::path& path) noexcept;      
 
+    ParsedUnit(ParsedProgram& program, StringView path) noexcept;
+
     /// @brief Parses the current unit
     /// @return The parsing result
     ParseResult parse() noexcept;

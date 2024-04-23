@@ -14,9 +14,12 @@ namespace clt::lng
   ParsedUnit::ParsedUnit(ParsedProgram& program, const std::filesystem::path& path) noexcept
     : program(program), path(path), exprs(program.getTypes()) {}
 
+  ParsedUnit::ParsedUnit(ParsedProgram& program, StringView to_parse) noexcept
+    : program(program), path(ParsedProgram::EMPTY_PATH), exprs(program.getTypes()), to_parse(to_parse) {}
+
   ParsedUnit::ParseResult ParsedUnit::parse() noexcept
   {
-    assert_true("parse must only be called once!", to_parse.capacity() != 0);
+    assert_true("parse must only be called once!", to_parse.capacity() != 0 || path == ParsedProgram::EMPTY_PATH);
     if (std::error_code err; !std::filesystem::is_regular_file(path, err))
       return ParseResult::INVALID_PATH;
 

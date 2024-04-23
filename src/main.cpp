@@ -15,9 +15,13 @@ using namespace clt;
 
 void REPL()
 {
+  using namespace lng;
+
   io::print_warn("REPL is not implemented...");
 
   auto reporter = lng::make_error_reporter<lng::ConsoleReporter>();
+  auto warn = WarnFor::WarnAll();
+  Vector<std::filesystem::path> includes = {};
   while (true)
   {
     io::print<"">("Enter line to lex: ");
@@ -25,10 +29,7 @@ void REPL()
     if (a.is_error())
       return;
     const auto& str = *a;
-
-    lng::TokenBuffer buffer = lng::Lex(*reporter, str);
-    for (auto tkn : buffer.getTokens())
-      lng::PrintToken(tkn, buffer);
+    auto program = ParsedProgram{ *reporter, StringView{ str }, includes, warn };
   }
 }
 

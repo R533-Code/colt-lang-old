@@ -13,22 +13,35 @@ namespace clt::lng
   {
     if constexpr (isDebugBuild())
     {
-      try
-      {
         ASTMaker ast = { unit };
-      }
-      catch (...)
-      {
-
-      }
     }
   }
 
   void ASTMaker::panic_consume_semicolon() noexcept
   {
-
+    using enum Lexeme;
+    
+    // Consume everything till a ';' is hit
+    auto tkn = current();
+    while (tkn != TKN_EOF && tkn != TKN_SEMICOLON)
+    {
+      consume_current();
+      tkn = current();
+    }
   }
-
+  
+  void ASTMaker::panic_consume_lparen() noexcept
+  {
+    using enum Lexeme;
+    
+    // Consume everything till a ')' is hit
+    auto tkn = current();
+    while (tkn != TKN_EOF && tkn != TKN_LEFT_PAREN)
+    {
+      consume_current();
+      tkn = current();
+    }
+  }
 
   ProdExprToken ASTMaker::parse_primary_literal(TokenRange range) noexcept
   {
@@ -54,7 +67,7 @@ namespace clt::lng
     if (current() == TKN_ERROR)
       consume_current();
     else
-      report_current<ERROR>(&ASTMaker::panic_consume_semicolon, "Expected an expression!");
+      report_current<ERROR>(current_panic, "Expected an expression!");
 
     return getExprBuffer().addError(range);
   }
@@ -75,14 +88,14 @@ namespace clt::lng
       to_ret = parse_unary();
     // Handles (...)
     else if (current() == TKN_LEFT_PAREN)
-      to_ret = parse_parenthesis(&ASTMaker::parse_binary);
+      to_ret = parse_parenthesis(&ASTMaker::parse_binary, (u8)0);
     // Handles invalid primary expressions
     else
       to_ret = parse_primary_invalid(range.getRange());    
 
     //If the primary expression accepts a conversion, check for as/bit_as.
     if (accepts_conv && is_current_one_of(TKN_KEYWORD_bit_as, TKN_KEYWORD_as))
-      return parse_conversion(to_ret, line_state);
+      return parse_conversion(to_ret, range);
     return to_ret;
   }
 
@@ -91,7 +104,7 @@ namespace clt::lng
     if (auto pchild = decl_from_read(child); pchild.isValue())
       return getExprBuffer().addAddressOf(range, pchild.getValue());
 
-    report<ERROR>(range, &ASTMaker::panic_consume_semicolon,
+    report<ERROR>(range, nullptr,
       "Unary '&' can only be applied on a variable!");
     return getExprBuffer().addError(range);
   }
@@ -100,13 +113,13 @@ namespace clt::lng
   {
     if (!getExprBuffer().getType(child).isAnyOpaquePtr())
     {
-      report<ERROR>(range, &ASTMaker::panic_consume_semicolon,
+      report<ERROR>(range, nullptr,
         "Unary '*' can only be applied on a non-opaque pointer!");
       return getExprBuffer().addError(range);
     }
     else if (!getExprBuffer().getType(child).isAnyPtr())
     {
-      report<ERROR>(range, &ASTMaker::panic_consume_semicolon,
+      report<ERROR>(range, nullptr,
         "Unary '*' can only be applied on pointer types!");
       return getExprBuffer().addError(range);
     }
@@ -138,7 +151,7 @@ namespace clt::lng
       
       // Handles '+', which are not supported by the language
     break; case TKN_PLUS:
-      report<ERROR>(range.getRange(), &ASTMaker::panic_consume_semicolon, "Unary '+' is not supported!");
+      report<ERROR>(range.getRange(), current_panic, "Unary '+' is not supported!");
       to_ret = getExprBuffer().addError(range.getRange());
       
       // Handles '&', which are usually AddressOf expressions
@@ -162,11 +175,79 @@ namespace clt::lng
     return to_ret;
   }
   
+  ProdExprToken ASTMaker::consume_propagate(ProdExprToken err) noexcept
+  {
+    assert_true("Expected an error!", getExprBuffer().getExpr(err).isError());
+    (this->*current_panic)();
+    return err;
+  }
+
+  ProdExprToken ASTMaker::parse_binary(u8 precedence)
+  {
+    using enum Lexeme;
+    auto depth = addDepth();
+    auto range = startRange();
+
+    ProdExprToken lhs = parse_primary();
+    if (getExprBuffer().getExpr(lhs).isError())
+      return consume_propagate(lhs);
+
+    // The binary operators
+    Token binary_op = current();
+    if (isAssignmentToken(binary_op))
+      return parse_assignment(lhs, range);
+    if (isComparisonToken(binary_op))
+      return parse_comparison(lhs, range);
+
+    //The current operator's precedence
+    u8 op_precedence = OpPrecedence(binary_op);
+    while (op_precedence > precedence)
+    {
+      //Consume the operator
+      consume_current();
+      //Recurse: 10 + 5 + 8 -> (10 + (5 + 8))
+      ProdExprToken rhs = parse_binary(OpPrecedence(binary_op));
+      if (getExprBuffer().getExpr(rhs).isError())
+        return rhs;
+
+      if (!isBinaryToken(binary_op))
+      {
+        report<ERROR>(binary_op, current_panic, "Expected a binary operator!");
+        return getExprBuffer().addError(range.getRange());
+      }
+      else //Pratt's parsing, which allows operators priority
+        lhs = getExprBuffer().addBinary(range.getRange(), lhs, TokenToBinary(binary_op), rhs);
+
+      //Update the Token
+      binary_op = current();
+      //Update precedence
+      op_precedence = OpPrecedence(binary_op);
+    }
+
+    return lhs;
+  }
+
+  ProdExprToken ASTMaker::parse_conversion(ProdExprToken to_conv, const TokenRangeGenerator& range)
+  {
+    return to_conv;
+  }
+
+  ProdExprToken ASTMaker::parse_assignment(ProdExprToken assign_to, const TokenRangeGenerator& range)
+  {
+    auto panic = scopedSetPanic(&ASTMaker::panic_consume_semicolon);
+    return assign_to;
+  }
+
+  ProdExprToken ASTMaker::parse_comparison(ProdExprToken lhs, const TokenRangeGenerator& range)
+  {
+    return lhs;
+  }
+
   OptTok<StmtExprToken> ASTMaker::decl_from_read(ProdExprToken expr) const noexcept
   {
     auto& read = getExprBuffer().getExpr(expr);
     if (!read.isRead())
       return None;
     return read.getExpr<ReadExpr>()->getDecl();
-  }
+  }  
 }
