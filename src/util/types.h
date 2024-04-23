@@ -178,11 +178,11 @@ namespace clt
         : loc(src) {}
 
       template<typename... Args>
-      constexpr T& init(Args&&... args) const noexcept(std::is_nothrow_constructible_v<T, Args...>)
+      constexpr T& init(Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Args...>)
       {
         if (!is_constructed)
         {
-          new(&buffer) T(std::forward<Args>(args)...);
+          std::construct_at<T>((T*)buffer, std::forward<Args>(args)...);
           is_constructed = true;
           return val();
         }
@@ -240,9 +240,9 @@ namespace clt
       constexpr UninitRelease() noexcept {}
 
       template<typename... Args>
-      constexpr T& init(Args&&... args) const noexcept(std::is_nothrow_constructible_v<T, Args...>)
+      constexpr T& init(Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Args...>)
       {        
-        return *(new(&buffer) T(std::forward<Args>(args)...));
+        return *std::construct_at<T>((T*)buffer, std::forward<Args>(args)...);;
       }
 
       /// @brief Returns the object (validating that it is constructed)
@@ -259,7 +259,7 @@ namespace clt
       /// @return Reference to the constructed object
       constexpr T& operator=(const T& construct) noexcept(std::is_nothrow_copy_constructible_v<T>)
       {
-        return *(new(&buffer) T(construct));
+        return *(new(buffer) T(construct));
       }
       
       /// @brief Initializes the uninitialized memory
