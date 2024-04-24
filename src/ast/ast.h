@@ -96,11 +96,8 @@ namespace clt::lng
     }
   };
 
-  struct ASTMaker
+  class ASTMaker
   {
-    /// @brief The maximum recursion depth allowed
-    static constexpr u16 MAX_RECURSION_DEPTH = 256;
-
     /// @brief Type of methods consuming tokens
     using panic_consume_t = void(ASTMaker::*)() noexcept;
 
@@ -132,7 +129,11 @@ namespace clt::lng
     ModuleName forced_lookup = ModuleName::getGlobalModule();
     /// @brief The current panic function
     panic_consume_t current_panic = nullptr;
-    
+  
+  public:
+    /// @brief The maximum recursion depth allowed
+    static constexpr u16 MAX_RECURSION_DEPTH = 256;
+
     /// @brief Constructor
     /// @param unit The unit to parse
     ASTMaker(ParsedUnit& unit) noexcept
@@ -170,6 +171,10 @@ namespace clt::lng
     /// @return The expression buffer representing the parsed file
     ExprBuffer& getExprBuffer() noexcept { return to_parse.getExprBuffer(); }
 
+
+
+  private:
+
     /*---------------------
      | LEXEMES AND TOKENS |
      ---------------------*/
@@ -193,6 +198,8 @@ namespace clt::lng
       Token current;
 
     public:
+      MAKE_DELETE_COPY_AND_MOVE_FOR(TokenRangeGenerator);
+
       /// @brief Constructor
       /// @param ast The ASTMaker whose state to use to generate the range
       TokenRangeGenerator(const ASTMaker& ast) noexcept
@@ -220,7 +227,7 @@ namespace clt::lng
     /// @return RAII helper
     ScopedAssignment<panic_consume_t> scopedSetPanic(panic_consume_t new_value) noexcept
     {
-      return ScopedAssignment<panic_consume_t>{ current_panic, new_value };
+      return { current_panic, new_value };
     }
 
     /// @brief Helper to check for recursion depth
@@ -230,6 +237,8 @@ namespace clt::lng
       ASTMaker& ast;
 
     public:
+      MAKE_DELETE_COPY_AND_MOVE_FOR(RecursionDepthChecker);
+      
       /// @brief Constructs a checker, see `addDepth`
       /// @param ast The ASTMaker whose data to use
       RecursionDepthChecker(ASTMaker& ast)
@@ -258,7 +267,7 @@ namespace clt::lng
     /// is thrown.
     /// Care must be taken: the function calling this method must not be noexcept.   
     /// @return RecursionDepthChecker
-    RecursionDepthChecker addDepth() { return RecursionDepthChecker{ *this }; }
+    RecursionDepthChecker addDepth() { return { *this }; }
 
     /*------------------
      | ERROR REPORTING |
@@ -325,17 +334,19 @@ namespace clt::lng
     * the same method more than once won't do anything.
     */
 
+    template<Lexeme TILL>
+    /// @brief Consumes all tokens till 'TILL' (or EOF) is hit
+    /// @tparam TILL The lexeme to consume to
+    void panic_consume_till() noexcept;
+
+    /// @brief Calls 'current_panic' if it isn't null
+    void panic_consume() noexcept { if (current_panic) (this->*current_panic)(); }
+
     /// @brief Consumes all tokens till a semicolon is hit
-    void panic_consume_semicolon() noexcept;
+    void panic_consume_semicolon() noexcept { panic_consume_till<Lexeme::TKN_SEMICOLON>(); }
 
     /// @brief Consumes all tokens till a left parenthesis is hit
-    void panic_consume_lparen() noexcept;
-
-    /// @brief Propagates an error, calling the current panic function
-    /// @param err The error to propagate
-    /// @return 'err'
-    /// @pre 'err' must be an error expression
-    ProdExprToken consume_propagate(ProdExprToken err) noexcept;
+    void panic_consume_lparen() noexcept { panic_consume_till<Lexeme::TKN_LEFT_PAREN>(); }
 
     /*--------------------
      | PARSING FUNCTIONS |
@@ -547,6 +558,20 @@ namespace clt::lng
     using enum Lexeme;
     auto panic = scopedSetPanic(&ASTMaker::panic_consume_lparen);
     return parse_enclosed<TKN_LEFT_PAREN, TKN_RIGHT_PAREN>("Expected a '(!", "Expected a ')!", consume, method_ptr, std::forward<Args>(args)...);
+  }
+
+  template<Lexeme TILL>
+  void ASTMaker::panic_consume_till() noexcept
+  {
+    using enum Lexeme;
+
+    // Consume everything till a 'TILL' is hit
+    auto tkn = current();
+    while (tkn != TKN_EOF && tkn != TILL)
+    {
+      consume_current();
+      tkn = current();
+    }
   }
 }
 
