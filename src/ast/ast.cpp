@@ -11,38 +11,9 @@ namespace clt::lng
 {
   void MakeAST(ParsedUnit& unit) noexcept
   {
-    if constexpr (isDebugBuild())
-    {
-        ASTMaker ast = { unit };
-    }
-  }
-
-  void ASTMaker::panic_consume_semicolon() noexcept
-  {
-    using enum Lexeme;
-    
-    // Consume everything till a ';' is hit
-    auto tkn = current();
-    while (tkn != TKN_EOF && tkn != TKN_SEMICOLON)
-    {
-      consume_current();
-      tkn = current();
-    }
-  }
+      ASTMaker ast = { unit };
+  }  
   
-  void ASTMaker::panic_consume_lparen() noexcept
-  {
-    using enum Lexeme;
-    
-    // Consume everything till a ')' is hit
-    auto tkn = current();
-    while (tkn != TKN_EOF && tkn != TKN_LEFT_PAREN)
-    {
-      consume_current();
-      tkn = current();
-    }
-  }
-
   ProdExprToken ASTMaker::parse_primary_literal(TokenRange range) noexcept
   {
     assert_true("Expected literal token!", isLiteralToken(current()));
@@ -174,13 +145,6 @@ namespace clt::lng
     }
     return to_ret;
   }
-  
-  ProdExprToken ASTMaker::consume_propagate(ProdExprToken err) noexcept
-  {
-    assert_true("Expected an error!", getExprBuffer().getExpr(err).isError());
-    (this->*current_panic)();
-    return err;
-  }
 
   ProdExprToken ASTMaker::parse_binary(u8 precedence)
   {
@@ -190,7 +154,10 @@ namespace clt::lng
 
     ProdExprToken lhs = parse_primary();
     if (getExprBuffer().getExpr(lhs).isError())
-      return consume_propagate(lhs);
+    {
+      panic_consume();
+      return lhs;
+    }
 
     // The binary operators
     Token binary_op = current();
