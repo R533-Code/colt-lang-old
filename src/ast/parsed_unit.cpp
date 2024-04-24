@@ -19,7 +19,8 @@ namespace clt::lng
 
   ParsedUnit::ParseResult ParsedUnit::parse() noexcept
   {
-    assert_true("parse must only be called once!", to_parse.capacity() != 0 || path == ParsedProgram::EMPTY_PATH);
+    assert_true("parse must only be called once!", !isParsed());
+    is_parsed = true;
     if (std::error_code err; !std::filesystem::is_regular_file(path, err))
       return ParseResult::INVALID_PATH;
 
