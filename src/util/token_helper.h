@@ -15,6 +15,13 @@
   constexpr type& operator=(type&&) noexcept = default; \
   constexpr type& operator=(const type&) noexcept = default;
 
+/// @brief Expands to delete copy/move constructor/assignment operator
+#define MAKE_DELETE_COPY_AND_MOVE_FOR(type) \
+  type(type&&) = delete; \
+  type(const type&) = delete; \
+  type& operator=(type&&) = delete; \
+  type& operator=(const type&) = delete;
+
 #define IMPL_CREATE_TOKEN_FRIEND_CLASS(a) friend class a;
 
 /// @brief Creates a token class
