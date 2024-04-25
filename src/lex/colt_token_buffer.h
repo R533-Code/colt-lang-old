@@ -193,7 +193,7 @@ namespace clt::lng
     TokenBuffer& operator=(const TokenBuffer&) = delete;
 
     TokenBuffer(TokenBuffer&&) noexcept = default;
-    TokenBuffer& operator=(TokenBuffer&&) noexcept = default;
+    TokenBuffer& operator=(TokenBuffer&&) noexcept = delete;
 
     /// @brief Clears the TokenBuffer
     void unsafeClear() noexcept
