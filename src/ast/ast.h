@@ -15,7 +15,17 @@
 
 namespace clt::lng
 {
+  /// @brief Generates the AST and stores the result in 'unit'
+  /// @param unit The unit whose AST to generate
+  /// @pre !unit.isParsed()
   void MakeAST(ParsedUnit& unit) noexcept;
+
+  /// @brief Prints an expression (for debugging purposes)
+  /// @param tkn The token to print
+  /// @param buffer The buffer to which belongs the token
+  /// @param tkn_buffer The token buffer
+  /// @param depth The depth (for spacing)
+  void PrintExpr(ProdExprToken tkn, const ExprBuffer& buffer, const TokenBuffer& tkn_buffer, u64 depth = 0) noexcept;
 
   /// @brief Flags for checking if a variable is initialized or not
   enum class VarStateFlag
@@ -137,7 +147,11 @@ namespace clt::lng
     /// @brief Constructor
     /// @param unit The unit to parse
     ASTMaker(ParsedUnit& unit) noexcept
-      : to_parse(unit) {}
+      : to_parse(unit)
+    {
+      while (current() != Lexeme::TKN_EOF)
+        PrintExpr(parse_binary(), getExprBuffer(), to_parse.getTokenBuffer());
+    }
 
     /*------------------
      | USEFUL GETTERS  |
@@ -171,8 +185,6 @@ namespace clt::lng
     /// @return The expression buffer representing the parsed file
     ExprBuffer& getExprBuffer() noexcept { return to_parse.getExprBuffer(); }
 
-
-
   private:
 
     /*---------------------
@@ -185,8 +197,8 @@ namespace clt::lng
     /// @brief Advances to the next token    
     void consume_current() noexcept
     {
-      assert_true("Already reached EOF!", current() == Lexeme::TKN_EOF);
-      ++current_tkn;
+      //assert_true("Already reached EOF!", current() == Lexeme::TKN_EOF);
+      current_tkn += current() != Lexeme::TKN_EOF;
     }
 
     /// @brief Helper to generate TokenRange
@@ -326,7 +338,7 @@ namespace clt::lng
     bool is_current_one_of(Args&&... args) const noexcept;
 
     /*----------------------
-     | CONSUMING FUNCTIONS |
+      | CONSUMING FUNCTIONS |
      ----------------------*/
 
     /**
@@ -365,14 +377,14 @@ namespace clt::lng
     /// @param range The token range representing the expression
     /// @return LiteralExpr
     /// @pre `isLiteralToken(current())`
-    ProdExprToken parse_primary_literal(TokenRange range) noexcept;
+    ProdExprToken parse_primary_literal(const TokenRangeGenerator& range) noexcept;
     
     /// @brief Handles an invalid primary expression.
     /// Avoids reporting an error if the lexer already did.
     /// This is a leaf function, and thus cannot throw `ExitRecursionExcept`.
     /// @param range The token range representing the expression
     /// @return ErrorExpr
-    ProdExprToken parse_primary_invalid(TokenRange range) noexcept;
+    ProdExprToken parse_primary_invalid(const TokenRangeGenerator& range) noexcept;
 
     /// @brief Parses a unary expression.
     /// A unary expression is a unary operator (!, ~, *, &) applied
@@ -387,16 +399,16 @@ namespace clt::lng
     /// @param child The child whose address to return
     /// @return AddressOfExpr or ErrorExpr if 'child' is not a 'ReadExpr'
     /// @pre The previously parsed unary operator must be '&'
-    ProdExprToken parse_unary_and(ProdExprToken child, TokenRange range) noexcept;
+    ProdExprToken parse_unary_and(ProdExprToken child, const TokenRangeGenerator& range) noexcept;
     
     /// @brief Handles a PtrLoad expression
     /// This is a leaf function, and thus cannot throw `ExitRecursionExcept`.
     /// @param child The child from which to load
     /// @return AddressOfExpr or ErrorExpr if 'child' is not a pointer
     /// @pre The previously parsed unary operator must be '*'
-    ProdExprToken parse_unary_star(ProdExprToken child, TokenRange range) noexcept;
+    ProdExprToken parse_unary_star(ProdExprToken child, const TokenRangeGenerator& range) noexcept;
 
-    ProdExprToken parse_binary(u8 precedence);
+    ProdExprToken parse_binary(u8 precedence = 0, bool is_parsing_comp = true);
 
     ProdExprToken parse_conversion(ProdExprToken to_conv, const TokenRangeGenerator& range);
 

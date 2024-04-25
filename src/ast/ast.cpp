@@ -11,10 +11,12 @@ namespace clt::lng
 {
   void MakeAST(ParsedUnit& unit) noexcept
   {
-      ASTMaker ast = { unit };
+    assert_true("Unit already parsed!", !unit.isParsed());
+    // The constructor generates the AST directly
+    ASTMaker ast = { unit };
   }  
   
-  ProdExprToken ASTMaker::parse_primary_literal(TokenRange range) noexcept
+  ProdExprToken ASTMaker::parse_primary_literal(const TokenRangeGenerator& range) noexcept
   {
     assert_true("Expected literal token!", isLiteralToken(current()));
     //Save literal token
@@ -26,11 +28,11 @@ namespace clt::lng
     //TODO: add support for string literal
     QWORD_t value = getTokenBuffer().getLiteral(literal_tkn);
     return getExprBuffer().addLiteral(
-      range, value, LiteralToBuiltinID(literal_tkn)
+      range.getRange(), value, LiteralToBuiltinID(literal_tkn)
     );
   }
   
-  ProdExprToken ASTMaker::parse_primary_invalid(TokenRange range) noexcept
+  ProdExprToken ASTMaker::parse_primary_invalid(const TokenRangeGenerator& range) noexcept
   {
     using enum Lexeme;
     
@@ -40,7 +42,7 @@ namespace clt::lng
     else
       report_current<ERROR>(current_panic, "Expected an expression!");
 
-    return getExprBuffer().addError(range);
+    return getExprBuffer().addError(range.getRange());
   }
 
   ProdExprToken ASTMaker::parse_primary(bool accepts_conv)
@@ -53,16 +55,16 @@ namespace clt::lng
 
     // Handles literals (10, 0.5, ...)
     if (isLiteralToken(current()))
-      to_ret = parse_primary_literal(range.getRange());
+      to_ret = parse_primary_literal(range);
     // Handles unary operators (&, *, -, ...)
     else if (isUnaryToken(current()))
       to_ret = parse_unary();
     // Handles (...)
     else if (current() == TKN_LEFT_PAREN)
-      to_ret = parse_parenthesis(&ASTMaker::parse_binary, (u8)0);
+      to_ret = parse_parenthesis(&ASTMaker::parse_binary, (u8)0, true);
     // Handles invalid primary expressions
     else
-      to_ret = parse_primary_invalid(range.getRange());    
+      to_ret = parse_primary_invalid(range);    
 
     //If the primary expression accepts a conversion, check for as/bit_as.
     if (accepts_conv && is_current_one_of(TKN_KEYWORD_bit_as, TKN_KEYWORD_as))
@@ -70,35 +72,36 @@ namespace clt::lng
     return to_ret;
   }
 
-  ProdExprToken ASTMaker::parse_unary_and(ProdExprToken child, TokenRange range) noexcept
+  ProdExprToken ASTMaker::parse_unary_and(ProdExprToken child, const TokenRangeGenerator& range) noexcept
   {
     if (auto pchild = decl_from_read(child); pchild.isValue())
-      return getExprBuffer().addAddressOf(range, pchild.getValue());
+      return getExprBuffer().addAddressOf(range.getRange(), pchild.getValue());
 
-    report<ERROR>(range, nullptr,
+    report<ERROR>(range.getRange(), nullptr,
       "Unary '&' can only be applied on a variable!");
-    return getExprBuffer().addError(range);
+    return getExprBuffer().addError(range.getRange());
   }
 
-  ProdExprToken ASTMaker::parse_unary_star(ProdExprToken child, TokenRange range) noexcept
+  ProdExprToken ASTMaker::parse_unary_star(ProdExprToken child, const TokenRangeGenerator& range) noexcept
   {
     if (!getExprBuffer().getType(child).isAnyOpaquePtr())
     {
-      report<ERROR>(range, nullptr,
+      report<ERROR>(range.getRange(), nullptr,
         "Unary '*' can only be applied on a non-opaque pointer!");
-      return getExprBuffer().addError(range);
+      return getExprBuffer().addError(range.getRange());
     }
     else if (!getExprBuffer().getType(child).isAnyPtr())
     {
-      report<ERROR>(range, nullptr,
+      report<ERROR>(range.getRange(), nullptr,
         "Unary '*' can only be applied on pointer types!");
-      return getExprBuffer().addError(range);
+      return getExprBuffer().addError(range.getRange());
     }
-    return getExprBuffer().addPtrLoad(range, child);
+    return getExprBuffer().addPtrLoad(range.getRange(), child);
   }
 
   ProdExprToken ASTMaker::parse_unary()
   {
+    assert_true("parse_unary must be called when a unary token is hit!", isUnaryToken(current()));
     using enum Lexeme;
     auto depth = addDepth();
     auto range = startRange();
@@ -127,11 +130,11 @@ namespace clt::lng
       
       // Handles '&', which are usually AddressOf expressions
     break; case TKN_AND:    
-      to_ret = parse_unary_and(child, range.getRange());    
+      to_ret = parse_unary_and(child, range);    
       
       // Handles '*', which are usually PtrLoad expressions
     break; case TKN_STAR:
-      to_ret = parse_unary_star(child, range.getRange());
+      to_ret = parse_unary_star(child, range);
     
     break; default:
       //if (!child->type()->supports(TokenToUnary(op)))
@@ -146,7 +149,7 @@ namespace clt::lng
     return to_ret;
   }
 
-  ProdExprToken ASTMaker::parse_binary(u8 precedence)
+  ProdExprToken ASTMaker::parse_binary(u8 precedence, bool is_parsing_comp)
   {
     using enum Lexeme;
     auto depth = addDepth();
@@ -164,7 +167,7 @@ namespace clt::lng
     if (isAssignmentToken(binary_op))
       return parse_assignment(lhs, range);
     if (isComparisonToken(binary_op))
-      return parse_comparison(lhs, range);
+      return is_parsing_comp ? lhs : parse_comparison(lhs, range);
 
     //The current operator's precedence
     u8 op_precedence = OpPrecedence(binary_op);
@@ -182,6 +185,8 @@ namespace clt::lng
         report<ERROR>(binary_op, current_panic, "Expected a binary operator!");
         return getExprBuffer().addError(range.getRange());
       }
+      else if (isComparisonToken(binary_op))
+        lhs = is_parsing_comp ? lhs : parse_comparison(lhs, range);
       else //Pratt's parsing, which allows operators priority
         lhs = getExprBuffer().addBinary(range.getRange(), lhs, TokenToBinary(binary_op), rhs);
 
@@ -216,5 +221,45 @@ namespace clt::lng
     if (!read.isRead())
       return None;
     return read.getExpr<ReadExpr>()->getDecl();
-  }  
+  }
+
+  void PrintExpr(ProdExprToken tkn, const ExprBuffer& buffer, const TokenBuffer& tkn_buffer, u64 depth) noexcept
+  {
+    using enum clt::lng::ExprID;
+    auto& expr = buffer.getExpr(tkn);
+    auto info = tkn_buffer.makeSourceInfo(expr.getTokenRange());
+    switch (expr.classof())
+    {
+    break; case EXPR_ERROR:
+      io::print("{}{:^{}}({:h}: {}){}", io::BrightRedF, "", depth * 3, expr.classof(), info.expr, io::Reset);
+    
+    break; case EXPR_LITERAL:
+      io::print("{}{:^{}}({:h}: {}, {}){}", io::BrightGreenF, "", depth * 3, expr.classof(),
+        info.expr, expr.getType().getID(), io::Reset);
+    
+    break; case EXPR_UNARY:
+      io::print("{}{:^{}}({:h}: '{:h}'", io::YellowF, "", depth * 3, expr.classof(),
+        expr.getExpr<UnaryExpr>()->getOp());
+      PrintExpr(expr.getExpr<UnaryExpr>()->getExpr(), buffer, tkn_buffer, depth + 1);
+      io::print("{}{:^{}}{}){}", io::YellowF, "", depth * 3, expr.getType().getID(), io::Reset);
+
+    break; case EXPR_BINARY:
+      io::print("{}{:^{}}({:h}:", io::BrightCyanF, "", depth * 3, expr.classof());
+      PrintExpr(expr.getExpr<BinaryExpr>()->getLHS(), buffer, tkn_buffer, depth + 1);
+      io::print("{}{:^{}} {:h}", io::BrightCyanF, "", depth * 3,
+        expr.getExpr<BinaryExpr>()->getOp());
+      PrintExpr(expr.getExpr<BinaryExpr>()->getRHS(), buffer, tkn_buffer, depth + 1);
+      io::print("{}{:^{}}{}){}", io::BrightCyanF, "", depth * 3, expr.getType().getID(), io::Reset);
+    
+    break; case EXPR_CAST:
+      io::print("{}{:^{}}({:h}: '{}' -> '{}'", io::BrightMagentaF, "", depth * 3, expr.classof(),
+        expr.getExpr<CastExpr>()->getType().getID(), expr.getExpr<CastExpr>()->getTypeToCastTo().getID());
+      PrintExpr(expr.getExpr<CastExpr>()->getToCast(), buffer, tkn_buffer, depth + 1);
+      io::print("{}{:^{}}{}){}", io::BrightMagentaF, "", depth * 3, expr.getExpr<CastExpr>()->getType().getID(), io::Reset);
+    
+    break; default:
+      io::print("{:^{}}{:h}", "", depth * 3, expr.classof());
+      break;
+    }
+  }
 }
