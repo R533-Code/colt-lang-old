@@ -14,11 +14,12 @@
 namespace clt
 {
   template<typename T, auto ALLOCATOR = mem::GlobalAllocatorDescription>
-    requires meta::AllocatorScope<ALLOCATOR>
   /// @brief Unique pointer that automatically frees an allocated resource.
   /// A unique pointer is movable but not copyable, which makes it own its resource.
   class UniquePtr
   {
+    static_assert(meta::AllocatorScope<ALLOCATOR>, "Invalid allocator!");
+
     /// @brief True if the allocator is global
     static constexpr bool is_global = meta::GlobalAllocator<ALLOCATOR>;
     /// @brief True if the allocator is local (we need a reference to it)
@@ -34,7 +35,7 @@ namespace clt
     mem::MemBlock blk = {};
 
   public:
-    template<typename U, auto ALL> requires meta::AllocatorScope<ALL>
+    template<typename U, auto ALL>
     friend class UniquePtr;
 
     //Non-copyable
