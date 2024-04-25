@@ -20,14 +20,20 @@ namespace clt::lng
   ParsedUnit::ParseResult ParsedUnit::parse() noexcept
   {
     assert_true("parse must only be called once!", !isParsed());
-    is_parsed = true;
-    if (std::error_code err; !std::filesystem::is_regular_file(path, err))
-      return ParseResult::INVALID_PATH;
+    // Set is_parsed to true when the function returns
+    ON_SCOPE_EXIT { is_parsed = true; };
 
-    auto file = String::getFile(path.string().c_str());
-    if (file.is_error())
-      return ParseResult::FILE_ERROR;
-    to_parse = std::move(*file);
+    // If the path is EMPTY_PATH, then to parse was already initialized
+    // with the right string to parse (used for REPL)
+    if (path != ParsedProgram::EMPTY_PATH)
+    {
+      if (std::error_code err; !std::filesystem::is_regular_file(path, err))
+        return ParseResult::INVALID_PATH;    
+      auto file = String::getFile(path.string().c_str());
+      if (file.is_error())
+        return ParseResult::FILE_ERROR;
+      to_parse = std::move(*file);
+    }
 
     auto& reporter = program.getReporter();
     // Save the error count
