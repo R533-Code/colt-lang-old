@@ -313,13 +313,13 @@ namespace clt::lng
       return nb_literals[tkn.literal_index];
     }
 
-    /// @brief Returns the column on which the token appears
-    /// @param tkn The Token whose column to return
+    /// @brief Returns the size of the Token
+    /// @param tkn The Token whose size to return
     /// @return The column to return (1-based)
-    u32 getSize(Token tkn) const noexcept
+    TokenInfo getInfo(Token tkn) const noexcept
     {
       owns(tkn);
-      return tokens_info[tkn.info_index].size;
+      return tokens_info[tkn.info_index];
     }
 
     /// @brief Constructs a source information from a token range
@@ -329,12 +329,12 @@ namespace clt::lng
     {
       owns(range);
       auto& tkn1_info = tokens_info[range.start_index];
-      auto& tkn2_info = tokens_info[range.end_index];
+      auto& tkn2_info = tokens_info[range.end_index - 1];
       auto line = StringView{ lines[tkn1_info.line_start].data(),
         lines[tkn2_info.line_end].data() + lines[tkn2_info.line_end].size() };
       auto expr = StringView{ lines[tkn1_info.line_start].data() + tkn1_info.column,
         lines[tkn2_info.line_end].data() + tkn2_info.size + tkn2_info.column };
-      return SourceInfo{ tkn1_info.line_start, tkn2_info.line_end, expr, line };
+      return SourceInfo{ tkn1_info.line_start + 1, tkn2_info.line_end + 1, expr, line };
     }
 
     /// @brief Constructs a source information from a token
@@ -346,7 +346,7 @@ namespace clt::lng
       auto& tkn_info = tokens_info[tkn.info_index];
       auto expr = StringView{ lines[tkn_info.line_start].data() + tkn_info.column,
         lines[tkn_info.line_end].data() + tkn_info.size + tkn_info.column};
-      return SourceInfo{ tkn_info.line_start, expr, lines[tkn_info.line_start] };
+      return SourceInfo{ tkn_info.line_start + 1, expr, lines[tkn_info.line_start] };
     }
 
     /// @brief Returns the list of tokens
