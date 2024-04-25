@@ -11,6 +11,7 @@
 
 #include "util/macros.h"
 #include "util/token_helper.h"
+#include <variant>
 
 #define IMPL_FORWARD_DECLARE_TYPE_LIST(a) class a;
 #define IMPL_CONVERT_TYPE_TO_ENUM(a) if (std::same_as<T, a>) return static_cast<ty>(size); else ++size;
