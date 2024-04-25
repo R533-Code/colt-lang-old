@@ -156,7 +156,7 @@ namespace clt::lng
     /// @param op The operation applied on the expression
     /// @param rhs The right hand side of the expression
     constexpr BinaryExpr(TokenRange range, TypeToken type, ProdExprToken lhs, BinaryOp op, ProdExprToken rhs) noexcept
-      : ExprBase(TypeToExprID<UnaryExpr>(), type, range, static_cast<u8>(op)), lhs(lhs), rhs(rhs) {}
+      : ExprBase(TypeToExprID<BinaryExpr>(), type, range, static_cast<u8>(op)), lhs(lhs), rhs(rhs) {}
 
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(BinaryExpr);
 
