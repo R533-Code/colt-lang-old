@@ -172,6 +172,7 @@ namespace clt::lng
 	/// @return The table of lexing functions
 	consteval LexerDispatchTable GenLexerDispatchTable() noexcept
 	{
+		using enum clt::lng::Lexeme;
 		LexerDispatchTable table{};
 		for (size_t i = 0; i < table.size(); i++)
 		{
@@ -200,15 +201,15 @@ namespace clt::lng
 		table['&'] = &ParseAnd;
 		table['|'] = &ParseOr;
 		table['^'] = &ParseCaret;
-		table['~'] = &ParseSingle<Lexeme::TKN_TILDE>;
-		table[';'] = &ParseSingle<Lexeme::TKN_SEMICOLON>;
-		table[','] = &ParseSingle<Lexeme::TKN_COLON>;
-		table['{'] = &ParseSingle<Lexeme::TKN_LEFT_CURLY>;
-		table['}'] = &ParseSingle<Lexeme::TKN_RIGHT_CURLY>;
-		table['('] = &ParseSingle<Lexeme::TKN_LEFT_PAREN>;
-		table[')'] = &ParseSingle<Lexeme::TKN_RIGHT_PAREN>;
-		table['['] = &ParseSingle<Lexeme::TKN_LEFT_SQUARE>;
-		table[']'] = &ParseSingle<Lexeme::TKN_RIGHT_SQUARE>;
+		table['~'] = &ParseSingle<TKN_TILDE>;
+		table[';'] = &ParseSingle<TKN_SEMICOLON>;
+		table[','] = &ParseSingle<TKN_COLON>;
+		table['{'] = &ParseSingle<TKN_LEFT_CURLY>;
+		table['}'] = &ParseSingle<TKN_RIGHT_CURLY>;
+		table['('] = &ParseSingle<TKN_LEFT_PAREN>;
+		table[')'] = &ParseSingle<TKN_RIGHT_PAREN>;
+		table['['] = &ParseSingle<TKN_LEFT_SQUARE>;
+		table[']'] = &ParseSingle<TKN_RIGHT_SQUARE>;
 
 		return table;
 	}
@@ -231,6 +232,10 @@ namespace clt::lng
 		u8 comment_depth = 0;
 		/// @brief Next character to parse
 		char next;
+#ifdef COLT_DEBUG
+		bool ended = false;
+#endif // COLT_DEBUG
+
 
 		struct Snapshot
 		{
@@ -251,9 +256,16 @@ namespace clt::lng
 
 		constexpr char getNext() noexcept
 		{
-			if (line_nb == buffer.lines.size())
-				return EOF;
+			// Even if we return EOF, we need to increment the size of the lexeme
 			++size_lexeme;
+			if (line_nb == buffer.lines.size())
+			{
+#ifdef COLT_DEBUG
+				assert_true("Do not call getNext() if EOF was already hit!", !ended);
+				ended = true;
+#endif // COLT_DEBUG
+				return EOF;
+			}
 			if (offset == buffer.lines[line_nb].size())
 			{
 				offset = 0;
