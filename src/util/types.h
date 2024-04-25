@@ -252,7 +252,7 @@ namespace clt
       /// @brief Returns the object (validating that it is constructed)
       /// @return Reference to the object
       [[nodiscard]]
-      constexpr T& get() const noexcept { return *ptr_to<T*>(buffer); }
+      constexpr T& get() noexcept { return *ptr_to<T*>(buffer); }
 
       /// @brief Initializes the uninitialized memory
       /// @param construct The value to initialize with
