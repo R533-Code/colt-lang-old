@@ -19,9 +19,9 @@ namespace clt::lng
 	/// @brief The source code information of an expression.
 	struct SourceInfo
 	{
-		/// @brief The beginning line number of the expression
+		/// @brief The beginning line number of the expression (1-based)
 		u32 line_begin;
-		/// @brief The end line number of the expression
+		/// @brief The end line number of the expression (1-based)
 		u32 line_end;
 		/// @brief StringView over all the lines on which the expression spans
 		StringView lines;
