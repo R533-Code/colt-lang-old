@@ -347,8 +347,19 @@ namespace clt::lng
       return a.getUnionMember<T>().getHash();
     }
     
-    static constexpr auto EqualTable = COLTC_TYPE_VARIANT_GEN_TABLE(table_equal, COLTC_TYPE_LIST);
-    static constexpr auto HashTable  = COLTC_TYPE_VARIANT_GEN_TABLE(table_hash, COLTC_TYPE_LIST);
+    template<typename T>
+    /// @brief Check for 'op' support
+    /// @param a The variant to hash
+    /// @param op The unary operation to check for
+    /// @return a.getUnionMember<T>().supports(op)
+    static constexpr UnarySupport table_supports(const TypeVariant& a, UnaryOp op) noexcept
+    {
+      return a.getUnionMember<T>().supports(op);
+    }
+    
+    static constexpr auto EqualTable      = COLTC_TYPE_VARIANT_GEN_TABLE(table_equal, COLTC_TYPE_LIST);
+    static constexpr auto HashTable       = COLTC_TYPE_VARIANT_GEN_TABLE(table_hash, COLTC_TYPE_LIST);
+    static constexpr auto USupportsTable  = COLTC_TYPE_VARIANT_GEN_TABLE(table_supports, COLTC_TYPE_LIST);
 
   public:
     template<ColtType Type, typename... Args>
@@ -480,6 +491,14 @@ namespace clt::lng
     constexpr size_t getHash() const noexcept
     {
       return HashTable[static_cast<u8>(this->getTypeID())](*this);
+    }
+
+    /// @brief Check if the current type supports 'op'
+    /// @param op The operator to check for
+    /// @return UnarySupport
+    constexpr UnarySupport supports(UnaryOp op) const noexcept
+    {
+      return USupportsTable[static_cast<u8>(this->getTypeID())](*this, op);
     }
   };
 
