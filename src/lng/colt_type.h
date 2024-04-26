@@ -14,6 +14,7 @@
 #include "structs/vector.h"
 #include "util/hash.h"
 #include "colt_type_token.h"
+#include "colt_support_op.h"
 #include "macro_helper.h"
 
 DECLARE_ENUM_WITH_TYPE(u8, clt::lng, TypeID,
@@ -57,20 +58,24 @@ namespace clt::lng
 
   template<typename T>
   /// @brief A ColtType provides its ID and is equality comparable
-  concept ColtType = std::equality_comparable<T> && std::convertible_to<T, TypeBase> && requires (T a)
+  concept ColtType = std::equality_comparable<T> && std::convertible_to<T, TypeBase> &&
+    requires (const T a, UnaryOp unary, BinaryOp binary)
   {
     { a.classof() } -> std::same_as<TypeID>;
     { a.getHash() } -> std::same_as<size_t>;
-  };  
+    { a.supports(unary) } -> std::same_as<UnarySupport>;
+    { a.supports(binary) } -> std::same_as<BinarySupport>;
+  };
 
   // Create a type that is default constructible, movable and move assignable
-#define CREATE_TYPE(name) class name final : public TypeBase \
+#define CREATE_TYPE(name, unary_support) class name final : public TypeBase \
                           { \
                           public: \
                             constexpr name() noexcept : TypeBase(TypeToTypeID<name>()) {} \
                             MAKE_DEFAULT_COPY_AND_MOVE_FOR(name) \
                             constexpr bool operator==(const name&) const { return true; } \
                             constexpr size_t getHash() const noexcept { return hash_value(static_cast<u8>(classof())); } \
+                            constexpr UnarySupport supports(UnaryOp op) const noexcept { return unary_support(op); } \
                           }
 
   // Create the empty types.
@@ -80,13 +85,13 @@ namespace clt::lng
   /// @brief Represents an error type.
   /// This type is used by the compiler to avoid generating
   /// a lot of error when parsing an invalid type.
-  CREATE_TYPE(ErrorType);
+  CREATE_TYPE(ErrorType, ErrorSupport);
   /// @brief Represents the absence of a type.
-  CREATE_TYPE(VoidType);
+  CREATE_TYPE(VoidType, VoidSupport);
   /// @brief Represents a pointer to const void (opaque ptr)
-  CREATE_TYPE(OpaquePtrType);
+  CREATE_TYPE(OpaquePtrType, PtrSupport);
   /// @brief Represents a pointer to void (mut opaque ptr)
-  CREATE_TYPE(MutOpaquePtrType);
+  CREATE_TYPE(MutOpaquePtrType, PtrSupport);
 
 #undef CREATE_TYPE
 
@@ -124,6 +129,14 @@ namespace clt::lng
       seed = hash_combine(seed, hash_value(static_cast<u8>(typeID())));
       return seed;
     }
+
+    /// @brief Check if the current type supports 'op'
+    /// @param op The operator whose support to check
+    /// @return INVALID or BUILTIN
+    constexpr UnarySupport supports(UnaryOp op) const noexcept
+    {
+      return BuiltinSupport(typeID(), op);
+    }
   };
 
   /// @brief Represents a pointer to constant memory of a type
@@ -160,6 +173,14 @@ namespace clt::lng
       seed = hash_combine(seed, hash_value(getPointingTo().getID()));
       return seed;
     }
+
+    /// @brief Check if the current type supports 'op'
+    /// @param op The operator whose support to check
+    /// @return INVALID or BUILTIN
+    constexpr UnarySupport supports(UnaryOp op) const noexcept
+    {
+      return PtrSupport(op);
+    }
   };
   
   /// @brief Represents a pointer to mutable memory of a type
@@ -195,6 +216,14 @@ namespace clt::lng
       seed = hash_combine(seed, hash_value(static_cast<u8>(classof())));
       seed = hash_combine(seed, hash_value(getPointingTo().getID()));
       return seed;
+    }
+
+    /// @brief Check if the current type supports 'op'
+    /// @param op The operator whose support to check
+    /// @return INVALID or BUILTIN
+    constexpr UnarySupport supports(UnaryOp op) const noexcept
+    {
+      return PtrSupport(op);
     }
   };
 
@@ -263,6 +292,14 @@ namespace clt::lng
       seed = hash_combine(seed, hash_value(static_cast<u8>(classof())));
       seed = hash_combine(seed, hash_value(payload_index));
       return seed;
+    }
+
+    /// @brief Check if the current type supports 'op'
+    /// @param op The operator whose support to check
+    /// @return INVALID
+    constexpr UnarySupport supports(UnaryOp op) const noexcept
+    {
+      return NoSupport(op);
     }
   };
 
