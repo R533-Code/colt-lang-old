@@ -188,7 +188,7 @@ namespace clt::lng
       else if (isComparisonToken(binary_op))
         lhs = is_parsing_comp ? lhs : parse_comparison(lhs, range);
       else //Pratt's parsing, which allows operators priority
-        lhs = getExprBuffer().addBinary(range.getRange(), lhs, TokenToBinary(binary_op), rhs);
+        lhs = makeBinary(range.getRange(), lhs, TokenToBinary(binary_op), rhs);
 
       //Update the Token
       binary_op = current();
@@ -223,10 +223,39 @@ namespace clt::lng
     return read.getExpr<ReadExpr>()->getDecl();
   }
 
-  void PrintExpr(ProdExprToken tkn, const ExprBuffer& buffer, const TokenBuffer& tkn_buffer, u64 depth) noexcept
+  ProdExprToken ASTMaker::makeBinary(TokenRange range, ProdExprToken lhs, BinaryOp op, ProdExprToken rhs) noexcept
+  {
+    using enum BinarySupport;
+    
+    auto& type = getExprBuffer().getType(lhs);
+    auto support = type.supports(op, getExprBuffer().getType(rhs));    
+    switch_no_default(support)
+    {
+    case BUILTIN:
+      return getExprBuffer().addBinary(range, lhs, op, rhs);
+    
+    case clt::lng::BinarySupport::INVALID_OP:
+      report<report_as::ERROR>(range, nullptr,
+        "'{}' does not support operator '{}'!",
+        getTypeName(type), toStr(op));
+      return getExprBuffer().addError(range);
+    
+    case clt::lng::BinarySupport::INVALID_TYPE:
+      report<report_as::ERROR>(range, nullptr,
+        "'{}' does not support '{}' as right hand side of operator '{}'!",
+        getTypeName(type), getTypeName(getExprBuffer().getType(rhs)), toStr(op));
+      return getExprBuffer().addError(range);
+    }
+  }
+
+  void PrintExpr(ProdExprToken tkn, const ParsedUnit& unit, u64 depth) noexcept
   {
     using enum clt::lng::ExprID;
+    auto& buffer = unit.getExprBuffer();
+    auto& types = unit.getProgram().getTypes();
+    auto& tkn_buffer = unit.getTokenBuffer();    
     auto& expr = buffer.getExpr(tkn);
+    
     auto info = tkn_buffer.makeSourceInfo(expr.getTokenRange());
     switch (expr.classof())
     {
@@ -235,27 +264,27 @@ namespace clt::lng
     
     break; case EXPR_LITERAL:
       io::print("{}{:^{}}({:h}: {}, {}){}", io::BrightGreenF, "", depth * 3, expr.classof(),
-        info.expr, expr.getType().getID(), io::Reset);
+        info.expr, types.getTypeName(expr.getType()), io::Reset);
     
     break; case EXPR_UNARY:
       io::print("{}{:^{}}({:h}: '{:h}'", io::YellowF, "", depth * 3, expr.classof(),
         expr.getExpr<UnaryExpr>()->getOp());
-      PrintExpr(expr.getExpr<UnaryExpr>()->getExpr(), buffer, tkn_buffer, depth + 1);
-      io::print("{}{:^{}}{}){}", io::YellowF, "", depth * 3, expr.getType().getID(), io::Reset);
+      PrintExpr(expr.getExpr<UnaryExpr>()->getExpr(), unit, depth + 1);
+      io::print("{}{:^{}}{}){}", io::YellowF, "", depth * 3, types.getTypeName(expr.getType()), io::Reset);
 
     break; case EXPR_BINARY:
       io::print("{}{:^{}}({:h}:", io::BrightCyanF, "", depth * 3, expr.classof());
-      PrintExpr(expr.getExpr<BinaryExpr>()->getLHS(), buffer, tkn_buffer, depth + 1);
+      PrintExpr(expr.getExpr<BinaryExpr>()->getLHS(), unit, depth + 1);
       io::print("{}{:^{}} {:h}", io::BrightCyanF, "", depth * 3,
         expr.getExpr<BinaryExpr>()->getOp());
-      PrintExpr(expr.getExpr<BinaryExpr>()->getRHS(), buffer, tkn_buffer, depth + 1);
-      io::print("{}{:^{}}{}){}", io::BrightCyanF, "", depth * 3, expr.getType().getID(), io::Reset);
+      PrintExpr(expr.getExpr<BinaryExpr>()->getRHS(), unit, depth + 1);
+      io::print("{}{:^{}}{}){}", io::BrightCyanF, "", depth * 3, types.getTypeName(expr.getType()), io::Reset);
     
     break; case EXPR_CAST:
       io::print("{}{:^{}}({:h}: '{}' -> '{}'", io::BrightMagentaF, "", depth * 3, expr.classof(),
-        expr.getExpr<CastExpr>()->getType().getID(), expr.getExpr<CastExpr>()->getTypeToCastTo().getID());
-      PrintExpr(expr.getExpr<CastExpr>()->getToCast(), buffer, tkn_buffer, depth + 1);
-      io::print("{}{:^{}}{}){}", io::BrightMagentaF, "", depth * 3, expr.getExpr<CastExpr>()->getType().getID(), io::Reset);
+        types.getTypeName(expr.getExpr<CastExpr>()->getType()), types.getTypeName(expr.getExpr<CastExpr>()->getTypeToCastTo()));
+      PrintExpr(expr.getExpr<CastExpr>()->getToCast(), unit, depth + 1);
+      io::print("{}{:^{}}{}){}", io::BrightMagentaF, "", depth * 3, types.getTypeName(expr.getExpr<CastExpr>()->getType()), io::Reset);
     
     break; default:
       io::print("{:^{}}{:h}", "", depth * 3, expr.classof());
