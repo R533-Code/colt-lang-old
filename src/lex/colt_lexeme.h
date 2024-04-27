@@ -379,12 +379,13 @@ namespace clt::lng
 			|| tkn == Lexeme::TKN_EXCLAM;
 	}
 
-	/// @brief Check if a Lexeme represents any binary operator (+, -, ...)
+	/// @brief Check if a Lexeme represents any binary operator (+, -, ...).
+	/// This does not check for assignment operators.
 	/// @param tkn The token to check for
 	/// @return True if the Lexeme is a binary operator token
 	constexpr bool isBinaryToken(Lexeme tkn) noexcept
 	{
-		return tkn <= Lexeme::TKN_GREAT_GREAT_EQUAL;
+		return tkn <= Lexeme::TKN_EQUAL_EQUAL;
 	}
 
 	/// @brief Check if a Lexeme is a built-in type keyword (TKN_KEYWORD_VOID...)
