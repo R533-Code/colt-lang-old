@@ -69,45 +69,13 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, BinaryOp,
 	OP_NOT_EQUAL,
 	/// @brief ==
 	OP_EQUAL,
-
-	/*********** ASSIGNMENTS ***********/
-
-	/// @brief =
-	OP_ASSIGN,
-	/// @brief +=
-	OP_ASSIGN_SUM,
-	/// @brief -=
-	OP_ASSIGN_SUB,
-	/// @brief *=
-	OP_ASSIGN_MUL,
-	/// @brief /=
-	OP_ASSIGN_DIV,
-	/// @brief %=
-	OP_ASSIGN_MOD,
-	/// @brief &=
-	OP_ASSIGN_BIT_AND,
-	/// @brief |=
-	OP_ASSIGN_BIT_OR,
-	/// @brief ^=
-	OP_ASSIGN_BIT_XOR,
-	/// @brief <<=
-	OP_ASSIGN_LSHIFT,
-	/// @brief >>=
-	OP_ASSIGN_RSHIFT
 );
 
 DECLARE_ENUM_WITH_TYPE(u8, clt::lng, OpFamily,
 	ARITHMETIC,
 	BIT_LOGIC,
 	BOOL_LOGIC,
-	COMPARISON,
-	ASSIGNMENT
-);
-
-DECLARE_ENUM_WITH_TYPE(u8, clt::lng, OpAssoc,
-	NONE,
-	LEFT,
-	RIGHT
+	COMPARISON
 );
 
 namespace clt::lng
@@ -148,7 +116,7 @@ namespace clt::lng
 	/// @return The family of 'op'
 	constexpr OpFamily FamilyOf(BinaryOp op) noexcept
 	{
-		using enum clt::lng::OpFamily;
+		using enum OpFamily;
 		using enum BinaryOp;
 		
 		if (OP_SUM <= op && op <= OP_MOD)
@@ -157,29 +125,10 @@ namespace clt::lng
 			return BIT_LOGIC;
 		if (op == OP_BOOL_AND || op == OP_BOOL_OR)
 			return BOOL_LOGIC;
-		if (OP_LESS <= op && op <= OP_ASSIGN)
+		if (OP_LESS <= op && op <= OP_EQUAL)
 			return COMPARISON;
-		if (OP_ASSIGN <= op && op <= OP_ASSIGN_RSHIFT)
-			return ASSIGNMENT;
 		unreachable("Unknow operator!");
 	}
-
-	constexpr OpAssoc AssocOf(BinaryOp op) noexcept
-	{
-		if (op == BinaryOp::OP_DIV || FamilyOf(op) == OpFamily::ASSIGNMENT)
-			return OpAssoc::NONE;
-		return OpAssoc::LEFT;
-	}
-
-	constexpr bool AreRelated(BinaryOp lhs, BinaryOp rhs) noexcept
-	{
-		const auto lhsf = FamilyOf(lhs);
-		const auto rhsf = FamilyOf(rhs);
-		if (lhsf != rhsf || (lhs != rhs && OpPrecedence(lhs) == OpPrecedence(rhs)
-			&& (lhs != BinaryOp::OP_SUM || rhs != BinaryOp::OP_SUB)))
-			return false;
-		return true;
-	}	
 
 	/// @brief Converts a valid unary token to a UnaryOp
 	/// @param tkn The Lexeme to convert
@@ -257,28 +206,6 @@ namespace clt::lng
 			return "!=";
 		case OP_EQUAL:
 			return "==";
-		case OP_ASSIGN:
-			return "=";
-		case OP_ASSIGN_SUM:
-			return "+=";
-		case OP_ASSIGN_SUB:
-			return "-=";
-		case OP_ASSIGN_MUL:
-			return "*=";
-		case OP_ASSIGN_DIV:
-			return "/=";
-		case OP_ASSIGN_MOD:
-			return "%=";
-		case OP_ASSIGN_BIT_AND:
-			return "&=";
-		case OP_ASSIGN_BIT_OR:
-			return "|=";
-		case OP_ASSIGN_BIT_XOR:
-			return "^=";
-		case OP_ASSIGN_LSHIFT:
-			return "<<=";
-		case OP_ASSIGN_RSHIFT:
-			return ">>=";
 		}
 	}
 
