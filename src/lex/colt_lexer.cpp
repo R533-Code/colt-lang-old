@@ -433,7 +433,8 @@ namespace clt::lng
     if (lexer.next == '.')
     {
       //Snapshot for '.' character
-      auto snap_dot = lexer.startLexeme();
+      // TODO: fix snapshot...
+      //auto snap_dot = lexer.startLexeme();
 
       lexer.next = lexer.getNext();
       if (clt::isdigit(lexer.next))
@@ -454,7 +455,7 @@ namespace clt::lng
         //The dot is not followed by a digit, this is not a float,
         //but rather should be a dot followed by an identifier for a function call
         lexer.next = lexer.getNext();
-        return lexer.addToken(Lexeme::TKN_DOT, snap_dot);
+        return lexer.addToken(Lexeme::TKN_DOT, snap);
       }
     }
 
