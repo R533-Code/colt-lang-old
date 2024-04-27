@@ -256,8 +256,6 @@ namespace clt::lng
 
 		constexpr char getNext() noexcept
 		{
-			// Even if we return EOF, we need to increment the size of the lexeme
-			++size_lexeme;
 			if (line_nb == buffer.lines.size())
 			{
 #ifdef COLT_DEBUG
@@ -266,6 +264,7 @@ namespace clt::lng
 #endif // COLT_DEBUG
 				return EOF;
 			}
+			++size_lexeme;
 			if (offset == buffer.lines[line_nb].size())
 			{
 				offset = 0;
