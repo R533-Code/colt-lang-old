@@ -22,9 +22,8 @@ namespace clt::lng
     /// @param args... The arguments to forward to the constructor
     constexpr ProdExprVariant(std::type_identity<Type>, Args&&... args)
       noexcept(std::is_nothrow_constructible_v<Type, Args...>)
-      : _mono_state_(construct<Type>(&getUnionMember<Type>(), std::forward<Args>(args)...))
     {
-      // The ugly code above is used to keep the constructor constexpr
+      construct<Type>(&getUnionMember<Type>(), std::forward<Args>(args)...);
     }
 
     /// @brief Returns the type of the current expression
@@ -76,7 +75,7 @@ namespace clt::lng
       static_assert(producer_group_requirements_t<T>::size != 0, "Group must be inherited from!");
       if (is_classof_any_of(producer_group_requirements_t<T>{}))
         return nullptr;
-      return (const T*)&_mono_state_;
+      return (const T*)&_buffer;
     }
     
     /// @brief Check if the current expression is an error
@@ -98,9 +97,8 @@ namespace clt::lng
     /// @param args... The arguments to forward to the constructor
     constexpr StmtExprVariant(std::type_identity<Type>, Args&&... args)
       noexcept(std::is_nothrow_constructible_v<Type, Args...>)
-      : _mono_state_(construct<Type>(&getUnionMember<Type>(), std::forward<Args>(args)...))
     {
-      // The ugly code above is used to keep the constructor constexpr
+      construct<Type>(&getUnionMember<Type>(), std::forward<Args>(args)...);
     }
 
     /// @brief Returns the type of the current expression
@@ -108,7 +106,7 @@ namespace clt::lng
     constexpr TypeToken getType() const noexcept
     {
       // UB...
-      return ((const ExprBase*)&_ConditionExpr)->getType();
+      return ((const ExprBase*)&_buffer)->getType();
     }
 
     /// @brief Returns the range of tokens representing the current expression
@@ -116,7 +114,7 @@ namespace clt::lng
     constexpr TokenRange getTokenRange() const noexcept
     {
       // UB...
-      return ((const ExprBase*)&_ConditionExpr)->getTokenRange();
+      return ((const ExprBase*)&_buffer)->getTokenRange();
     }
 
     /// @brief Returns the expression ID
@@ -124,7 +122,7 @@ namespace clt::lng
     constexpr ExprID classof() const noexcept
     {
       // UB...
-      return ((const ExprBase*)&_ConditionExpr)->classof();
+      return ((const ExprBase*)&_buffer)->classof();
     }
 
     template<StatementExpr T>
