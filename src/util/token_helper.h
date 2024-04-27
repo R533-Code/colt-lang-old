@@ -30,8 +30,8 @@
   { \
     type index; \
     constexpr name(type index) noexcept: index(index) {} \
-    MAKE_DEFAULT_COPY_AND_MOVE_FOR(name); \
   public: constexpr type getID() const noexcept { return index; } \
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(name); \
     COLT_FOR_EACH(IMPL_CREATE_TOKEN_FRIEND_CLASS, friend1, __VA_ARGS__) \
     constexpr bool operator==(const name&) const noexcept = default; \
     using storage_t = type; \
