@@ -11,7 +11,7 @@
 
 #include "util/macros.h"
 #include "util/token_helper.h"
-#include <variant>
+#include <algorithm>
 
 #define IMPL_FORWARD_DECLARE_TYPE_LIST(a) class a;
 #define IMPL_CONVERT_TYPE_TO_ENUM(a) if (std::same_as<T, a>) return static_cast<ty>(size); else ++size;
@@ -33,6 +33,7 @@
   }
 
 #define IMPL_MAKE_UNION(a) a _##a;
+#define IMPL_GET_SIZEOF(a) , sizeof(a)
 #define IMPL_GET_MEMBER(a) if constexpr (std::same_as<T, a>) return _##a;
 
 /// @brief Helper used in variants, see `colt_global.h.
@@ -40,13 +41,12 @@
 /// name _ followed by the type name.
 #define MAKE_UNION_AND_GET_MEMBER(type_list) \
   template<typename T, typename... Args> \
-  static constexpr std::monostate construct(T* placement, Args&&... args) \
+  static constexpr void construct(T* placement, Args&&... args) \
   { \
     std::construct_at(placement, std::forward<Args>(args)...); \
-    return {}; \
   } \
   union { \
-    std::monostate _mono_state_; \
+    char _buffer[std::max({ (size_t)0 COLT_FOR_EACH(IMPL_GET_SIZEOF, type_list) })]; \
     COLT_FOR_EACH(IMPL_MAKE_UNION, type_list) \
   }; \
   template<typename T> \
