@@ -56,15 +56,17 @@ namespace clt::lng
     constexpr TypeID classof() const noexcept { return type_id; }
   };
 
+  class TypeVariant;
+  
   template<typename T>
   /// @brief A ColtType provides its ID and is equality comparable
   concept ColtType = std::equality_comparable<T> && std::convertible_to<T, TypeBase> &&
-    requires (const T a, UnaryOp unary, BinaryOp binary)
+    requires (const T a, UnaryOp unary, BinaryOp binary, const TypeVariant& var)
   {
     { a.classof() } -> std::same_as<TypeID>;
     { a.getHash() } -> std::same_as<size_t>;
     { a.supports(unary) } -> std::same_as<UnarySupport>;
-    { a.supports(binary) } -> std::same_as<BinarySupport>;
+    { a.supports(binary, var) } -> std::same_as<BinarySupport>;
   };
 
   // Create a type that is default constructible, movable and move assignable
@@ -76,6 +78,7 @@ namespace clt::lng
                             constexpr bool operator==(const name&) const { return true; } \
                             constexpr size_t getHash() const noexcept { return hash_value(static_cast<u8>(classof())); } \
                             constexpr UnarySupport supports(UnaryOp op) const noexcept { return unary_support(op); } \
+                            BinarySupport supports(BinaryOp op, const TypeVariant& var) const noexcept; \
                           }
 
   // Create the empty types.
@@ -87,7 +90,7 @@ namespace clt::lng
   /// a lot of error when parsing an invalid type.
   CREATE_TYPE(ErrorType, ErrorSupport);
   /// @brief Represents the absence of a type.
-  CREATE_TYPE(VoidType, VoidSupport);
+  CREATE_TYPE(VoidType, NoSupport);
   /// @brief Represents a pointer to const void (opaque ptr)
   CREATE_TYPE(OpaquePtrType, PtrSupport);
   /// @brief Represents a pointer to void (mut opaque ptr)
@@ -133,24 +136,46 @@ namespace clt::lng
     /// @brief Check if the current type supports 'op'
     /// @param op The operator whose support to check
     /// @return INVALID or BUILTIN
-    constexpr UnarySupport supports(UnaryOp op) const noexcept
-    {
-      return BuiltinSupport(typeID(), op);
-    }
+    constexpr UnarySupport supports(UnaryOp op) const noexcept { return BuiltinSupport(typeID(), op); }
+    BinarySupport supports(BinaryOp op, const TypeVariant& var) const noexcept;
   };
 
-  /// @brief Represents a pointer to constant memory of a type
-  class PtrType
-    final : public TypeBase
+  class PointerType
+    : public TypeBase
   {
     /// @brief The type index pointed to
     TypeToken type_id;
 
   public:
     /// @brief Constructor
+    /// @param type The type of the pointer
     /// @param id The type pointer to
+    constexpr PointerType(TypeID type, TypeToken id) noexcept
+      : TypeBase(type), type_id(id)
+    {
+      assert_true("Expected pointer type!", type == TypeID::TYPE_MUT_PTR || type == TypeID::TYPE_PTR);
+    }
+
+    /// @brief Check if the pointer type is mutable or not
+    /// @return True if classof() == TYPE_MUT_PTR
+    constexpr bool isMut() const noexcept { return classof() == TypeID::TYPE_MUT_PTR; }
+
+    /// @brief Returns the type pointed to
+    /// @return The type pointed to
+    constexpr TypeToken getPointingTo() const noexcept { return type_id; }
+
+    constexpr UnarySupport supports(UnaryOp op) const noexcept { return PtrSupport(op); }
+    BinarySupport supports(BinaryOp op, const TypeVariant& var) const noexcept;
+  };
+
+  /// @brief Represents a pointer to constant memory of a type
+  class PtrType
+    final : public PointerType
+  {
+  public:    
     constexpr PtrType(TypeToken id) noexcept
-      : TypeBase(TypeToTypeID<PtrType>()), type_id(id) {}
+      : PointerType(TypeToTypeID<PtrType>(), id) {}
+
     // No default constructor
     PtrType() = delete;
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(PtrType);
@@ -158,12 +183,8 @@ namespace clt::lng
     /// @brief Check if two ptr types represent the same type
     /// @param b The other pointer type
     /// @return True if both types point to the same type
-    constexpr bool operator==(const PtrType& b) const noexcept { return type_id == b.type_id; }
+    constexpr bool operator==(const PtrType& b) const noexcept { return getPointingTo() == b.getPointingTo(); }
 
-    /// @brief Returns the type pointed to
-    /// @return The type pointed to
-    constexpr TypeToken getPointingTo() const noexcept { return type_id; }
-    
     /// @brief Hashes the current type
     /// @return The hash of the current type
     constexpr size_t getHash() const noexcept
@@ -173,28 +194,17 @@ namespace clt::lng
       seed = hash_combine(seed, hash_value(getPointingTo().getID()));
       return seed;
     }
-
-    /// @brief Check if the current type supports 'op'
-    /// @param op The operator whose support to check
-    /// @return INVALID or BUILTIN
-    constexpr UnarySupport supports(UnaryOp op) const noexcept
-    {
-      return PtrSupport(op);
-    }
   };
-  
+
   /// @brief Represents a pointer to mutable memory of a type
   class MutPtrType
-    final : public TypeBase
+    final : public PointerType
   {
-    /// @brief The type index pointed to
-    TypeToken type_id;
-
   public:
     /// @brief Constructor
     /// @param id The type pointer to
     constexpr MutPtrType(TypeToken id) noexcept
-      : TypeBase(TypeToTypeID<MutPtrType>()), type_id(id) {}
+      : PointerType(TypeToTypeID<MutPtrType>(), id) {}
     // No default constructor
     MutPtrType() = delete;
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(MutPtrType);
@@ -202,11 +212,7 @@ namespace clt::lng
     /// @brief Check if two ptr types represent the same type
     /// @param b The other pointer type
     /// @return True if both types point to the same type
-    constexpr bool operator==(const MutPtrType& b) const noexcept { return type_id == b.type_id; }
-
-    /// @brief Returns the type pointed to
-    /// @return The type pointed to
-    constexpr TypeToken getPointingTo() const noexcept { return type_id; }
+    constexpr bool operator==(const MutPtrType& b) const noexcept { return getPointingTo() == b.getPointingTo(); }
 
     /// @brief Hashes the current type
     /// @return The hash of the current type
@@ -216,14 +222,6 @@ namespace clt::lng
       seed = hash_combine(seed, hash_value(static_cast<u8>(classof())));
       seed = hash_combine(seed, hash_value(getPointingTo().getID()));
       return seed;
-    }
-
-    /// @brief Check if the current type supports 'op'
-    /// @param op The operator whose support to check
-    /// @return INVALID or BUILTIN
-    constexpr UnarySupport supports(UnaryOp op) const noexcept
-    {
-      return PtrSupport(op);
     }
   };
 
@@ -297,11 +295,24 @@ namespace clt::lng
     /// @brief Check if the current type supports 'op'
     /// @param op The operator whose support to check
     /// @return INVALID
-    constexpr UnarySupport supports(UnaryOp op) const noexcept
-    {
-      return NoSupport(op);
-    }
+    constexpr UnarySupport supports(UnaryOp op) const noexcept { return NoSupport(op); }
+    BinarySupport supports(BinaryOp op, const TypeVariant& var) const noexcept;
   };
+
+  template<typename T>
+  struct type_group_requirements
+  {
+    template<typename Ty>
+    struct base_of
+    {
+      static constexpr bool value = std::is_base_of_v<T, Ty>;
+    };
+
+    using type = meta::type_list<COLTC_TYPE_LIST>::remove_if_not<base_of>;
+  };
+
+  template<typename T>
+  using type_group_requirements_t = typename type_group_requirements<T>::type;
 
   /// @brief Type List of all Colt Types
   using ColtTypeList = meta::type_list<COLTC_TYPE_LIST>;
@@ -324,6 +335,12 @@ namespace clt::lng
   class TypeVariant
   {
     MAKE_UNION_AND_GET_MEMBER(COLTC_TYPE_LIST);
+
+    template<typename... Args>
+    constexpr bool is_classof_any_of(meta::type_list<Args...>) const noexcept
+    {
+      return (... || (classof() == TypeToTypeID<Args>()));
+    }
 
     // Generates a dispatch table for using table_operator_equal.
     // The generated dispatch table can be indexed by getTypeID().
@@ -447,7 +464,6 @@ namespace clt::lng
     {
       if (this->getTypeID() != type.getTypeID())
         return false;
-
       return EqualTable[static_cast<u8>(this->getTypeID())](*this, type);
     }
     
@@ -483,6 +499,17 @@ namespace clt::lng
       if (getTypeID() != TypeToTypeID<T>())
         return nullptr;
       return &getUnionMember<T>();
+    }
+
+    template<typename T>
+    /// @brief Downcasts the variant to 'T'
+    /// @return nullptr if type does not match else pointer to the type
+    constexpr const T* getType() const noexcept
+    {
+      static_assert(type_group_requirements_t<T>::size != 0, "Group must be inherited from!");
+      if (is_classof_any_of(type_group_requirements_t<T>{}))
+        return nullptr;
+      return (const T*)&_mono_state_;
     }
 
     /// @brief Hashes the current type.
