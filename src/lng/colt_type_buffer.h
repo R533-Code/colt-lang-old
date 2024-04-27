@@ -23,6 +23,8 @@ namespace clt::lng
     IndexedSet<TypeVariant> type_map{};
     /// @brief The set of function payloads (used by function types)
     IndexedSet<FnTypePayload> fn_payloads{};
+    /// @brief The type names
+    mutable Vector<String> type_names;
 
     /// @brief Returns the next token to save
     /// @return The token to save
@@ -35,6 +37,9 @@ namespace clt::lng
   public:
     /// @brief Default constructor
     TypeBuffer() noexcept = default;
+
+    StringView getTypeName(const TypeVariant& variant) const noexcept;
+    StringView getTypeName(TypeToken variant) const noexcept;
 
     /// @brief Saves a type and return its index number
     /// @param variant The type to save
