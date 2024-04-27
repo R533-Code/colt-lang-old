@@ -298,7 +298,6 @@ namespace clt::lng
     ProdExprToken addBinary(TokenRange range, ProdExprToken lhs, BinaryOp op, ProdExprToken rhs) noexcept
     {
       assert_true("Both expression must be of the same type!", getTypeToken(lhs) == getTypeToken(rhs));
-      assert_true("Operator must not be an assignment operator!", FamilyOf(op) != OpFamily::ASSIGNMENT);
       return addNewProd<BinaryExpr>(range,
         FamilyOf(op) == OpFamily::COMPARISON ? types.addBuiltin(BuiltinID::BOOL) : getTypeToken(lhs),
         lhs, op, rhs);
