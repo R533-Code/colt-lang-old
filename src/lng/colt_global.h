@@ -149,9 +149,8 @@ namespace clt::lng
     /// @param args... The arguments to forward to the constructor
     constexpr GlobalVariant(std::type_identity<Type>, Args&&... args)
       noexcept(std::is_nothrow_constructible_v<Type, Args...>)
-      : _mono_state_(construct<Type>(&getUnionMember<Type>(), std::forward<Args>(args)...))
     {
-      // The ugly code above is used to keep the constructor constexpr
+      construct<Type>(&getUnionMember<Type>(), std::forward<Args>(args)...);
     }
 
     constexpr GlobalVariant(GlobalVariant&&) noexcept = default;
