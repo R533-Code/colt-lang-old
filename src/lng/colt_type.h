@@ -369,14 +369,26 @@ namespace clt::lng
     /// @param a The variant to hash
     /// @param op The unary operation to check for
     /// @return a.getUnionMember<T>().supports(op)
-    static constexpr UnarySupport table_supports(const TypeVariant& a, UnaryOp op) noexcept
+    static constexpr UnarySupport table_supports_u(const TypeVariant& a, UnaryOp op) noexcept
     {
       return a.getUnionMember<T>().supports(op);
     }
     
+    template<typename T>
+    /// @brief Check for 'op' support
+    /// @param a The variant to hash
+    /// @param op The unary operation to check for
+    /// @param var The right hand side
+    /// @return a.getUnionMember<T>().supports(op)
+    static constexpr BinarySupport table_supports_b(const TypeVariant& a, BinaryOp op, const TypeVariant& var) noexcept
+    {
+      return a.getUnionMember<T>().supports(op, var);
+    }
+    
     static constexpr auto EqualTable      = COLTC_TYPE_VARIANT_GEN_TABLE(table_equal, COLTC_TYPE_LIST);
     static constexpr auto HashTable       = COLTC_TYPE_VARIANT_GEN_TABLE(table_hash, COLTC_TYPE_LIST);
-    static constexpr auto USupportsTable  = COLTC_TYPE_VARIANT_GEN_TABLE(table_supports, COLTC_TYPE_LIST);
+    static constexpr auto USupportsTable  = COLTC_TYPE_VARIANT_GEN_TABLE(table_supports_u, COLTC_TYPE_LIST);
+    static constexpr auto BSupportsTable  = COLTC_TYPE_VARIANT_GEN_TABLE(table_supports_b, COLTC_TYPE_LIST);
 
   public:
     template<ColtType Type, typename... Args>
@@ -384,9 +396,8 @@ namespace clt::lng
     /// @param args... The arguments to forward to the constructor
     constexpr TypeVariant(std::type_identity<Type>, Args&&... args)
       noexcept(std::is_nothrow_constructible_v<Type, Args...>)
-      : _mono_state_(construct<Type>(&getUnionMember<Type>(), std::forward<Args>(args)...))
     {
-      // The ugly code above is used to keep the constructor constexpr
+      construct<Type>(&getUnionMember<Type>(), std::forward<Args>(args)...);
     }
 
     constexpr TypeVariant(TypeVariant&&) noexcept = default;
@@ -403,7 +414,7 @@ namespace clt::lng
       if (std::is_constant_evaluated()) // bit_cast is constexpr...
         id = std::bit_cast<TypeID>(_ErrorType);
       else
-        std::memcpy(&id, &_ErrorType, sizeof(TypeID));
+        id = ((const TypeBase*)&_buffer)->classof();
       return id;
     }
 
@@ -509,7 +520,7 @@ namespace clt::lng
       static_assert(type_group_requirements_t<T>::size != 0, "Group must be inherited from!");
       if (is_classof_any_of(type_group_requirements_t<T>{}))
         return nullptr;
-      return (const T*)&_mono_state_;
+      return (const T*)&_buffer;
     }
 
     /// @brief Hashes the current type.
@@ -526,6 +537,15 @@ namespace clt::lng
     constexpr UnarySupport supports(UnaryOp op) const noexcept
     {
       return USupportsTable[static_cast<u8>(this->getTypeID())](*this, op);
+    }
+
+    /// @brief Check if the current type supports 'op'
+    /// @param op The operator to check for
+    /// @param var The right hand side
+    /// @return BinaryOp
+    constexpr BinarySupport supports(BinaryOp op, const TypeVariant& var) const noexcept
+    {
+      return BSupportsTable[static_cast<u8>(this->getTypeID())](*this, op, var);
     }
   };
 
