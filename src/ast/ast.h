@@ -22,10 +22,9 @@ namespace clt::lng
 
   /// @brief Prints an expression (for debugging purposes)
   /// @param tkn The token to print
-  /// @param buffer The buffer to which belongs the token
-  /// @param tkn_buffer The token buffer
+  /// @param unit The unit owning the expression
   /// @param depth The depth (for spacing)
-  void PrintExpr(ProdExprToken tkn, const ExprBuffer& buffer, const TokenBuffer& tkn_buffer, u64 depth = 0) noexcept;
+  void PrintExpr(ProdExprToken tkn, const ParsedUnit& unit, u64 depth = 0) noexcept;
 
   /// @brief Flags for checking if a variable is initialized or not
   enum class VarStateFlag
@@ -150,7 +149,7 @@ namespace clt::lng
       : to_parse(unit)
     {
       while (current() != Lexeme::TKN_EOF)
-        PrintExpr(parse_binary(), getExprBuffer(), to_parse.getTokenBuffer());
+        PrintExpr(parse_binary(), to_parse);
     }
 
     /*------------------
@@ -186,6 +185,8 @@ namespace clt::lng
     ExprBuffer& getExprBuffer() noexcept { return to_parse.getExprBuffer(); }
 
   private:
+    StringView getTypeName(const TypeVariant& var) noexcept { return to_parse.getProgram().getTypes().getTypeName(var); }
+    StringView getTypeName(TypeToken var) noexcept { return to_parse.getProgram().getTypes().getTypeName(var); }
 
     /*---------------------
      | LEXEMES AND TOKENS |
@@ -198,7 +199,7 @@ namespace clt::lng
     void consume_current() noexcept
     {
       //assert_true("Already reached EOF!", current() == Lexeme::TKN_EOF);
-      current_tkn += current() != Lexeme::TKN_EOF;
+      current_tkn += (u8)(current() != Lexeme::TKN_EOF);
     }
 
     /// @brief Helper to generate TokenRange
@@ -459,6 +460,8 @@ namespace clt::lng
     /// @param expr The expression (can be any expression)
     /// @return None or VarDeclExpr or GlobalDeclExpr
     OptTok<StmtExprToken> decl_from_read(ProdExprToken expr) const noexcept;
+
+    ProdExprToken makeBinary(TokenRange range, ProdExprToken lhs, BinaryOp op, ProdExprToken rhs) noexcept;
   };
   
   template<ASTMaker::report_as AS, typename ...Args>
