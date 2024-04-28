@@ -5,10 +5,20 @@
 #include "colt_builtin_id.h"
 
 DECLARE_ENUM_WITH_TYPE(u8, clt::lng, UnarySupport,
-  BUILTIN, INVALID);
+  // Built-in operator
+  BUILTIN,
+  // Invalid operator
+  INVALID
+);
 
 DECLARE_ENUM_WITH_TYPE(u8, clt::lng, BinarySupport,
-  BUILTIN, INVALID_OP, INVALID_TYPE);
+  // Both operands are of type BuiltinType
+  BUILTIN,
+  // Invalid operator
+  INVALID_OP,
+  // Invalid right hand side
+  INVALID_TYPE
+);
 
 namespace clt::lng
 {
