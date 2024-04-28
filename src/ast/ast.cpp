@@ -318,8 +318,28 @@ namespace clt::lng
     }
     else if (err != run::NO_ERROR)
     {
-      report<report_as::WARNING>(range, nullptr,
-        "{}", run::toExplanation(err));
+      bool warn;
+      switch_no_default(err)
+      {
+      case run::OpError::RET_NAN:
+      case run::OpError::WAS_NAN:
+        warn = getWarnFor().constant_folding_nan;
+        break;
+      case run::OpError::SIGNED_OVERFLOW:
+      case run::OpError::SIGNED_UNDERFLOW:
+        warn = getWarnFor().constant_folding_signed_ou;
+        break;
+      case run::OpError::UNSIGNED_OVERFLOW:
+      case run::OpError::UNSIGNED_UNDERFLOW:
+        warn = getWarnFor().constant_folding_unsigned_ou;
+        break;
+      case run::OpError::SHIFT_BY_GRE_SIZEOF:
+        warn = getWarnFor().constant_folding_invalid_shift;
+        break;
+      }
+      if (warn)
+        report<report_as::WARNING>(range, nullptr,
+          "{}", run::toExplanation(err));
     }
 
     const auto family = FamilyOf(op);
