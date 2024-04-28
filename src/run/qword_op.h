@@ -610,10 +610,21 @@ namespace clt::run
     {
       if (std::isnan(a.as<From_t>()))
         return { {}, WAS_NAN };
-      if constexpr (std::is_integral_v<To_t>)
+      if constexpr (std::is_unsigned_v<To_t>)
       {
-        if (std::isinf(a.as<From_t>()))
-          return { {}, std::is_signed_v<To_t> ? SIGNED_OVERFLOW : UNSIGNED_OVERFLOW };
+        constexpr auto MAX_VALUE = static_cast<From_t>(std::numeric_limits<To_t>::max() / 2 + 1) * static_cast<From_t>(2.0);
+        if (a.as<From_t>() < static_cast<From_t>(0.0))
+          return { {}, UNSIGNED_UNDERFLOW };
+        if (!(a.as<From_t>() - MAX_VALUE < static_cast<From_t>(-0.5)))
+          return { {}, UNSIGNED_OVERFLOW };
+      }
+      else if constexpr (std::is_signed_v<To_t>)
+      {
+        constexpr auto MAX_VALUE = static_cast<From_t>(std::numeric_limits<To_t>::max() / 2 + 1) * static_cast<From_t>(2.0);
+        if (a.as<From_t>() - static_cast<From_t>(std::numeric_limits<To_t>::min()) > static_cast<From_t>(-0.5))
+          return { {}, SIGNED_UNDERFLOW };
+        if (!(a.as<From_t>() - MAX_VALUE < static_cast<From_t>(-0.5)))
+          return { {}, SIGNED_OVERFLOW };
       }
     }
     a.bit_assign(static_cast<To_t>(a.as<From_t>()));
@@ -734,6 +745,12 @@ namespace clt::run
   COLT_TypeOpFn(ge);
   COLT_TypeOpFn(leq);
   COLT_TypeOpFn(geq);
+
+  ResultQWORD NT_cnv(QWORD_t value, TypeOp from, TypeOp to) noexcept
+  {
+    static constexpr auto cnv = details::generate_cnv<COLT_TypeOp_PACK>();
+    return cnv[(u8)from][(u8)to](value);
+  }
 }
 
 #endif //!HG_COLT_QWORD_OP
