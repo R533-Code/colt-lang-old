@@ -20,142 +20,64 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, BinarySupport,
   INVALID_TYPE
 );
 
+DECLARE_ENUM_WITH_TYPE(u8, clt::lng, ConversionSupport,
+  // Built-in conversion
+  BUILTIN,
+  // Invalid conversion
+  INVALID
+);
+
 namespace clt::lng
 {
+  /************* UNARY *************/
+
   /// @brief Check which unary operators are supported by an error type
   /// @param op The unary operator whose support to check
   /// @return BUILTIN
-  constexpr UnarySupport ErrorSupport([[maybe_unused]] UnaryOp op) noexcept
-  {
-    return UnarySupport::BUILTIN;
-  }
+  UnarySupport ErrorSupport([[maybe_unused]] UnaryOp op) noexcept;  
   
   /// @brief Check which unary operators are supported by an error type
   /// @param op The unary operator whose support to check
   /// @return INVALID
-  constexpr UnarySupport NoSupport([[maybe_unused]] UnaryOp op) noexcept
-  {
-    return UnarySupport::INVALID;
-  }
+  UnarySupport NoSupport([[maybe_unused]] UnaryOp op) noexcept;  
 
   /// @brief Check which unary operators are supported by a pointer type
   /// @param op The unary operator whose support to check
   /// @return INVALID
-  constexpr UnarySupport PtrSupport([[maybe_unused]] UnaryOp op) noexcept
-  {
-    return UnarySupport::INVALID;
-  }
+  UnarySupport PtrSupport([[maybe_unused]] UnaryOp op) noexcept;  
 
   /// @brief Check which unary operators are supported by a BOOL type
   /// @param op The unary operator whose support to check
   /// @return INVALID or BUILTIN
-  constexpr UnarySupport BoolSupport(UnaryOp op) noexcept
-  {
-    using enum UnaryOp;
-    if (op == OP_BOOL_NOT)
-      return UnarySupport::BUILTIN;
-    return UnarySupport::INVALID;
-  }
+  UnarySupport BoolSupport(UnaryOp op) noexcept;
 
   /// @brief Check which unary operators are supported by a signed int type
   /// @param op The unary operator whose support to check
   /// @return INVALID or BUILTIN
-  constexpr UnarySupport SIntSupport(UnaryOp op) noexcept
-  {
-    using enum UnaryOp;
-    switch (op)
-    {
-    case OP_BIT_NOT:
-    case OP_NEGATE:
-    case OP_INC:
-    case OP_DEC:
-      return UnarySupport::BUILTIN;
-    default:
-      return UnarySupport::INVALID;
-    }
-  }
+  UnarySupport SIntSupport(UnaryOp op) noexcept;
   
   /// @brief Check which unary operators are supported by an unsigned int type
   /// @param op The unary operator whose support to check
   /// @return INVALID or BUILTIN
-  constexpr UnarySupport UIntSupport(UnaryOp op) noexcept
-  {
-    using enum UnaryOp;
-    switch (op)
-    {
-    case OP_BIT_NOT:
-    case OP_INC:
-    case OP_DEC:
-      return UnarySupport::BUILTIN;
-    default:
-      return UnarySupport::INVALID;
-    }
-  }
+  UnarySupport UIntSupport(UnaryOp op) noexcept;
   
   /// @brief Check which unary operators are supported by a floating point type
   /// @param op The unary operator whose support to check
   /// @return INVALID or BUILTIN
-  constexpr UnarySupport FPSupport(UnaryOp op) noexcept
-  {
-    using enum UnaryOp;
-    switch (op)
-    {
-    case OP_INC:
-    case OP_DEC:
-    case OP_NEGATE:
-      return UnarySupport::BUILTIN;
-    default:
-      return UnarySupport::INVALID;
-    }
-  }
+  UnarySupport FPSupport(UnaryOp op) noexcept;
   
   /// @brief Check which unary operators are supported by byte type
   /// @param op The unary operator whose support to check
   /// @return INVALID or BUILTIN
-  constexpr UnarySupport BytesSupport(UnaryOp op) noexcept
-  {
-    using enum UnaryOp;
-    if (op == OP_BIT_NOT)
-      return UnarySupport::BUILTIN;
-    return UnarySupport::INVALID;
-  }
+  UnarySupport BytesSupport(UnaryOp op) noexcept;  
 
   /// @brief Check if the type with ID 'ID' supports 'op'
   /// @param ID The type ID
   /// @param op The operator whose support to check
   /// @return UnarySupport
-  constexpr UnarySupport BuiltinSupport(BuiltinID ID, UnaryOp op) noexcept
-  {
-    using enum BuiltinID;
-    switch_no_default (ID)
-    {
-    case BOOL:
-      return BoolSupport(op);
-    case CHAR:
-      return UnarySupport::INVALID;
-    case U8:
-    case U16:
-    case U32:
-    case U64:
-      return UIntSupport(op);
-    case I8:
-    case I16:
-    case I32:
-    case I64:
-      return SIntSupport(op);
-    case F32:
-    case F64:
-      return FPSupport(op);
-    case BYTE:
-    case WORD:
-    case DWORD:
-    case QWORD:
-      return BytesSupport(op);
-    }
-  }
+  UnarySupport BuiltinSupport(BuiltinID ID, UnaryOp op) noexcept;  
 
-  class TypeVariant;
-  class PointerType;
+  /************* BINARY *************/
 
   /// @brief Check which unary operators are supported by an error type
   /// @param op The binary operator whose support to check
@@ -221,7 +143,24 @@ namespace clt::lng
   /// @param op The operator whose support to check
   /// @param var The right hand side of the operator
   /// @return UnarySupport
-  BinarySupport BuiltinSupport(BuiltinID ID, BinaryOp op, const TypeVariant& var) noexcept;  
+  BinarySupport BuiltinSupport(BuiltinID ID, BinaryOp op, const TypeVariant& var) noexcept;
+
+  /************* CONVERSIONS *************/
+
+  /// @brief Check if an error type is castable to another type
+  /// @param var The type to cast to
+  /// @return BUILTIN
+  ConversionSupport ErrorCastable([[maybe_unused]] const TypeVariant& var) noexcept;
+
+  /// @brief Always return INVALID
+  /// @param var The type to cast to (unused)
+  /// @return INVALID
+  ConversionSupport NotCastable([[maybe_unused]] const TypeVariant& var) noexcept;
+
+  /// @brief Check if a type is castable to another type
+  /// @param var The type to cast to
+  /// @return BUILTIN or INVALID
+  ConversionSupport BuiltinCastable(const TypeVariant& var) noexcept;
 }
 
 #endif // !HG_COLT_SUPPORT_OP

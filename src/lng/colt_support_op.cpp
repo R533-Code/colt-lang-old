@@ -3,12 +3,117 @@
 
 namespace clt::lng
 {
-  BinarySupport ErrorSupport([[maybe_unused]] BinaryOp op, const TypeVariant& var) noexcept
+  UnarySupport ErrorSupport([[maybe_unused]] UnaryOp op) noexcept
   {
-    return BinarySupport::BUILTIN;
+    return UnarySupport::BUILTIN;
   }
   
-  BinarySupport NoSupport([[maybe_unused]] BinaryOp op, const TypeVariant& var) noexcept
+  UnarySupport NoSupport([[maybe_unused]] UnaryOp op) noexcept
+  {
+    return UnarySupport::INVALID;
+  }
+  
+  UnarySupport PtrSupport([[maybe_unused]] UnaryOp op) noexcept
+  {
+    return UnarySupport::INVALID;
+  }
+  
+  UnarySupport BoolSupport(UnaryOp op) noexcept
+  {
+    using enum UnaryOp;
+    if (op == OP_BOOL_NOT)
+      return UnarySupport::BUILTIN;
+    return UnarySupport::INVALID;
+  }
+  
+  UnarySupport SIntSupport(UnaryOp op) noexcept
+  {
+    using enum UnaryOp;
+    switch (op)
+    {
+    case OP_BIT_NOT:
+    case OP_NEGATE:
+    case OP_INC:
+    case OP_DEC:
+      return UnarySupport::BUILTIN;
+    default:
+      return UnarySupport::INVALID;
+    }
+  }
+  
+  UnarySupport UIntSupport(UnaryOp op) noexcept
+  {
+    using enum UnaryOp;
+    switch (op)
+    {
+    case OP_BIT_NOT:
+    case OP_INC:
+    case OP_DEC:
+      return UnarySupport::BUILTIN;
+    default:
+      return UnarySupport::INVALID;
+    }
+  }
+  
+  UnarySupport FPSupport(UnaryOp op) noexcept
+  {
+    using enum UnaryOp;
+    switch (op)
+    {
+    case OP_INC:
+    case OP_DEC:
+    case OP_NEGATE:
+      return UnarySupport::BUILTIN;
+    default:
+      return UnarySupport::INVALID;
+    }
+  }
+  
+  UnarySupport BytesSupport(UnaryOp op) noexcept
+  {
+    using enum UnaryOp;
+    if (op == OP_BIT_NOT)
+      return UnarySupport::BUILTIN;
+    return UnarySupport::INVALID;
+  }
+  
+  UnarySupport BuiltinSupport(BuiltinID ID, UnaryOp op) noexcept
+  {
+    using enum BuiltinID;
+   
+    switch_no_default(ID)
+    {
+    case BOOL:
+      return BoolSupport(op);
+    case CHAR:
+      return UnarySupport::INVALID;
+    case U8:
+    case U16:
+    case U32:
+    case U64:
+      return UIntSupport(op);
+    case I8:
+    case I16:
+    case I32:
+    case I64:
+      return SIntSupport(op);
+    case F32:
+    case F64:
+      return FPSupport(op);
+    case BYTE:
+    case WORD:
+    case DWORD:
+    case QWORD:
+      return BytesSupport(op);
+    }
+  }
+  
+  BinarySupport ErrorSupport([[maybe_unused]] BinaryOp op, [[maybe_unused]] const TypeVariant& var) noexcept
+  {
+    return BinarySupport::BUILTIN;
+  }  
+
+  BinarySupport NoSupport([[maybe_unused]] BinaryOp op, [[maybe_unused]] const TypeVariant& var) noexcept
   {
     return BinarySupport::INVALID_OP;
   }
@@ -213,5 +318,22 @@ namespace clt::lng
     case QWORD:
       return BytesSupport(ID, op, var);
     }
+  }
+
+  ConversionSupport ErrorCastable([[maybe_unused]] const TypeVariant& var) noexcept
+  {
+    return ConversionSupport::BUILTIN;
+  }
+  
+  ConversionSupport NotCastable([[maybe_unused]] const TypeVariant& var) noexcept
+  {
+    return ConversionSupport::INVALID;
+  }
+  
+  ConversionSupport BuiltinCastable(const TypeVariant& var) noexcept
+  {
+    if (var.isBuiltin())
+      return ConversionSupport::BUILTIN;
+    return ConversionSupport::INVALID;
   }
 }

@@ -67,6 +67,7 @@ namespace clt::lng
     { a.getHash() } -> std::same_as<size_t>;
     { a.supports(unary) } -> std::same_as<UnarySupport>;
     { a.supports(binary, var) } -> std::same_as<BinarySupport>;
+    { a.castableTo(var) } -> std::same_as<ConversionSupport>;
   };
 
   // Create a type that is default constructible, movable and move assignable
@@ -77,8 +78,9 @@ namespace clt::lng
                             MAKE_DEFAULT_COPY_AND_MOVE_FOR(name) \
                             constexpr bool operator==(const name&) const { return true; } \
                             constexpr size_t getHash() const noexcept { return hash_value(static_cast<u8>(classof())); } \
-                            constexpr UnarySupport supports(UnaryOp op) const noexcept { return unary_support(op); } \
+                            UnarySupport supports(UnaryOp op) const noexcept { return unary_support(op); } \
                             BinarySupport supports(BinaryOp op, const TypeVariant& var) const noexcept; \
+                            ConversionSupport castableTo(const TypeVariant& var) const noexcept; \
                           }
 
   // Create the empty types.
@@ -136,8 +138,9 @@ namespace clt::lng
     /// @brief Check if the current type supports 'op'
     /// @param op The operator whose support to check
     /// @return INVALID or BUILTIN
-    constexpr UnarySupport supports(UnaryOp op) const noexcept { return BuiltinSupport(typeID(), op); }
+    UnarySupport supports(UnaryOp op) const noexcept { return BuiltinSupport(typeID(), op); }
     BinarySupport supports(BinaryOp op, const TypeVariant& var) const noexcept;
+    ConversionSupport castableTo(const TypeVariant& var) const noexcept;
   };
 
   class PointerType
@@ -164,8 +167,9 @@ namespace clt::lng
     /// @return The type pointed to
     constexpr TypeToken getPointingTo() const noexcept { return type_id; }
 
-    constexpr UnarySupport supports(UnaryOp op) const noexcept { return PtrSupport(op); }
+    UnarySupport supports(UnaryOp op) const noexcept { return PtrSupport(op); }
     BinarySupport supports(BinaryOp op, const TypeVariant& var) const noexcept;
+    ConversionSupport castableTo(const TypeVariant& var) const noexcept;
   };
 
   /// @brief Represents a pointer to constant memory of a type
@@ -295,8 +299,9 @@ namespace clt::lng
     /// @brief Check if the current type supports 'op'
     /// @param op The operator whose support to check
     /// @return INVALID
-    constexpr UnarySupport supports(UnaryOp op) const noexcept { return NoSupport(op); }
+    UnarySupport supports(UnaryOp op) const noexcept { return NoSupport(op); }
     BinarySupport supports(BinaryOp op, const TypeVariant& var) const noexcept;
+    ConversionSupport castableTo(const TypeVariant& var) const noexcept;
   };
 
   template<typename T>
@@ -369,7 +374,7 @@ namespace clt::lng
     /// @param a The variant to hash
     /// @param op The unary operation to check for
     /// @return a.getUnionMember<T>().supports(op)
-    static constexpr UnarySupport table_supports_u(const TypeVariant& a, UnaryOp op) noexcept
+    static UnarySupport table_supports_u(const TypeVariant& a, UnaryOp op) noexcept
     {
       return a.getUnionMember<T>().supports(op);
     }
@@ -534,7 +539,7 @@ namespace clt::lng
     /// @brief Check if the current type supports 'op'
     /// @param op The operator to check for
     /// @return UnarySupport
-    constexpr UnarySupport supports(UnaryOp op) const noexcept
+    UnarySupport supports(UnaryOp op) const noexcept
     {
       return USupportsTable[static_cast<u8>(this->getTypeID())](*this, op);
     }
