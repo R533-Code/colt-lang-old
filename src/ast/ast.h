@@ -462,6 +462,7 @@ namespace clt::lng
     OptTok<StmtExprToken> decl_from_read(ProdExprToken expr) const noexcept;
 
     ProdExprToken makeBinary(TokenRange range, ProdExprToken lhs, BinaryOp op, ProdExprToken rhs) noexcept;
+    ProdExprToken makeUnary(TokenRange range, UnaryOp op, ProdExprToken child) noexcept;
   };
   
   template<ASTMaker::report_as AS, typename ...Args>
