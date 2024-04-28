@@ -494,7 +494,7 @@ namespace clt::lng
     /// @brief Casts the current type to 'T'
     /// @tparam T The type to cast to
     /// @return nullptr if the variant does not contain 'T', or valid pointer to 'T'
-    constexpr T* getType() noexcept
+    constexpr T* as() noexcept
     {
       if (getTypeID() != TypeToTypeID<T>())
         return nullptr;
@@ -505,7 +505,7 @@ namespace clt::lng
     /// @brief Casts the current type to 'T'
     /// @tparam T The type to cast to
     /// @return nullptr if the variant does not contain 'T', or valid pointer to 'T'
-    constexpr const T* getType() const noexcept
+    constexpr const T* as() const noexcept
     {
       if (getTypeID() != TypeToTypeID<T>())
         return nullptr;
@@ -515,10 +515,10 @@ namespace clt::lng
     template<typename T>
     /// @brief Downcasts the variant to 'T'
     /// @return nullptr if type does not match else pointer to the type
-    constexpr const T* getType() const noexcept
+    constexpr const T* as() const noexcept
     {
       static_assert(type_group_requirements_t<T>::size != 0, "Group must be inherited from!");
-      if (is_classof_any_of(type_group_requirements_t<T>{}))
+      if (!is_classof_any_of(type_group_requirements_t<T>{}))
         return nullptr;
       return (const T*)&_buffer;
     }
