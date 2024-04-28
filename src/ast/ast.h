@@ -185,12 +185,33 @@ namespace clt::lng
     /// @return The expression buffer representing the parsed file
     ExprBuffer& Expr() noexcept { return to_parse.getExprBuffer(); }
     
+    /// @brief Shorthand for Expr().getExpr()
+    /// @param expr The expression to get
+    /// @return ProdExprVariant
     ProdExprVariant& Expr(ProdExprToken expr) noexcept { return to_parse.getExprBuffer().getExpr(expr); }
+    /// @brief Shorthand for Expr().getExpr()
+    /// @param expr The expression to get
+    /// @return ProdExprVariant
     const ProdExprVariant& Expr(ProdExprToken expr) const noexcept { return to_parse.getExprBuffer().getExpr(expr); }
+    /// @brief Shorthand for Expr().getExpr()
+    /// @param expr The expression to get
+    /// @return StmtExprVariant
     StmtExprVariant& Expr(StmtExprToken expr) noexcept { return to_parse.getExprBuffer().getExpr(expr); }
+    /// @brief Shorthand for Expr().getExpr()
+    /// @param expr The expression to get
+    /// @return StmtExprVariant
     const StmtExprVariant& Expr(StmtExprToken expr) const noexcept { return to_parse.getExprBuffer().getExpr(expr); }
+    /// @brief Shorthand for Expr().getType()
+    /// @param expr The expression whose type to get
+    /// @return The type
     const TypeVariant& Type(ProdExprToken expr) const noexcept { return to_parse.getExprBuffer().getType(expr); }
+    /// @brief Shorthand for Expr().getType()
+    /// @param expr The expression whose type to get
+    /// @return The type
     const TypeVariant& Type(TypeToken expr) const noexcept { return to_parse.getExprBuffer().getType(expr); }
+    /// @brief Shorthand for Expr().getType()
+    /// @param expr The expression whose type to get
+    /// @return The type
     const TypeVariant& Type(const ExprBase& expr) const noexcept { return Type(expr.getType()); }
 
   private:
@@ -299,7 +320,11 @@ namespace clt::lng
 
     /*------------------
      | ERROR REPORTING |
-     ------------------*/    
+     ------------------*/
+
+    /// @brief Shorthand for getProgram().getWarnFor()
+    /// @return WarnFor
+    const WarnFor& getWarnFor() const noexcept { return to_parse.getProgram().getWarnFor(); }
 
     /// @brief Enum used to specify output type (for 'generate')
     enum report_as
@@ -496,8 +521,18 @@ namespace clt::lng
     /// @return ErrorExpr or UnaryExpr
     ProdExprToken makeUnary(TokenRange range, UnaryOp op, ProdExprToken child) noexcept;
 
+    /// @brief Constant folds two literals using 'op' as the binary operator.
+    /// This method will print errors and warnings following 'WarnAll'
+    /// @param range The range of tokens representing the expression
+    /// @param lhs The left hand side of the expression
+    /// @param op The operator
+    /// @param rhs The right hand side of the expression
+    /// @return LiteralExpr or ErrorExpr
     ProdExprToken constantFold(TokenRange range, const LiteralExpr& lhs, BinaryOp op, const LiteralExpr& rhs) noexcept;
 
+    /// @brief Check if 'expr' represents a LiteralExpr with value 0
+    /// @param expr The expression whose value to check
+    /// @return True if the expr is a LiteralExpr with value 0
     bool isLiteralZero(ProdExprToken expr) const noexcept;
   };
   
@@ -514,9 +549,9 @@ namespace clt::lng
     if constexpr (AS == ERROR)
       getReporter().error(str, source_info);
     if constexpr (AS == WARNING)
-      getReporter().error(str, source_info);
+      getReporter().warn(str, source_info);
     if constexpr (AS == MESSAGE)
-      getReporter().error(str, source_info);
+      getReporter().message(str, source_info);
     if (consume != nullptr)
       (*this.*consume)();
   }
@@ -534,9 +569,9 @@ namespace clt::lng
     if constexpr (AS == ERROR)
       getReporter().error(str, source_info);
     if constexpr (AS == WARNING)
-      getReporter().error(str, source_info);
+      getReporter().warn(str, source_info);
     if constexpr (AS == MESSAGE)
-      getReporter().error(str, source_info);
+      getReporter().message(str, source_info);
     if (consume != nullptr)
       (*this.*consume)();
   }
