@@ -105,6 +105,7 @@ namespace clt::lng
     }
   };
 
+  /// @brief Class responsible of generating the AST
   class ASTMaker
   {
     /// @brief Type of methods consuming tokens
@@ -143,7 +144,7 @@ namespace clt::lng
     /// @brief The maximum recursion depth allowed
     static constexpr u16 MAX_RECURSION_DEPTH = 256;
 
-    /// @brief Constructor
+    /// @brief Constructor, does all the parsing
     /// @param unit The unit to parse
     ASTMaker(ParsedUnit& unit) noexcept
       : to_parse(unit)
@@ -179,13 +180,27 @@ namespace clt::lng
 
     /// @brief Returns the expression buffer representing the parsed file
     /// @return The expression buffer representing the parsed file
-    const ExprBuffer& getExprBuffer() const noexcept { return to_parse.getExprBuffer(); }
+    const ExprBuffer& Expr() const noexcept { return to_parse.getExprBuffer(); }
     /// @brief Returns the expression buffer representing the parsed file
     /// @return The expression buffer representing the parsed file
-    ExprBuffer& getExprBuffer() noexcept { return to_parse.getExprBuffer(); }
+    ExprBuffer& Expr() noexcept { return to_parse.getExprBuffer(); }
+    
+    ProdExprVariant& Expr(ProdExprToken expr) noexcept { return to_parse.getExprBuffer().getExpr(expr); }
+    const ProdExprVariant& Expr(ProdExprToken expr) const noexcept { return to_parse.getExprBuffer().getExpr(expr); }
+    StmtExprVariant& Expr(StmtExprToken expr) noexcept { return to_parse.getExprBuffer().getExpr(expr); }
+    const StmtExprVariant& Expr(StmtExprToken expr) const noexcept { return to_parse.getExprBuffer().getExpr(expr); }
+    const TypeVariant& Type(ProdExprToken expr) const noexcept { return to_parse.getExprBuffer().getType(expr); }
+    const TypeVariant& Type(TypeToken expr) const noexcept { return to_parse.getExprBuffer().getType(expr); }
+    const TypeVariant& Type(const ExprBase& expr) const noexcept { return Type(expr.getType()); }
 
   private:
+    /// @brief Gets a string representing the typename of 'var'
+    /// @param var The type whose typename to return
+    /// @return StringVoew representing the typename of 'var'
     StringView getTypeName(const TypeVariant& var) noexcept { return to_parse.getProgram().getTypes().getTypeName(var); }
+    /// @brief Gets a string representing the typename of 'var'
+    /// @param var The type whose typename to return
+    /// @return StringVoew representing the typename of 'var'
     StringView getTypeName(TypeToken var) noexcept { return to_parse.getProgram().getTypes().getTypeName(var); }
 
     /*---------------------
@@ -461,8 +476,29 @@ namespace clt::lng
     /// @return None or VarDeclExpr or GlobalDeclExpr
     OptTok<StmtExprToken> decl_from_read(ProdExprToken expr) const noexcept;
 
+    /*----------------
+     | MAKE HELPERS  |
+     ---------------*/
+
+    /// @brief Verify that a type supports an operator and creates a BinaryExpr.
+    /// This method is also responsible of constant folding.
+    /// @param range The range of tokens representing the expression
+    /// @param lhs The left hand side
+    /// @param op The operator
+    /// @param rhs The right hand side
+    /// @return ErrorExpr or BinaryExpr
     ProdExprToken makeBinary(TokenRange range, ProdExprToken lhs, BinaryOp op, ProdExprToken rhs) noexcept;
+    /// @brief Verify that a type supports an operator and creates a UnaryExpr.
+    /// This method is also responsible of constant folding
+    /// @param range The range of tokens representing the expression
+    /// @param op The operator
+    /// @param child The expression on which the operator is applied
+    /// @return ErrorExpr or UnaryExpr
     ProdExprToken makeUnary(TokenRange range, UnaryOp op, ProdExprToken child) noexcept;
+
+    ProdExprToken constantFold(TokenRange range, const LiteralExpr& lhs, BinaryOp op, const LiteralExpr& rhs) noexcept;
+
+    bool isLiteralZero(ProdExprToken expr) const noexcept;
   };
   
   template<ASTMaker::report_as AS, typename ...Args>

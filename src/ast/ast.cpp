@@ -6,6 +6,7 @@
  * @date   April 2024
  *********************************************************************/
 #include "ast.h"
+#include "run/qword_op.h"
 
 namespace clt::lng
 {
@@ -27,7 +28,7 @@ namespace clt::lng
     
     //TODO: add support for string literal
     QWORD_t value = getTokenBuffer().getLiteral(literal_tkn);
-    return getExprBuffer().addLiteral(
+    return Expr().addLiteral(
       range.getRange(), value, LiteralToBuiltinID(literal_tkn)
     );
   }
@@ -42,7 +43,7 @@ namespace clt::lng
     else
       report_current<ERROR>(current_panic, "Expected an expression!");
 
-    return getExprBuffer().addError(range.getRange());
+    return Expr().addError(range.getRange());
   }
 
   ProdExprToken ASTMaker::parse_primary(bool accepts_conv)
@@ -75,28 +76,28 @@ namespace clt::lng
   ProdExprToken ASTMaker::parse_unary_and(ProdExprToken child, const TokenRangeGenerator& range) noexcept
   {
     if (auto pchild = decl_from_read(child); pchild.isValue())
-      return getExprBuffer().addAddressOf(range.getRange(), pchild.getValue());
+      return Expr().addAddressOf(range.getRange(), pchild.getValue());
 
     report<ERROR>(range.getRange(), nullptr,
       "Unary '&' can only be applied on a variable!");
-    return getExprBuffer().addError(range.getRange());
+    return Expr().addError(range.getRange());
   }
 
   ProdExprToken ASTMaker::parse_unary_star(ProdExprToken child, const TokenRangeGenerator& range) noexcept
   {
-    if (!getExprBuffer().getType(child).isAnyOpaquePtr())
+    if (!Type(child).isAnyOpaquePtr())
     {
       report<ERROR>(range.getRange(), nullptr,
         "Unary '*' can only be applied on a non-opaque pointer!");
-      return getExprBuffer().addError(range.getRange());
+      return Expr().addError(range.getRange());
     }
-    else if (!getExprBuffer().getType(child).isAnyPtr())
+    else if (!Type(child).isAnyPtr())
     {
       report<ERROR>(range.getRange(), nullptr,
         "Unary '*' can only be applied on pointer types!");
-      return getExprBuffer().addError(range.getRange());
+      return Expr().addError(range.getRange());
     }
-    return getExprBuffer().addPtrLoad(range.getRange(), child);
+    return Expr().addPtrLoad(range.getRange(), child);
   }
 
   ProdExprToken ASTMaker::parse_unary()
@@ -115,7 +116,7 @@ namespace clt::lng
     //Parse the child expression, without handling conversions:
     // '-5 as i32' is equivalent to '(-5) as i32'
     ProdExprToken child = parse_primary(false);
-    if (getExprBuffer().getExpr(child).isError())
+    if (Expr(child).isError())
       return child;
 
     switch (op)
@@ -126,7 +127,7 @@ namespace clt::lng
       // Handles '+', which are not supported by the language
     break; case TKN_PLUS:
       report<ERROR>(range.getRange(), current_panic, "Unary '+' is not supported!");
-      to_ret = getExprBuffer().addError(range.getRange());
+      to_ret = Expr().addError(range.getRange());
       
       // Handles '&', which are usually AddressOf expressions
     break; case TKN_AND:    
@@ -150,7 +151,7 @@ namespace clt::lng
     auto range = startRange();
 
     ProdExprToken lhs = parse_primary();
-    if (getExprBuffer().getExpr(lhs).isError())
+    if (Expr(lhs).isError())
     {
       panic_consume();
       return lhs;
@@ -171,13 +172,13 @@ namespace clt::lng
       consume_current();
       //Recurse: 10 + 5 + 8 -> (10 + (5 + 8))
       ProdExprToken rhs = parse_binary(OpPrecedence(binary_op));
-      if (getExprBuffer().getExpr(rhs).isError())
+      if (Expr(rhs).isError())
         return rhs;
 
       if (!isBinaryToken(binary_op))
       {
         report<ERROR>(binary_op, current_panic, "Expected a binary operator!");
-        return getExprBuffer().addError(range.getRange());
+        return Expr().addError(range.getRange());
       }
       else if (isComparisonToken(binary_op))
         lhs = is_parsing_comp ? lhs : parse_comparison(lhs, range);
@@ -211,34 +212,52 @@ namespace clt::lng
 
   OptTok<StmtExprToken> ASTMaker::decl_from_read(ProdExprToken expr) const noexcept
   {
-    auto& read = getExprBuffer().getExpr(expr);
+    auto& read = Expr(expr);
     if (!read.isRead())
       return None;
-    return read.getExpr<ReadExpr>()->getDecl();
+    return read.as<ReadExpr>()->getDecl();
   }
 
   ProdExprToken ASTMaker::makeBinary(TokenRange range, ProdExprToken lhs, BinaryOp op, ProdExprToken rhs) noexcept
   {
     using enum BinarySupport;
     
-    auto& type = getExprBuffer().getType(lhs);
-    auto support = type.supports(op, getExprBuffer().getType(rhs));    
+    if (Expr(lhs).isError() || Expr(rhs).isError())
+      return Expr().addError(range);
+
+    auto& type = Type(lhs);
+    auto support = type.supports(op, Type(rhs));    
     switch_no_default(support)
     {
     case BUILTIN:
-      return getExprBuffer().addBinary(range, lhs, op, rhs);
+      // If the right hand side of the expression is a literal,
+      // then we can check for division by zero.
+      // If the left hand side is also a literal, we can constant fold
+      // the expression
+      if (auto rhs_p = Expr(rhs).as<LiteralExpr>();
+        rhs_p != nullptr)
+      {
+        if (auto lhs_p = Expr(lhs).as<LiteralExpr>())
+          return constantFold(range, *lhs_p, op, *rhs_p);
+        if ((op == BinaryOp::OP_DIV || op == BinaryOp::OP_MOD) && isLiteralZero(rhs))
+        {
+          report<report_as::ERROR>(range, nullptr, "Integral division by zero is not allowed!");
+          return Expr().addError(range);
+        }
+      }
+      return Expr().addBinary(range, lhs, op, rhs);
     
     case INVALID_OP:
       report<report_as::ERROR>(range, nullptr,
         "'{}' does not support operator '{}'!",
         getTypeName(type), toStr(op));
-      return getExprBuffer().addError(range);
+      return Expr().addError(range);
     
     case INVALID_TYPE:
       report<report_as::ERROR>(range, nullptr,
         "'{}' does not support '{}' as right hand side of operator '{}'!",
-        getTypeName(type), getTypeName(getExprBuffer().getType(rhs)), toStr(op));
-      return getExprBuffer().addError(range);
+        getTypeName(type), getTypeName(Type(rhs)), toStr(op));
+      return Expr().addError(range);
     }
   }
 
@@ -246,19 +265,76 @@ namespace clt::lng
   {
     using enum UnarySupport;
     
-    auto& type = getExprBuffer().getType(child);
+    if (Expr(child).isError())
+      return Expr().addError(range);
+
+    auto& type = Type(child);
     auto support = type.supports(op);
     
     switch_no_default(support)
     {
     case BUILTIN:
-      return getExprBuffer().addUnary(range, op, child);
+      return Expr().addUnary(range, op, child);
     case INVALID:
       report<report_as::ERROR>(range, current_panic,
         "'{}' does not support unary operator '{}'!",
         getTypeName(type), toStr(op));
-      return getExprBuffer().addError(range);
+      return Expr().addError(range);
     }
+  }
+
+  ProdExprToken ASTMaker::constantFold(TokenRange range, const LiteralExpr& lhs, BinaryOp op, const LiteralExpr& rhs) noexcept
+  {
+    using enum clt::run::TypeOp;
+
+    static constexpr std::array table =
+    {
+      &run::NT_add, &run::NT_sub, &run::NT_mul, &run::NT_div, &run::NT_mod,
+      &run::NT_bit_and, &run::NT_bit_or, &run::NT_bit_xor, &run::NT_shl, &run::NT_shr,
+      &run::NT_bit_and, &run::NT_bit_or,
+      &run::NT_le, &run::NT_leq, &run::NT_ge, &run::NT_geq, &run::NT_neq, &run::NT_eq
+    };
+
+    static constexpr std::array ID_to_type =
+    {
+      u8_t, u8_t,
+      u8_t, u16_t, u32_t, u64_t,
+      i8_t, i16_t, i32_t, i64_t,
+      f32_t, f64_t,
+      u8_t, u16_t, u32_t, u64_t,
+    };
+    assert_true("Expected built-in type!", Type(lhs).as<BuiltinType>() != nullptr, Type(rhs).as<BuiltinType>() != nullptr);
+    const auto typeID = Type(lhs).as<BuiltinType>()->typeID();
+
+    auto fn = table[static_cast<u8>(op)];
+    auto [res, err] = fn(lhs.getValue(), rhs.getValue(),
+      ID_to_type[static_cast<u8>(typeID)]);
+
+    if (err == run::DIV_BY_ZERO)
+    {
+      report<report_as::ERROR>(range, nullptr,
+        "Integral division by zero is not allowed!");
+      return Expr().addError(range);
+    }
+    else if (err != run::NO_ERROR)
+    {
+      report<report_as::WARNING>(range, nullptr,
+        "{}", run::toExplanation(err));
+    }
+
+    const auto family = FamilyOf(op);
+    // If this is true then the resulting expression is a boolean
+    const bool is_ret_bool = family == OpFamily::BOOL_LOGIC || family == OpFamily::COMPARISON;
+
+    return Expr().addLiteral(range, res,
+      is_ret_bool ? BuiltinID::BOOL : typeID
+    );
+  }
+
+  bool ASTMaker::isLiteralZero(ProdExprToken expr) const noexcept
+  {
+    return Type(expr).isBuiltinAnd(&isIntegral)
+      && Expr(expr).as<LiteralExpr>()->getValue().is_none_set();
   }
 
   void PrintExpr(ProdExprToken tkn, const ParsedUnit& unit, u64 depth) noexcept
@@ -281,23 +357,23 @@ namespace clt::lng
     
     break; case EXPR_UNARY:
       io::print("{}{:^{}}({:h}: '{:h}'", io::YellowF, "", depth * 3, expr.classof(),
-        expr.getExpr<UnaryExpr>()->getOp());
-      PrintExpr(expr.getExpr<UnaryExpr>()->getExpr(), unit, depth + 1);
+        expr.as<UnaryExpr>()->getOp());
+      PrintExpr(expr.as<UnaryExpr>()->getExpr(), unit, depth + 1);
       io::print("{}{:^{}}{}){}", io::YellowF, "", depth * 3, types.getTypeName(expr.getType()), io::Reset);
 
     break; case EXPR_BINARY:
       io::print("{}{:^{}}({:h}:", io::BrightCyanF, "", depth * 3, expr.classof());
-      PrintExpr(expr.getExpr<BinaryExpr>()->getLHS(), unit, depth + 1);
+      PrintExpr(expr.as<BinaryExpr>()->getLHS(), unit, depth + 1);
       io::print("{}{:^{}} {:h}", io::BrightCyanF, "", depth * 3,
-        expr.getExpr<BinaryExpr>()->getOp());
-      PrintExpr(expr.getExpr<BinaryExpr>()->getRHS(), unit, depth + 1);
+        expr.as<BinaryExpr>()->getOp());
+      PrintExpr(expr.as<BinaryExpr>()->getRHS(), unit, depth + 1);
       io::print("{}{:^{}}{}){}", io::BrightCyanF, "", depth * 3, types.getTypeName(expr.getType()), io::Reset);
     
     break; case EXPR_CAST:
       io::print("{}{:^{}}({:h}: '{}' -> '{}'", io::BrightMagentaF, "", depth * 3, expr.classof(),
-        types.getTypeName(expr.getExpr<CastExpr>()->getType()), types.getTypeName(expr.getExpr<CastExpr>()->getTypeToCastTo()));
-      PrintExpr(expr.getExpr<CastExpr>()->getToCast(), unit, depth + 1);
-      io::print("{}{:^{}}{}){}", io::BrightMagentaF, "", depth * 3, types.getTypeName(expr.getExpr<CastExpr>()->getType()), io::Reset);
+        types.getTypeName(expr.as<CastExpr>()->getType()), types.getTypeName(expr.as<CastExpr>()->getTypeToCastTo()));
+      PrintExpr(expr.as<CastExpr>()->getToCast(), unit, depth + 1);
+      io::print("{}{:^{}}{}){}", io::BrightMagentaF, "", depth * 3, types.getTypeName(expr.as<CastExpr>()->getType()), io::Reset);
     
     break; default:
       io::print("{:^{}}{:h}", "", depth * 3, expr.classof());
