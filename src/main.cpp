@@ -9,7 +9,6 @@
 #include "args.h"
 #include "util/run_tests.h"
 #include "ast/parsed_program.h"
-#include "ast/ast.h"
 
 using namespace clt;
 
@@ -20,7 +19,7 @@ void REPL()
   io::print_warn("REPL is not implemented...");
 
   auto reporter = lng::make_error_reporter<lng::ConsoleReporter>();
-  auto warn = WarnFor::WarnAll();
+  auto warn = GlobalWarnFor;
   Vector<std::filesystem::path> includes = {};
   while (true)
   {
