@@ -46,7 +46,7 @@ namespace clt::lng
     case OP_GREAT_EQUAL:
     case OP_NOT_EQUAL:
     case OP_EQUAL:
-      if (auto ptr = rhs.getType<PointerType>(); ptr && ptr->getPointingTo() == lhs.getPointingTo())
+      if (auto ptr = rhs.as<PointerType>(); ptr && ptr->getPointingTo() == lhs.getPointingTo())
         return BinarySupport::BUILTIN;
       return BinarySupport::INVALID_TYPE;
     default:
@@ -94,7 +94,7 @@ namespace clt::lng
     case OP_GREAT_EQUAL:
     case OP_NOT_EQUAL:
     case OP_EQUAL:
-      if (auto ptr = var.getType<BuiltinType>(); ptr && ptr->typeID() == lhs)
+      if (auto ptr = var.as<BuiltinType>(); ptr && ptr->typeID() == lhs)
         return BinarySupport::BUILTIN;
       return BinarySupport::INVALID_TYPE;
     default:
@@ -123,7 +123,7 @@ namespace clt::lng
     case OP_GREAT_EQUAL:
     case OP_NOT_EQUAL:
     case OP_EQUAL:
-      if (auto ptr = var.getType<BuiltinType>(); ptr && ptr->typeID() == lhs)
+      if (auto ptr = var.as<BuiltinType>(); ptr && ptr->typeID() == lhs)
         return BinarySupport::BUILTIN;
       return BinarySupport::INVALID_TYPE;
     default:
@@ -147,7 +147,7 @@ namespace clt::lng
     case OP_GREAT_EQUAL:
     case OP_NOT_EQUAL:
     case OP_EQUAL:
-      if (auto ptr = var.getType<BuiltinType>(); ptr && ptr->typeID() == lhs)
+      if (auto ptr = var.as<BuiltinType>(); ptr && ptr->typeID() == lhs)
         return BinarySupport::BUILTIN;
       return BinarySupport::INVALID_TYPE;
     default:
@@ -176,7 +176,7 @@ namespace clt::lng
     case OP_GREAT_EQUAL:
     case OP_NOT_EQUAL:
     case OP_EQUAL:
-      if (auto ptr = var.getType<BuiltinType>(); ptr && ptr->typeID() == lhs)
+      if (auto ptr = var.as<BuiltinType>(); ptr && ptr->typeID() == lhs)
         return BinarySupport::BUILTIN;
       return BinarySupport::INVALID_TYPE;
     default:
