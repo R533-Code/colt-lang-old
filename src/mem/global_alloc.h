@@ -13,11 +13,16 @@
 namespace clt::mem
 {
   /// @brief The global allocator
-  inline AbortOnNULLAllocator<
-    Segregator<1_KiB,
-    ThreadSafeAllocator<Segregator<256, FreeList<StackAllocator<8_KiB, 16>, 16_B, 256_B, 32>, FreeList<Mallocator, 256_B, 1_KiB, 32>>>,
-    ThreadSafeAllocator<FreeList<Mallocator, 1_KiB, 4_KiB, 32>>
-    >> GlobalAllocator;
+  inline AbortOnNULLAllocator<FreeList<Mallocator, 16_B, 4_KiB, 1024>>
+    /*Segregator<1_KiB,
+      ThreadSafeAllocator<
+        Segregator<256, FreeList<StackAllocator<8_KiB, 16>, 16_B, 256_B, 32>,
+          FreeList<Mallocator, 256_B, 1_KiB, 32>>
+          >,
+      ThreadSafeAllocator<
+        FreeList<Mallocator, 1_KiB, 4_KiB, 32>>
+        >
+    >*/ GlobalAllocator;
 
   /// @brief Allocate a block of memory through the global allocator
   /// @param sz The size of the block
