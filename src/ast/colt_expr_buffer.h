@@ -50,7 +50,7 @@ namespace clt::lng
     template<ProducerExpr T>
     /// @brief Downcasts the variant to 'T'
     /// @return nullptr if type does not match else pointer to the type
-    constexpr T* getExpr() noexcept
+    constexpr T* as() noexcept
     {
       if (classof() != TypeToExprID<T>())
         return nullptr;
@@ -60,7 +60,7 @@ namespace clt::lng
     template<ProducerExpr T>
     /// @brief Downcasts the variant to 'T'
     /// @return nullptr if type does not match else pointer to the type
-    constexpr const T* getExpr() const noexcept
+    constexpr const T* as() const noexcept
     {
       if (classof() != TypeToExprID<T>())
         return nullptr;
@@ -70,10 +70,10 @@ namespace clt::lng
     template<typename T>
     /// @brief Downcasts the variant to 'T'
     /// @return nullptr if type does not match else pointer to the type
-    constexpr const T* getExpr() const noexcept
+    constexpr const T* as() const noexcept
     {
       static_assert(producer_group_requirements_t<T>::size != 0, "Group must be inherited from!");
-      if (is_classof_any_of(producer_group_requirements_t<T>{}))
+      if (!is_classof_any_of(producer_group_requirements_t<T>{}))
         return nullptr;
       return (const T*)&_buffer;
     }
@@ -354,9 +354,9 @@ namespace clt::lng
       assert_true("Expression must have a pointer type!", getType(to_cast).isAnyPtr()
         && !getType(to_cast).isAnyOpaquePtr());
       auto& ref = getType(to_cast);
-      if (auto ptr = ref.getType<MutPtrType>(); ptr)
+      if (auto ptr = ref.as<MutPtrType>(); ptr)
         return addNewProd<PtrLoadExpr>(range, ptr->getPointingTo(), to_cast);
-      if (auto ptr = ref.getType<PtrType>(); ptr)
+      if (auto ptr = ref.as<PtrType>(); ptr)
         return addNewProd<PtrLoadExpr>(range, ptr->getPointingTo(), to_cast);      
       clt::unreachable("Invalid type!");
     }
@@ -420,7 +420,7 @@ namespace clt::lng
     {
       assert_true("Expected a non-opaque pointer to mutable type!", getType(write_to).isMutPtr()
         && !getType(write_to).isAnyOpaquePtr());
-      assert_true("Types must match!", getType(write_to).getType<MutPtrType>()->getPointingTo() == getTypeToken(to_write));
+      assert_true("Types must match!", getType(write_to).as<MutPtrType>()->getPointingTo() == getTypeToken(to_write));
       return addNewProd<PtrStoreExpr>(range, types.getVoidType(), write_to, to_write);
     }
 
