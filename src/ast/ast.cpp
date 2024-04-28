@@ -136,15 +136,9 @@ namespace clt::lng
     break; case TKN_STAR:
       to_ret = parse_unary_star(child, range);
     
+      // Handles the rest of the unary tokens (makeUnary checks for supports())
     break; default:
-      //if (!child->type()->supports(TokenToUnary(op)))
-      //{
-      //  generate<ERROR>(line_state.to_src_info(), &ASTMaker::panic_consume_semicolon,
-      //    "'{}' does not support '{}' operator!", type_name(ctx, child->type()), op_symbol); //TESTED
-      //  to_ret = Expr::CreateError(ctx, line_state.to_src_info());
-      //}
-      //else
-        to_ret = getExprBuffer().addUnary(range.getRange(), TokenToUnary(op), child);
+      to_ret = makeUnary(range.getRange(), TokenToUnary(op), child);      
     }
     return to_ret;
   }
@@ -234,16 +228,35 @@ namespace clt::lng
     case BUILTIN:
       return getExprBuffer().addBinary(range, lhs, op, rhs);
     
-    case clt::lng::BinarySupport::INVALID_OP:
+    case INVALID_OP:
       report<report_as::ERROR>(range, nullptr,
         "'{}' does not support operator '{}'!",
         getTypeName(type), toStr(op));
       return getExprBuffer().addError(range);
     
-    case clt::lng::BinarySupport::INVALID_TYPE:
+    case INVALID_TYPE:
       report<report_as::ERROR>(range, nullptr,
         "'{}' does not support '{}' as right hand side of operator '{}'!",
         getTypeName(type), getTypeName(getExprBuffer().getType(rhs)), toStr(op));
+      return getExprBuffer().addError(range);
+    }
+  }
+
+  ProdExprToken ASTMaker::makeUnary(TokenRange range, UnaryOp op, ProdExprToken child) noexcept
+  {
+    using enum UnarySupport;
+    
+    auto& type = getExprBuffer().getType(child);
+    auto support = type.supports(op);
+    
+    switch_no_default(support)
+    {
+    case BUILTIN:
+      return getExprBuffer().addUnary(range, op, child);
+    case INVALID:
+      report<report_as::ERROR>(range, current_panic,
+        "'{}' does not support unary operator '{}'!",
+        getTypeName(type), toStr(op));
       return getExprBuffer().addError(range);
     }
   }
