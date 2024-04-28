@@ -11,6 +11,11 @@
 #include <io/print.h>
 #include "util/colt_config.h"
 #include <util/args_parsing.h>
+#include <err/warn.h>
+
+#define NO_WARN_FOR_ARG(name, descr, member) \
+  cl::Opt<"!W" name, cl::desc<descr>, \
+    cl::callback<[] { member = false; }>>
 
 namespace clt
 {
@@ -32,6 +37,8 @@ namespace clt
   inline Option<u16>        MaxWarnings = 64;
   /// @brief The maximum number of errors
   inline Option<u16>        MaxErrors = 32;
+  /// @brief What to warn for
+  inline lng::WarnFor       GlobalWarnFor = lng::WarnFor::WarnAll();
 
   namespace details
   {
@@ -84,7 +91,16 @@ namespace clt
       cl::callback<[] { clt::RunTests = true; }>>,
 
     cl::Opt<"test-lexer", cl::desc<"Lexer test file name (if -run-tests)">,
-      cl::location<LexerTestFile>, cl::value_desc<"<file_path>">>
+      cl::location<LexerTestFile>, cl::value_desc<"file_path">>,
+    
+    NO_WARN_FOR_ARG("cf_nan", "No warnings for NaNs when constant folding.",
+      GlobalWarnFor.constant_folding_nan),
+    NO_WARN_FOR_ARG("cf_uOUflow", "No warnings for unsigned over/underflow when constant folding.",
+      GlobalWarnFor.constant_folding_unsigned_ou),
+    NO_WARN_FOR_ARG("cf_iOUflow", "No warnings for signed over/underflow when constant folding.",
+      GlobalWarnFor.constant_folding_signed_ou),
+    NO_WARN_FOR_ARG("cf_shift", "No warnings for left/right shifts by invalid size when constant folding.",
+      GlobalWarnFor.constant_folding_invalid_shift)
     >;
 }
 
