@@ -11,6 +11,7 @@
 #include "parsed_program.h"
 #include "parsed_unit.h"
 #include "colt_expr.h"
+#include "run/qword_op.h"
 #include "util/exit_recursion.h"
 
 namespace clt::lng
@@ -25,6 +26,16 @@ namespace clt::lng
   /// @param unit The unit owning the expression
   /// @param depth The depth (for spacing)
   void PrintExpr(ProdExprToken tkn, const ParsedUnit& unit, u64 depth = 0) noexcept;
+
+  /// @brief Transforms a literal token to a built-in ID
+  /// @param tkn The token
+  /// @return BuiltinID equivalent of the literal token
+  constexpr BuiltinID KeywordToBuiltinID(Lexeme tkn) noexcept
+  {
+    using enum Lexeme;
+    assert_true("Token must be TKN_.*_L", isBuiltinToken(tkn));
+    return static_cast<BuiltinID>(static_cast<u8>(tkn) - static_cast<u8>(TKN_KEYWORD_bool));
+  }
 
   /// @brief Flags for checking if a variable is initialized or not
   enum class VarStateFlag
@@ -213,6 +224,9 @@ namespace clt::lng
     /// @param expr The expression whose type to get
     /// @return The type
     const TypeVariant& Type(const ExprBase& expr) const noexcept { return Type(expr.getType()); }
+    /// @brief Shorthand for getProgram().getTypes()
+    /// @return The type buffer
+    TypeBuffer& Type() noexcept { return to_parse.getProgram().getTypes(); }
 
   private:
     /// @brief Gets a string representing the typename of 'var'
@@ -326,6 +340,14 @@ namespace clt::lng
     /// @return WarnFor
     const WarnFor& getWarnFor() const noexcept { return to_parse.getProgram().getWarnFor(); }
 
+    /// @brief Check if the AST needs to generate a warning for 'err'.
+    /// This method does not accept a DIV_BY_ZERO as this is always
+    /// an error, and not a warning.
+    /// @param err The error
+    /// @return True if using getWarnFor, the warning must be printed
+    /// @pre err != DIV_BY_ZERO
+    bool warnFor(run::OpError err) const noexcept;
+
     /// @brief Enum used to specify output type (for 'generate')
     enum report_as
     {
@@ -400,7 +422,7 @@ namespace clt::lng
 
     /// @brief Consumes all tokens till a left parenthesis is hit
     void panic_consume_lparen() noexcept { panic_consume_till<Lexeme::TKN_LEFT_PAREN>(); }
-
+    
     /*--------------------
      | PARSING FUNCTIONS |
      --------------------*/
@@ -456,6 +478,8 @@ namespace clt::lng
     ProdExprToken parse_assignment(ProdExprToken assign_to, const TokenRangeGenerator& range);
     
     ProdExprToken parse_comparison(ProdExprToken lhs, const TokenRangeGenerator& range);
+
+    TypeToken parse_typename() noexcept;
 
     /*------------------------------
      | TEMPLATED PARSING FUNCTIONS |
@@ -520,15 +544,26 @@ namespace clt::lng
     /// @param child The expression on which the operator is applied
     /// @return ErrorExpr or UnaryExpr
     ProdExprToken makeUnary(TokenRange range, UnaryOp op, ProdExprToken child) noexcept;
+    
+    ProdExprToken makeCast(TokenRange range, ProdExprToken to_cast, TypeToken to, bool is_bit_cast) noexcept;
 
     /// @brief Constant folds two literals using 'op' as the binary operator.
-    /// This method will print errors and warnings following 'WarnAll'
+    /// This method will print warnings following 'WarnAll'
     /// @param range The range of tokens representing the expression
     /// @param lhs The left hand side of the expression
     /// @param op The operator
     /// @param rhs The right hand side of the expression
     /// @return LiteralExpr or ErrorExpr
     ProdExprToken constantFold(TokenRange range, const LiteralExpr& lhs, BinaryOp op, const LiteralExpr& rhs) noexcept;
+    /// @brief Constant folds a literal using 'op' as the unary operator.
+    /// This method will print warnings following 'WarnAll'
+    /// @param range The range of tokens representing the expression
+    /// @param op The operator
+    /// @param lhs The expression on which the operator is applied
+    /// @return LiteralExpr
+    ProdExprToken constantFold(TokenRange range, UnaryOp op, const LiteralExpr& lhs) noexcept;
+    
+    ProdExprToken constantFold(TokenRange range, const LiteralExpr& to_conv, const BuiltinType& to) noexcept;
 
     /// @brief Check if 'expr' represents a LiteralExpr with value 0
     /// @param expr The expression whose value to check

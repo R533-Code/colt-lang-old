@@ -6,7 +6,6 @@
  * @date   April 2024
  *********************************************************************/
 #include "ast.h"
-#include "run/qword_op.h"
 
 namespace clt::lng
 {
@@ -44,6 +43,27 @@ namespace clt::lng
       report_current<ERROR>(current_panic, "Expected an expression!");
 
     return Expr().addError(range.getRange());
+  }
+
+  bool ASTMaker::warnFor(run::OpError err) const noexcept
+  {
+    assert_true("DIV_BY_ZERO is an error not a warning!", err != run::OpError::DIV_BY_ZERO);
+    switch_no_default(err)
+    {
+      case run::OpError::RET_NAN:
+      case run::OpError::WAS_NAN:
+        return getWarnFor().constant_folding_nan;
+      case run::OpError::SIGNED_OVERFLOW:
+      case run::OpError::SIGNED_UNDERFLOW:
+        return getWarnFor().constant_folding_signed_ou;
+      case run::OpError::UNSIGNED_OVERFLOW:
+      case run::OpError::UNSIGNED_UNDERFLOW:
+        return getWarnFor().constant_folding_unsigned_ou;
+      case run::OpError::SHIFT_BY_GRE_SIZEOF:
+        return getWarnFor().constant_folding_invalid_shift;
+      case run::OpError::NO_ERROR:
+        return false;
+    }
   }
 
   ProdExprToken ASTMaker::parse_primary(bool accepts_conv)
@@ -177,7 +197,7 @@ namespace clt::lng
 
       if (!isBinaryToken(binary_op))
       {
-        report<ERROR>(binary_op, current_panic, "Expected a binary operator!");
+        report<report_as::ERROR>(binary_op, current_panic, "Expected a binary operator!");
         return Expr().addError(range.getRange());
       }
       else if (isComparisonToken(binary_op))
@@ -196,7 +216,32 @@ namespace clt::lng
 
   ProdExprToken ASTMaker::parse_conversion(ProdExprToken to_conv, const TokenRangeGenerator& range)
   {
-    return to_conv;
+    using enum Lexeme;
+    auto depth = addDepth();
+    assert_true("Function should only be called when 'as' or 'bit_as' is encountered!",
+      current() == TKN_KEYWORD_as || current() == TKN_KEYWORD_bit_as);
+
+    auto cnv = current();
+    consume_current();
+
+    TypeToken cnv_type = parse_typename();
+    if (Type(cnv_type).isError())
+      return Expr().addError(range.getRange());
+    if (Expr(to_conv).isError())
+      return to_conv;
+
+    // A bit_as conversion must have either the target or the starting
+    // type be a byte type
+    if (cnv == TKN_KEYWORD_bit_as
+      && !(Type(cnv_type).isBuiltinAnd(&isBytes) || Type(to_conv).isBuiltinAnd(&isBytes)))
+    {
+      report<report_as::ERROR>(range.getRange(), nullptr,
+        "'bit_as' conversion can only be applied on/to bytes types!");
+      getReporter().message("Bytes types are 'BYTE', 'WORD', 'DWORD' and 'QWORD'.");
+      return Expr().addError(range.getRange());
+    }
+
+    return makeCast(range.getRange(), to_conv, cnv_type, cnv == TKN_KEYWORD_bit_as);
   }
 
   ProdExprToken ASTMaker::parse_assignment(ProdExprToken assign_to, const TokenRangeGenerator& range)
@@ -208,6 +253,61 @@ namespace clt::lng
   ProdExprToken ASTMaker::parse_comparison(ProdExprToken lhs, const TokenRangeGenerator& range)
   {
     return lhs;
+  }
+
+  TypeToken ASTMaker::parse_typename() noexcept
+  {
+    using enum Lexeme;
+
+    //Save current expression state
+    auto depth = addDepth();
+    auto range = startRange();
+
+    // typeof(10 + 5) -> type of (10 + 5)
+    if (current() == TKN_KEYWORD_typeof)
+    {
+      consume_current();
+      return Expr(parse_parenthesis(&ASTMaker::parse_binary, static_cast<u8>(0), true)).getType();
+    }
+
+    if (current() == TKN_KEYWORD_void)
+    {
+      consume_current(); //void
+      return Type().getVoidType();
+    }
+    if (isBuiltinToken(current()))
+    {
+      auto type = current();
+      consume_current();
+      return Type().addBuiltin(KeywordToBuiltinID(type));
+    }
+    if (current() == TKN_KEYWORD_opaque)
+    {
+      consume_current();
+      return Type().addOpaquePtr();
+    }
+    if (current() == TKN_KEYWORD_mut_opaque)
+    {
+      consume_current();
+      return Type().addMutOpaquePtr();
+    }
+    if (current() == TKN_KEYWORD_ptr || current() == TKN_KEYWORD_mut_ptr)
+    {
+      bool is_mut = current() == TKN_KEYWORD_mut_ptr;
+      consume_current();
+      
+      if (check_consume(TKN_GREAT, current_panic, "Expected a '>'!").is_success())
+      {
+        auto ptr_to = parse_typename();
+        if (Type(ptr_to).isError())
+          return ptr_to;
+        return is_mut ? Type().addMutPtr(ptr_to) : Type().addPtr(ptr_to);
+      }
+      return Type().getErrorType();
+    }
+    report<report_as::ERROR>(range.getRange(), current_panic,
+      "Expected a typename!");
+    return Type().getErrorType();
   }
 
   OptTok<StmtExprToken> ASTMaker::decl_from_read(ProdExprToken expr) const noexcept
@@ -274,6 +374,8 @@ namespace clt::lng
     switch_no_default(support)
     {
     case BUILTIN:
+      if (auto ptr = Expr(child).as<LiteralExpr>(); ptr != nullptr)
+        return constantFold(range, op, *ptr);
       return Expr().addUnary(range, op, child);
     case INVALID:
       report<report_as::ERROR>(range, current_panic,
@@ -283,17 +385,22 @@ namespace clt::lng
     }
   }
 
-  ProdExprToken ASTMaker::constantFold(TokenRange range, const LiteralExpr& lhs, BinaryOp op, const LiteralExpr& rhs) noexcept
+  ProdExprToken ASTMaker::makeCast(TokenRange range, ProdExprToken to_cast, TypeToken to, bool is_bit_cast) noexcept
+  {
+    if (is_bit_cast)
+    {
+      unreachable("Not implemented!");
+      return Expr().addError(range);
+    }
+    auto builtin_t = Type(to).as<BuiltinType>();
+    if (auto ptr = Expr(to_cast).as<LiteralExpr>(); ptr != nullptr && builtin_t != nullptr)
+      return constantFold(range, *ptr, *builtin_t);
+    return Expr().addCast(range, to, to_cast);
+  }
+
+  run::TypeOp BuiltinToTypeOp(BuiltinID ID) noexcept
   {
     using enum clt::run::TypeOp;
-
-    static constexpr std::array table =
-    {
-      &run::NT_add, &run::NT_sub, &run::NT_mul, &run::NT_div, &run::NT_mod,
-      &run::NT_bit_and, &run::NT_bit_or, &run::NT_bit_xor, &run::NT_shl, &run::NT_shr,
-      &run::NT_bit_and, &run::NT_bit_or,
-      &run::NT_le, &run::NT_leq, &run::NT_ge, &run::NT_geq, &run::NT_neq, &run::NT_eq
-    };
 
     static constexpr std::array ID_to_type =
     {
@@ -303,12 +410,27 @@ namespace clt::lng
       f32_t, f64_t,
       u8_t, u16_t, u32_t, u64_t,
     };
+    return ID_to_type[(u8)ID];
+  }
+
+  ProdExprToken ASTMaker::constantFold(TokenRange range, const LiteralExpr& lhs, BinaryOp op, const LiteralExpr& rhs) noexcept
+  {
+
+    static constexpr std::array table =
+    {
+      &run::NT_add, &run::NT_sub, &run::NT_mul, &run::NT_div, &run::NT_mod,
+      &run::NT_bit_and, &run::NT_bit_or, &run::NT_bit_xor, &run::NT_shl, &run::NT_shr,
+      &run::NT_bit_and, &run::NT_bit_or,
+      &run::NT_le, &run::NT_leq, &run::NT_ge, &run::NT_geq, &run::NT_neq, &run::NT_eq
+    };
+
+    
     assert_true("Expected built-in type!", Type(lhs).as<BuiltinType>() != nullptr, Type(rhs).as<BuiltinType>() != nullptr);
     const auto typeID = Type(lhs).as<BuiltinType>()->typeID();
 
     auto fn = table[static_cast<u8>(op)];
     auto [res, err] = fn(lhs.getValue(), rhs.getValue(),
-      ID_to_type[static_cast<u8>(typeID)]);
+      BuiltinToTypeOp(typeID));
 
     if (err == run::DIV_BY_ZERO)
     {
@@ -316,30 +438,10 @@ namespace clt::lng
         "Integral division by zero is not allowed!");
       return Expr().addError(range);
     }
-    else if (err != run::NO_ERROR)
+    else if (warnFor(err))
     {
-      bool warn = true;
-      switch_no_default(err)
-      {
-      case run::OpError::RET_NAN:
-      case run::OpError::WAS_NAN:
-        warn = getWarnFor().constant_folding_nan;
-        break;
-      case run::OpError::SIGNED_OVERFLOW:
-      case run::OpError::SIGNED_UNDERFLOW:
-        warn = getWarnFor().constant_folding_signed_ou;
-        break;
-      case run::OpError::UNSIGNED_OVERFLOW:
-      case run::OpError::UNSIGNED_UNDERFLOW:
-        warn = getWarnFor().constant_folding_unsigned_ou;
-        break;
-      case run::OpError::SHIFT_BY_GRE_SIZEOF:
-        warn = getWarnFor().constant_folding_invalid_shift;
-        break;
-      }
-      if (warn)
-        report<report_as::WARNING>(range, nullptr,
-          "{}", run::toExplanation(err));
+      report<report_as::WARNING>(range, nullptr,
+        "{}", run::toExplanation(err));
     }
 
     const auto family = FamilyOf(op);
@@ -349,6 +451,45 @@ namespace clt::lng
     return Expr().addLiteral(range, res,
       is_ret_bool ? BuiltinID::BOOL : typeID
     );
+  }
+
+  ProdExprToken ASTMaker::constantFold(TokenRange range, UnaryOp op, const LiteralExpr& lhs) noexcept
+  {
+    using enum clt::lng::UnaryOp;
+
+    switch_no_default (op)
+    {
+    case OP_NEGATE:
+    {
+      const auto ID = Type(lhs).as<BuiltinType>()->typeID();
+      auto [result, err] = run::NT_neg(lhs.getValue(), BuiltinToTypeOp(ID));
+      if (warnFor(err))
+        report<report_as::WARNING>(range, nullptr, "{}", run::toExplanation(err));
+      return Expr().addLiteral(range, result, ID);
+    }
+    case OP_BOOL_NOT:
+    {
+      // No errors are possible
+      auto [result, err] = run::bool_not(lhs.getValue());
+      return Expr().addLiteral(range, result, BuiltinID::BOOL);
+    }
+    case OP_BIT_NOT:
+    {
+      // No errors are possible
+      const auto ID = Type(lhs).as<BuiltinType>()->typeID();
+      auto [result, err] = run::NT_bit_not(lhs.getValue(), BuiltinToTypeOp(ID));
+      return Expr().addLiteral(range, result, ID);
+    }
+    }
+  }
+
+  ProdExprToken ASTMaker::constantFold(TokenRange range, const LiteralExpr& to_conv, const BuiltinType& to) noexcept
+  {
+    auto [result, err] = run::NT_cnv(to_conv.getValue(),
+      BuiltinToTypeOp(Type(to_conv).as<BuiltinType>()->typeID()), BuiltinToTypeOp(to.typeID()));
+    if (warnFor(err))
+      report<report_as::WARNING>(range, nullptr, "{}", run::toExplanation(err));
+    return Expr().addLiteral(range, result, to.typeID());
   }
 
   bool ASTMaker::isLiteralZero(ProdExprToken expr) const noexcept
