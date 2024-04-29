@@ -18,19 +18,19 @@ consteval auto COLT_CONCAT(generate_table_, FnPtr)() \
 #define COLT_TypeOpTable(Name) clt::run::details::COLT_CONCAT(generate_table_, Name)<clt::run::TypeOp, COLT_TypeOp_PACK>()
 #define COLT_SizeTable(Name)   clt::run::details::COLT_CONCAT(generate_table_, Name)<clt::run::Size, COLT_Size_PACK>()
 
-#define COLT_TypeOpFn(Name)  ResultQWORD COLT_CONCAT(NT_, Name)(QWORD_t a, QWORD_t b, TypeOp type) noexcept\
+#define COLT_TypeOpFn(Name)  inline ResultQWORD COLT_CONCAT(NT_, Name)(QWORD_t a, QWORD_t b, TypeOp type) noexcept\
 { \
   static constexpr std::array table = COLT_TypeOpTable(Name); \
   return table[static_cast<u8>(type)](a, b); \
 }
 
-#define COLT_SizeFn(Name)  ResultQWORD COLT_CONCAT(NT_, Name)(QWORD_t a, QWORD_t b, TypeOp type) noexcept\
+#define COLT_SizeFn(Name)  inline ResultQWORD COLT_CONCAT(NT_, Name)(QWORD_t a, QWORD_t b, TypeOp type) noexcept\
 { \
   static constexpr std::array table = COLT_SizeTable(Name); \
   return table[static_cast<u8>(TypeOp_to_Size(type))](a, b); \
 }
 
-#define COLT_NotTemplateFn(Name)  ResultQWORD COLT_CONCAT(NT_, Name)(QWORD_t a, QWORD_t b, TypeOp) noexcept\
+#define COLT_NotTemplateFn(Name) inline  ResultQWORD COLT_CONCAT(NT_, Name)(QWORD_t a, QWORD_t b, TypeOp) noexcept\
 { \
   return Name(a, b); \
 }
@@ -746,7 +746,49 @@ namespace clt::run
   COLT_TypeOpFn(leq);
   COLT_TypeOpFn(geq);
 
-  ResultQWORD NT_cnv(QWORD_t value, TypeOp from, TypeOp to) noexcept
+  inline ResultQWORD NT_neg(QWORD_t value, TypeOp type) noexcept
+  {
+    using enum TypeOp;
+
+    switch_no_default (type)
+    {
+    case i8_t:
+      return neg<_8bits>(value);
+    case i16_t:
+      return neg<_16bits>(value);
+    case i32_t:
+      return neg<_32bits>(value);
+    case i64_t:
+      return neg<_64bits>(value);
+    case f32_t:
+      return fneg<_32bits>(value);
+    case f64_t:
+      return fneg<_64bits>(value);
+    }
+  }
+
+  inline ResultQWORD NT_bit_not(QWORD_t value, TypeOp type) noexcept
+  {
+    using enum TypeOp;
+
+    switch_no_default(type)
+    {
+    case i8_t:
+    case u8_t:
+      return bit_not<_8bits>(value);
+    case i16_t:
+    case u16_t:
+      return bit_not<_16bits>(value);
+    case i32_t:
+    case u32_t:
+      return bit_not<_32bits>(value);
+    case i64_t:
+    case u64_t:
+      return bit_not<_64bits>(value);
+    }
+  }
+
+  inline ResultQWORD NT_cnv(QWORD_t value, TypeOp from, TypeOp to) noexcept
   {
     static constexpr auto cnv = details::generate_cnv<COLT_TypeOp_PACK>();
     return cnv[(u8)from][(u8)to](value);
