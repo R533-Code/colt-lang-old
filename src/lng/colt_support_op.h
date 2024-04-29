@@ -29,6 +29,9 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, ConversionSupport,
 
 namespace clt::lng
 {
+  class TypeVariant;
+  class PointerType;
+
   /************* UNARY *************/
 
   /// @brief Check which unary operators are supported by an error type
