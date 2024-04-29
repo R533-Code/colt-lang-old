@@ -606,8 +606,9 @@ namespace clt::run
   {
     using From_t = TypeOp_to_type_t<From>;
     using To_t = TypeOp_to_type_t<To>;
-    if (std::isnan(a.as<From_t>()))
-      return { {}, WAS_NAN };
+    if constexpr (std::is_floating_point_v<From_t>)
+      if (std::isnan(a.as<From_t>()))
+        return { {}, WAS_NAN };
     if constexpr (std::is_floating_point_v<From_t> && !std::is_floating_point_v<To_t>)
     {
       if constexpr (std::is_unsigned_v<To_t>)
