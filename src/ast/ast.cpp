@@ -82,7 +82,7 @@ namespace clt::lng
       to_ret = parse_unary();
     // Handles (...)
     else if (current() == TKN_LEFT_PAREN)
-      to_ret = parse_parenthesis(&ASTMaker::parse_binary, (u8)0, true);
+      to_ret = parse_parenthesis(&ASTMaker::parse_binary);
     // Handles invalid primary expressions
     else
       to_ret = parse_primary_invalid(range);    
@@ -118,7 +118,7 @@ namespace clt::lng
       return Expr().addError(range.getRange());
     }
     return Expr().addPtrLoad(range.getRange(), child);
-  }
+  }  
 
   ProdExprToken ASTMaker::parse_unary()
   {
@@ -164,7 +164,7 @@ namespace clt::lng
     return to_ret;
   }
 
-  ProdExprToken ASTMaker::parse_binary(u8 precedence, bool is_parsing_comp)
+  ProdExprToken ASTMaker::parse_binary()
   {
     using enum Lexeme;
     auto depth = addDepth();
@@ -182,8 +182,12 @@ namespace clt::lng
     if (isAssignmentToken(binary_op))
       return parse_assignment(lhs, range);
     if (isComparisonToken(binary_op))
-      return is_parsing_comp ? lhs : parse_comparison(lhs, range);
+    {
+      lhs = parse_comparison(binary_op, lhs, range);
+      binary_op = current();
+    }
 
+    const u8 precedence = 0;
     //The current operator's precedence
     u8 op_precedence = OpPrecedence(binary_op);
     while (op_precedence > precedence)
@@ -191,7 +195,52 @@ namespace clt::lng
       //Consume the operator
       consume_current();
       //Recurse: 10 + 5 + 8 -> (10 + (5 + 8))
-      ProdExprToken rhs = parse_binary(OpPrecedence(binary_op));
+      ProdExprToken rhs = parse_binary_internal(binary_op, false);
+      if (Expr(rhs).isError())
+        return rhs;
+
+      if (!isBinaryToken(binary_op))
+      {
+        report<report_as::ERROR>(binary_op, current_panic, "Expected a binary operator!");
+        return Expr().addError(range.getRange());
+      }
+      //Pratt's parsing, which allows operators priority
+      lhs = makeBinary(range.getRange(), lhs, TokenToBinary(binary_op), rhs);
+      if (isComparisonToken(current()))
+        lhs = parse_comparison(current(), lhs, range);
+
+      //Update the Token
+      binary_op = current();
+      //Update precedence
+      op_precedence = OpPrecedence(binary_op);
+    }
+
+    return lhs;
+  }
+
+  ProdExprToken ASTMaker::parse_binary_internal(Token previous, bool is_parsing_comp)
+  {
+    using enum Lexeme;
+    auto depth = addDepth();
+    auto range = startRange();
+
+    ProdExprToken lhs = parse_primary();
+    if (Expr(lhs).isError())
+    {
+      panic_consume();
+      return lhs;
+    }
+
+    // The binary operators
+    Token binary_op = current();
+    //The current operator's precedence
+    u8 op_precedence = OpPrecedence(binary_op);
+    while (op_precedence > OpPrecedence(previous))
+    {
+      //Consume the operator
+      consume_current();
+      //Recurse: 10 + 5 + 8 -> (10 + (5 + 8))
+      ProdExprToken rhs = parse_binary_internal(binary_op);
       if (Expr(rhs).isError())
         return rhs;
 
@@ -201,7 +250,7 @@ namespace clt::lng
         return Expr().addError(range.getRange());
       }
       else if (isComparisonToken(binary_op))
-        lhs = is_parsing_comp ? lhs : parse_comparison(lhs, range);
+        lhs = is_parsing_comp ? lhs : parse_comparison(binary_op, lhs, range);
       else //Pratt's parsing, which allows operators priority
         lhs = makeBinary(range.getRange(), lhs, TokenToBinary(binary_op), rhs);
 
@@ -250,8 +299,34 @@ namespace clt::lng
     return assign_to;
   }
 
-  ProdExprToken ASTMaker::parse_comparison(ProdExprToken lhs, const TokenRangeGenerator& range)
+  enum class ComparisonSet
   {
+    /// @brief {<, <=}
+    LE_OR_LEQ,
+    /// @brief ==
+    EQUAL,
+    /// @brief {>, >=}
+    GE_OR_GEQ,
+    /// @brief !=
+    NONE
+  };
+
+  ProdExprToken ASTMaker::parse_comparison(Token comparison, ProdExprToken lhs, const TokenRangeGenerator& range)
+  {
+    using enum Lexeme;
+    using enum ComparisonSet;
+    assert_true("parse_comparison must be called when isComparisonToken(current())", isComparisonToken(comparison));
+    
+    ComparisonSet comparison_set = NONE;
+    if (comparison == TKN_EQUAL_EQUAL)
+      comparison_set = EQUAL;
+    else if (comparison == TKN_LESS || comparison == TKN_LESS_EQUAL)
+      comparison_set = LE_OR_LEQ;
+    else if (comparison == TKN_GREAT || comparison == TKN_GREAT_EQUAL)
+      comparison_set = GE_OR_GEQ;
+    consume_current();
+    parse_binary_internal(comparison);
+    
     return lhs;
   }
 
@@ -267,7 +342,7 @@ namespace clt::lng
     if (current() == TKN_KEYWORD_typeof)
     {
       consume_current();
-      return Expr(parse_parenthesis(&ASTMaker::parse_binary, static_cast<u8>(0), true)).getType();
+      return Expr(parse_parenthesis(&ASTMaker::parse_binary)).getType();
     }
 
     if (current() == TKN_KEYWORD_void)
