@@ -10,6 +10,7 @@
 #define HG_COLTC_BUILTIN_ID
 
 #include "meta/meta_enum.h"
+#include "util/assertions.h"
 
 DECLARE_ENUM_WITH_TYPE(u8, clt::lng, BuiltinID,
   BOOL,
@@ -80,6 +81,58 @@ namespace clt::lng
 
   /// @brief The type of function checks on BuiltinID
   using BuilinTypeCheck_t = bool (*)(BuiltinID) noexcept;
+
+  /// @brief Struct with custom formatting
+  struct fmt_TypedQWORD
+  {
+    /// @brief The value of the literal
+    QWORD_t value;
+    /// @brief The type of the QWORD_t
+    BuiltinID ID;
+  };
 }
+
+template<>
+struct fmt::formatter<clt::lng::fmt_TypedQWORD>
+  : clt::meta::DefaultParserFMT
+{
+  template<typename context>
+  auto format(const clt::lng::fmt_TypedQWORD& c, context& ctx) const
+  {
+    using enum clt::lng::BuiltinID;
+    
+    switch_no_default (c.ID)
+    {
+    case BOOL:
+      return fmt::format_to(ctx.out(), "{}", c.value.as<bool>());
+    case CHAR:
+      return fmt::format_to(ctx.out(), "{}", c.value.as<char>());
+    case U8:
+    case BYTE:
+      return fmt::format_to(ctx.out(), "{}", c.value.as<u8>());
+    case U16:
+    case WORD:
+      return fmt::format_to(ctx.out(), "{}", c.value.as<u16>());
+    case U32:
+    case DWORD:
+      return fmt::format_to(ctx.out(), "{}", c.value.as<u32>());
+    case U64:
+    case QWORD:
+      return fmt::format_to(ctx.out(), "{}", c.value.as<u64>());
+    case I8:
+      return fmt::format_to(ctx.out(), "{}", c.value.as<i8>());
+    case I16:
+      return fmt::format_to(ctx.out(), "{}", c.value.as<i16>());
+    case I32:
+      return fmt::format_to(ctx.out(), "{}", c.value.as<i32>());
+    case I64:
+      return fmt::format_to(ctx.out(), "{}", c.value.as<i64>());
+    case F32:
+      return fmt::format_to(ctx.out(), "{}", c.value.as<f32>());
+    case F64:
+      return fmt::format_to(ctx.out(), "{}", c.value.as<f64>());
+    }
+  }
+};
 
 #endif // !HG_COLTC_BUILTIN_ID
