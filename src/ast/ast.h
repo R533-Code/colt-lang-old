@@ -275,6 +275,7 @@ namespace clt::lng
       /// @return The TokenRange
       TokenRange getRange() const noexcept
       {
+        assert_true("Missing call to consume_current()!", current != ast.current());
         return ast.getTokenBuffer().getRangeFrom(current, ast.current());
       }
     };
@@ -471,13 +472,15 @@ namespace clt::lng
     /// @pre The previously parsed unary operator must be '*'
     ProdExprToken parse_unary_star(ProdExprToken child, const TokenRangeGenerator& range) noexcept;
 
-    ProdExprToken parse_binary(u8 precedence = 0, bool is_parsing_comp = true);
+    ProdExprToken parse_binary();
+    
+    ProdExprToken parse_binary_internal(Token previous, bool is_parsing_comp = false);
 
     ProdExprToken parse_conversion(ProdExprToken to_conv, const TokenRangeGenerator& range);
 
     ProdExprToken parse_assignment(ProdExprToken assign_to, const TokenRangeGenerator& range);
     
-    ProdExprToken parse_comparison(ProdExprToken lhs, const TokenRangeGenerator& range);
+    ProdExprToken parse_comparison(Token comparison, ProdExprToken lhs, const TokenRangeGenerator& range);
 
     TypeToken parse_typename() noexcept;
 
@@ -563,6 +566,12 @@ namespace clt::lng
     /// @return LiteralExpr
     ProdExprToken constantFold(TokenRange range, UnaryOp op, const LiteralExpr& lhs) noexcept;
     
+    /// @brief Constant folds a cast
+    /// This method will print warnings following 'WarnAll'
+    /// @param range The range of tokens representing the expression
+    /// @param to_conv The literal to convert
+    /// @param to The type to convert to
+    /// @return LiteralExpr
     ProdExprToken constantFold(TokenRange range, const LiteralExpr& to_conv, const BuiltinType& to) noexcept;
 
     /// @brief Check if 'expr' represents a LiteralExpr with value 0
