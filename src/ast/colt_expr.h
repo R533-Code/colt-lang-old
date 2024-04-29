@@ -589,8 +589,8 @@ namespace clt::lng
   class ScopeExpr
     final : public ExprBase
   {
-    /// @brief The parent (or INVALID_STMT)
-    StmtExprToken parent_expr;
+    /// @brief The parent
+    OptTok<StmtExprToken> parent_expr;
     /// @brief The local variable declarations
     Vector<const VarDeclExpr*> decl{};
     /// @brief The statements contained in the scope (in the order of their declarations)
@@ -601,25 +601,23 @@ namespace clt::lng
     /// @param range The range of tokens
     /// @param type The type (must be void)
     constexpr ScopeExpr(TokenRange range, TypeToken type) noexcept
-      : ExprBase(TypeToExprID<ScopeExpr>(), type, range, false), parent_expr(ExprBase::INVALID_STMT) {}
+      : ExprBase(TypeToExprID<ScopeExpr>(), type, range), parent_expr(ExprBase::INVALID_STMT) {}
 
     /// @brief Constructs a scope with a parent
     /// @param range The range of tokens
     /// @param type The type (must be void)
     /// @param parent The parent of the scope
     constexpr ScopeExpr(TokenRange range, TypeToken type, StmtExprToken parent) noexcept
-      : ExprBase(TypeToExprID<ScopeExpr>(), type, range, true), parent_expr(parent) {}
+      : ExprBase(TypeToExprID<ScopeExpr>(), type, range), parent_expr(parent) {}
 
     /// @brief Check if the current scope has a parent
     /// @return True if the scope has a parent
-    constexpr bool hasParent() const noexcept { return padding0; }
+    constexpr bool hasParent() const noexcept { return parent_expr.isValue(); }
 
     /// @brief Returns the parent of the current scope.
-    /// @pre hasParent()
     /// @return The parent of the current scope
-    constexpr StmtExprToken getParent() const noexcept
+    constexpr OptTok<StmtExprToken> getParent() const noexcept
     {
-      assert_true("hasParent must return true before getParent", hasParent());
       return parent_expr;
     }
 
@@ -645,8 +643,8 @@ namespace clt::lng
     ProdExprToken if_cond;
     /// @brief The if statement
     StmtExprToken if_stmt;
-    /// @brief The else statement (can be invalid)
-    StmtExprToken else_stmt;
+    /// @brief The else statement
+    OptTok<StmtExprToken> else_stmt;
 
   public:
     /// @brief Constructs a condition expression that does not have an else branch
@@ -655,7 +653,7 @@ namespace clt::lng
     /// @param if_cond The if condition (must evaluate to bool)
     /// @param if_stmt The scope to execute if the condition evaluates to true
     constexpr ConditionExpr(TokenRange range, TypeToken type, ProdExprToken if_cond, StmtExprToken if_stmt)
-      : ExprBase(TypeToExprID<ConditionExpr>(), type, range, false), if_cond(if_cond), if_stmt(if_stmt), else_stmt(ExprBase::INVALID_STMT) {}
+      : ExprBase(TypeToExprID<ConditionExpr>(), type, range), if_cond(if_cond), if_stmt(if_stmt), else_stmt(None) {}
     
     /// @brief Constructs a condition expression that has an else branch
     /// @param range The range of tokens
@@ -664,18 +662,16 @@ namespace clt::lng
     /// @param if_stmt The scope to execute if the condition evaluates to true
     /// @param else_stmt The scope to execute if the condition evaluates to false
     constexpr ConditionExpr(TokenRange range, TypeToken type, ProdExprToken if_cond, StmtExprToken if_stmt, StmtExprToken else_stmt)
-      : ExprBase(TypeToExprID<ConditionExpr>(), type, range, true), if_cond(if_cond), if_stmt(if_stmt), else_stmt(else_stmt) {}
+      : ExprBase(TypeToExprID<ConditionExpr>(), type, range), if_cond(if_cond), if_stmt(if_stmt), else_stmt(else_stmt) {}
 
     /// @brief Check if this condition has an else branch
     /// @return True if this condition has an else branch
-    constexpr bool hasElse() const noexcept { return padding0; }
+    constexpr bool hasElse() const noexcept { return else_stmt.isValue(); }
 
     /// @brief Returns the else statement of the condition.
-    /// @pre hasElse()
     /// @return The else statement
-    constexpr StmtExprToken getElseStmt() const noexcept
+    constexpr OptTok<StmtExprToken> getElseStmt() const noexcept
     {
-      assert_true("hasParent must return true before getParent", hasElse());
       return else_stmt;
     }
     
