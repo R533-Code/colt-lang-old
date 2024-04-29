@@ -513,8 +513,9 @@ namespace clt::lng
       io::print("{}{:^{}}({:h}: {}){}", io::BrightRedF, "", depth * 3, expr.classof(), info.expr, io::Reset);
     
     break; case EXPR_LITERAL:
-      io::print("{}{:^{}}({:h}: {}, 0x{:X} {}){}", io::BrightGreenF, "", depth * 3, expr.classof(),
-        info.expr, expr.as<LiteralExpr>()->getValue().as<u64>(), types.getTypeName(expr.getType()), io::Reset);
+      io::print("{}{:^{}}({:h}: {}, {} {}){}", io::BrightGreenF, "", depth * 3, expr.classof(),
+        info.expr, fmt_TypedQWORD{ expr.as<LiteralExpr>()->getValue(), types.getType(expr.getType()).as<BuiltinType>()->typeID() },
+        types.getTypeName(expr.getType()), io::Reset);
     
     break; case EXPR_UNARY:
       io::print("{}{:^{}}({:h}: '{:h}'", io::YellowF, "", depth * 3, expr.classof(),
