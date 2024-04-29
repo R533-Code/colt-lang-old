@@ -240,6 +240,8 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, Lexeme,
 	TKN_KEYWORD_mut_ptr,
 	/// @brief opaque
 	TKN_KEYWORD_opaque,
+	/// @brief mut_opaque
+	TKN_KEYWORD_mut_opaque,
 
 	/********* END OF BUILTIN TYPES *******/
 
@@ -388,12 +390,12 @@ namespace clt::lng
 		return tkn <= Lexeme::TKN_EQUAL_EQUAL;
 	}
 
-	/// @brief Check if a Lexeme is a built-in type keyword (TKN_KEYWORD_VOID...)
+	/// @brief Check if a Lexeme is a built-in type keyword (TKN_KEYWORD_bool...)
 	/// @param tkn The token to check for
-	/// @return True if any TKN_KEYWORD_* that represents a type (PTR is not a type)
+	/// @return True if any TKN_KEYWORD_* that represents a type (PTR and VOID are not types)
 	constexpr bool isBuiltinToken(Lexeme tkn) noexcept
 	{
-		return Lexeme::TKN_KEYWORD_void <= tkn && tkn <= Lexeme::TKN_KEYWORD_QWORD;
+		return Lexeme::TKN_KEYWORD_bool <= tkn && tkn <= Lexeme::TKN_KEYWORD_QWORD;
 	}
 
 	/// @brief Returns the keywords count (in Lexeme).
