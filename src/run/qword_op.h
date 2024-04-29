@@ -606,10 +606,10 @@ namespace clt::run
   {
     using From_t = TypeOp_to_type_t<From>;
     using To_t = TypeOp_to_type_t<To>;
-    if constexpr (std::is_floating_point_v<From_t>)
+    if (std::isnan(a.as<From_t>()))
+      return { {}, WAS_NAN };
+    if constexpr (std::is_floating_point_v<From_t> && !std::is_floating_point_v<To_t>)
     {
-      if (std::isnan(a.as<From_t>()))
-        return { {}, WAS_NAN };
       if constexpr (std::is_unsigned_v<To_t>)
       {
         constexpr auto MAX_VALUE = static_cast<From_t>(std::numeric_limits<To_t>::max() / 2 + 1) * static_cast<From_t>(2.0);
