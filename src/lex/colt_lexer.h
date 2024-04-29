@@ -189,7 +189,7 @@ namespace clt::lng
 		table['_'] = &ParseIdentifier;
 		table['+'] = &ParsePlus;
 		table['-'] = &ParseMinus;
-		table['*'] = &ParsePlus;
+		table['*'] = &ParseStar;
 		table['/'] = &ParseSlash;
 		table['%'] = &ParsePercent;
 		table[':'] = &ParseColon;
