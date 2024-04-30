@@ -1,3 +1,10 @@
+/*****************************************************************//**
+ * @file   colt_type_token.h
+ * @brief  Contains TypeToken, a token that represents a Colt type.
+ * 
+ * @author RPC
+ * @date   April 2024
+ *********************************************************************/
 #ifndef HG_COLTC_TYPE_TOKEN
 #define HG_COLTC_TYPE_TOKEN
 

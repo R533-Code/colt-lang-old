@@ -1,3 +1,12 @@
+/*****************************************************************//**
+ * @file   colt_module.h
+ * @brief  Contains 'ModuleBuffer' which is responsible of the
+ * lifetimes of Colt modules.
+ * Modules are the equivalent of C++ namespaces.
+ * 
+ * @author RPC
+ * @date   April 2024
+ *********************************************************************/
 #ifndef HG_COLT_MODULE
 #define HG_COLT_MODULE
 

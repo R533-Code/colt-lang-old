@@ -1,3 +1,11 @@
+/*****************************************************************//**
+ * @file   colt_support_op.h
+ * @brief  Contains enum and functions to check if a Colt type
+ * supports an operator or a cast.
+ * 
+ * @author RPC
+ * @date   April 2024
+ *********************************************************************/
 #ifndef HG_COLT_SUPPORT_OP
 #define HG_COLT_SUPPORT_OP
 

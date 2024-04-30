@@ -1,3 +1,13 @@
+/*****************************************************************//**
+ * @file   colt_expr_buffer.h
+ * @brief  Contains ExprBuffer, the class responsible of the
+ * lifetimes of all expressions.
+ * As with types, a ProdExprToken/StmtExprToken is returned
+ * rather than a pointer or a reference.
+ * 
+ * @author RPC
+ * @date   April 2024
+ *********************************************************************/
 #ifndef HG_COLT_EXPR_BUFFER
 #define HG_COLT_EXPR_BUFFER
 

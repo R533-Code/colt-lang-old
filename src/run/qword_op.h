@@ -1,3 +1,12 @@
+/*****************************************************************//**
+ * @file   qword_op.h
+ * @brief  Contains functions that applies operations to QWORD_t.
+ * The functions provided allows to apply checked operations
+ * on QWORD_t. This is useful for interpreters and constant folding.
+ * 
+ * @author RPC
+ * @date   April 2024
+ *********************************************************************/
 #ifndef HG_COLT_QWORD_OP
 #define HG_COLT_QWORD_OP
 

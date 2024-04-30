@@ -10,7 +10,7 @@ A programming language in its early stages of development.
 
 ## Features:
 For the eleventh time, a whole codebase rewrite is in progress.
-Currently, only the lexer is written and functional.
+Currently, only the lexer and parts of the AST is written and functional.
 In this rewrite, the design of the compiler is following a more data-oriented
 approach, as seen in [Chandler Carruth's talk](https://www.youtube.com/watch?v=ZI198eFghJk).
 

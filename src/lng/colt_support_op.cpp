@@ -1,3 +1,10 @@
+/*****************************************************************//**
+ * @file   colt_support_op.cpp
+ * @brief  Contains the implementation of `colt_support_op.h`.
+ * 
+ * @author RPC
+ * @date   April 2024
+ *********************************************************************/
 #include "colt_support_op.h"
 #include "colt_type.h"
 
