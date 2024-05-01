@@ -380,20 +380,22 @@ namespace clt::lng
     }
     
     template<typename T>
-    /// @brief Check for 'op' support
-    /// @param a The variant to hash
-    /// @param op The unary operation to check for
-    /// @param var The right hand side
-    /// @return a.getUnionMember<T>().supports(op)
     static constexpr BinarySupport table_supports_b(const TypeVariant& a, BinaryOp op, const TypeVariant& var) noexcept
     {
       return a.getUnionMember<T>().supports(op, var);
+    }
+    
+    template<typename T>
+    static constexpr ConversionSupport table_castable(const TypeVariant& a, const TypeVariant& var) noexcept
+    {
+      return a.getUnionMember<T>().castableTo(var);
     }
     
     static constexpr auto EqualTable      = COLTC_TYPE_VARIANT_GEN_TABLE(table_equal, COLTC_TYPE_LIST);
     static constexpr auto HashTable       = COLTC_TYPE_VARIANT_GEN_TABLE(table_hash, COLTC_TYPE_LIST);
     static constexpr auto USupportsTable  = COLTC_TYPE_VARIANT_GEN_TABLE(table_supports_u, COLTC_TYPE_LIST);
     static constexpr auto BSupportsTable  = COLTC_TYPE_VARIANT_GEN_TABLE(table_supports_b, COLTC_TYPE_LIST);
+    static constexpr auto CastableTable   = COLTC_TYPE_VARIANT_GEN_TABLE(table_castable, COLTC_TYPE_LIST);
 
   public:
     template<ColtType Type, typename... Args>
@@ -548,9 +550,17 @@ namespace clt::lng
     /// @param op The operator to check for
     /// @param var The right hand side
     /// @return BinaryOp
-    constexpr BinarySupport supports(BinaryOp op, const TypeVariant& var) const noexcept
+    BinarySupport supports(BinaryOp op, const TypeVariant& var) const noexcept
     {
       return BSupportsTable[static_cast<u8>(this->getTypeID())](*this, op, var);
+    }
+
+    /// @brief Check if the current type can be casted to 'var'
+    /// @param var The type to cast to
+    /// @return ConversionSupport
+    ConversionSupport castableTo(const TypeVariant& var) const noexcept
+    {
+      return CastableTable[static_cast<u8>(this->getTypeID())](*this, var);
     }
   };
 
