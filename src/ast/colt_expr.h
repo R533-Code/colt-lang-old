@@ -36,10 +36,6 @@ namespace clt::lng
     /// @brief Byte that can be used for anything
     u8 padding2 = 0;
 
-    static constexpr ProdExprToken INVALID_PROD = ProdExprToken{ std::numeric_limits<u32>::max() };
-    
-    static constexpr StmtExprToken INVALID_STMT = StmtExprToken{ std::numeric_limits<u32>::max() };
-
   public:
     /// @brief Constructor
     /// @param id The ID of the expression
@@ -57,6 +53,9 @@ namespace clt::lng
     /// @brief Returns the range of tokens representing the expression
     /// @return Range of tokens representing the expression
     constexpr TokenRange getTokenRange() const noexcept { return range; }
+    /// @brief Sets the range of tokens representing the expression to 'nrange'
+    /// @param nrange The new range
+    constexpr void setTokenRange(TokenRange nrange) noexcept { range = nrange; }
     /// @brief Returns the type of the expression.
     /// @return The type of the expression
     constexpr TypeToken getType() const noexcept { return type; }

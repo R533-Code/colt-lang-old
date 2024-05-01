@@ -88,6 +88,31 @@ namespace clt::lng
       return (const T*)&_buffer;
     }
     
+    template<typename T>
+    /// @brief Downcasts the variant to 'T'
+    /// @return nullptr if type does not match else pointer to the type
+    constexpr T* as() noexcept
+    {
+      static_assert(producer_group_requirements_t<T>::size != 0, "Group must be inherited from!");
+      if (!is_classof_any_of(producer_group_requirements_t<T>{}))
+        return nullptr;
+      return (T*)&_buffer;
+    }
+
+    /// @brief Returns the expression as an ExprBase pointer
+    /// @return ExprBase* (never null)
+    constexpr ExprBase* asBase() noexcept
+    {
+      return (ExprBase*)&_buffer;
+    }
+    
+    /// @brief Returns the expression as an ExprBase pointer
+    /// @return ExprBase* (never null)
+    constexpr const ExprBase* asBase() const noexcept
+    {
+      return (const ExprBase*)&_buffer;
+    }
+    
     /// @brief Check if the current expression is an error
     /// @return True if error
     constexpr bool isError() const noexcept { return classof() == ExprID::EXPR_ERROR; }
