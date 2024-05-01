@@ -236,12 +236,12 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, Lexeme,
 	TKN_KEYWORD_QWORD,
 	/// @brief ptr
 	TKN_KEYWORD_ptr,
-	/// @brief mut_ptr
-	TKN_KEYWORD_mut_ptr,
+	/// @brief mutptr
+	TKN_KEYWORD_mutptr,
 	/// @brief opaque
 	TKN_KEYWORD_opaque,
-	/// @brief mut_opaque
-	TKN_KEYWORD_mut_opaque,
+	/// @brief mutopaque
+	TKN_KEYWORD_mutopaque,
 
 	/********* END OF BUILTIN TYPES *******/
 

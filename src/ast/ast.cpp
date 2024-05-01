@@ -361,17 +361,17 @@ namespace clt::lng
       consume_current();
       return Type().addOpaquePtr();
     }
-    if (current() == TKN_KEYWORD_mut_opaque)
+    if (current() == TKN_KEYWORD_mutopaque)
     {
       consume_current();
       return Type().addMutOpaquePtr();
     }
-    if (current() == TKN_KEYWORD_ptr || current() == TKN_KEYWORD_mut_ptr)
+    if (current() == TKN_KEYWORD_ptr || current() == TKN_KEYWORD_mutptr)
     {
-      bool is_mut = current() == TKN_KEYWORD_mut_ptr;
+      bool is_mut = current() == TKN_KEYWORD_mutptr;
       consume_current();
       
-      if (check_consume(TKN_GREAT, current_panic, "Expected a '>'!").is_success())
+      if (check_consume(TKN_DOT, current_panic, "Expected a '.'!").is_success())
       {
         auto ptr_to = parse_typename();
         if (Type(ptr_to).isError())
@@ -412,7 +412,7 @@ namespace clt::lng
       if (auto rhs_p = Expr(rhs).as<LiteralExpr>();
         rhs_p != nullptr)
       {
-        if (auto lhs_p = Expr(lhs).as<LiteralExpr>())
+        if (auto lhs_p = Expr(lhs).as<LiteralExpr>(); lhs_p != nullptr)
           return constantFold(range, *lhs_p, op, *rhs_p);
         if ((op == BinaryOp::OP_DIV || op == BinaryOp::OP_MOD) && isLiteralZero(rhs))
         {
@@ -462,15 +462,31 @@ namespace clt::lng
 
   ProdExprToken ASTMaker::makeCast(TokenRange range, ProdExprToken to_cast, TypeToken to, bool is_bit_cast) noexcept
   {
+    using enum ConversionSupport;
+    if (Expr(to_cast).isError())
+      return to_cast;
+    
     if (is_bit_cast)
     {
       unreachable("Not implemented!");
       return Expr().addError(range);
     }
-    auto builtin_t = Type(to).as<BuiltinType>();
-    if (auto ptr = Expr(to_cast).as<LiteralExpr>(); ptr != nullptr && builtin_t != nullptr)
-      return constantFold(range, *ptr, *builtin_t);
-    return Expr().addCast(range, to, to_cast);
+
+    auto support = Type(to_cast).castableTo(Type(to));
+    switch_no_default(support)
+    {
+    case BUILTIN:
+    {
+      auto builtin_t = Type(to).as<BuiltinType>();
+      if (auto ptr = Expr(to_cast).as<LiteralExpr>(); ptr != nullptr && builtin_t != nullptr)
+        return constantFold(range, *ptr, *builtin_t);
+      return Expr().addCast(range, to, to_cast);
+    }
+    case INVALID:
+      report<report_as::ERROR>(range, nullptr, "'{}' cannot be casted to '{}'!",
+        getTypeName(Type(to_cast)), getTypeName(to));
+      return Expr().addError(range);
+    }
   }
 
   run::TypeOp BuiltinToTypeOp(BuiltinID ID) noexcept
