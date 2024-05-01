@@ -57,13 +57,13 @@ namespace clt::lng
     case TYPE_PTR:
     {
       type_names.push_back({});
-      fmt::format_to(std::back_inserter(type_names.back()), "ptr<{}>", getTypeName(var.as<PtrType>()->getPointingTo()));
+      fmt::format_to(std::back_inserter(type_names.back()), "ptr.{}", getTypeName(var.as<PtrType>()->getPointingTo()));
       return type_names.back();
     }
     case TYPE_MUT_PTR:
     {
       type_names.push_back({});
-      fmt::format_to(std::back_inserter(type_names.back()), "mut_ptr<{}>", getTypeName(var.as<PtrType>()->getPointingTo()));
+      fmt::format_to(std::back_inserter(type_names.back()), "mutptr.{}", getTypeName(var.as<MutPtrType>()->getPointingTo()));
       return type_names.back();
     }
     case TYPE_OPTR:
