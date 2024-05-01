@@ -274,6 +274,14 @@ namespace clt::lng
     {
       return addNewProd<ErrorExpr>(range, types.getErrorType());
     }
+    
+    /// @brief Creates a no-op expression
+    /// @param range The range of tokens
+    /// @return NOPExpr
+    ProdExprToken addNOP(TokenRange range) noexcept
+    {
+      return addNewProd<NOPExpr>(range, types.getVoidType());
+    }
 
     /// @brief Creates a literal expression
     /// @param range The range of tokens

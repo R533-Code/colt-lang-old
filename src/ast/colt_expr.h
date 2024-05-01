@@ -85,6 +85,21 @@ namespace clt::lng
 
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(ErrorExpr);
   };
+  
+  /// @brief Represents an no-op expression.
+  class NOPExpr
+    final : public ExprBase
+  {
+  public:
+    /// @brief Constructor
+    /// @param id The ID of the expression
+    /// @param type The type of the expression
+    /// @param range The range representing the expression
+    constexpr NOPExpr(TokenRange range, TypeToken type) noexcept
+      : ExprBase(TypeToExprID<NOPExpr>(), type, range) {}
+
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(NOPExpr);
+  };
 
   /// @brief Represents a literal expression
   class LiteralExpr

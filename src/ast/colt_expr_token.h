@@ -14,7 +14,7 @@
 #include "lng/colt_type_buffer.h"
 
 DECLARE_ENUM_WITH_TYPE(u8, clt::lng, ExprID,
-  EXPR_ERROR, EXPR_LITERAL, EXPR_UNARY, EXPR_BINARY, EXPR_CAST,
+  EXPR_ERROR, EXPR_NOP, EXPR_LITERAL, EXPR_UNARY, EXPR_BINARY, EXPR_CAST,
   // VARIABLE RELATED
   EXPR_ADDRESSOF,
   EXPR_VAR_DECL, EXPR_VAR_READ, EXPR_VAR_WRITE,
@@ -29,7 +29,7 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, ExprID,
 );
 
 /// @brief Macro Expr List (with same index as ExprID declaration!)
-#define COLTC_EXPR_LIST ErrorExpr, LiteralExpr, UnaryExpr, BinaryExpr, CastExpr, \
+#define COLTC_EXPR_LIST ErrorExpr, NOPExpr, LiteralExpr, UnaryExpr, BinaryExpr, CastExpr, \
    AddressOfExpr, VarDeclExpr, VarReadExpr, VarWriteExpr, \
    GlobalDeclExpr, GlobalReadExpr, GlobalWriteExpr, \
    MoveExpr, CopyExpr, CMoveExpr, \
@@ -37,7 +37,7 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, ExprID,
    FnCallExpr, \
    ScopeExpr, ConditionExpr
 
-#define COLTC_PROD_EXPR_LIST ErrorExpr, LiteralExpr, UnaryExpr, \
+#define COLTC_PROD_EXPR_LIST ErrorExpr, NOPExpr, LiteralExpr, UnaryExpr, \
   BinaryExpr, CastExpr, AddressOfExpr, PtrLoadExpr, VarReadExpr, GlobalReadExpr, \
   FnCallExpr, VarWriteExpr, PtrStoreExpr, GlobalWriteExpr, MoveExpr, CopyExpr, CMoveExpr
 
