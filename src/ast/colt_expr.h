@@ -513,7 +513,7 @@ namespace clt::lng
     /// @brief The name of the variable
     StringView name;
     /// @brief The assigned value
-    ProdExprToken value;
+    OptTok<ProdExprToken> value;
     /// @brief The local ID of the variable
     u32 local_id;
 
@@ -525,7 +525,7 @@ namespace clt::lng
     /// @param name The name of the variable
     /// @param is_mut True if the variable is mutable
     constexpr VarDeclExpr(TokenRange range, TypeToken type, u32 local_id, StringView name, bool is_mut) noexcept
-      : ExprBase(TypeToExprID<VarDeclExpr>(), type, range, false, is_mut), name(name), value(ExprBase::INVALID_PROD), local_id(local_id) {}
+      : ExprBase(TypeToExprID<VarDeclExpr>(), type, range, false, is_mut), name(name), value(None), local_id(local_id) {}
     
     /// @brief Constructor, for initialized variables
     /// @param range The range of tokens
@@ -544,11 +544,9 @@ namespace clt::lng
     constexpr bool isInit() const noexcept { return padding0; }
 
     /// @brief Returns the initial value of the declared variable
-    /// @pre isInit()
     /// @return The initial value of the variable
-    constexpr ProdExprToken getInit() const noexcept
+    constexpr OptTok<ProdExprToken> getInit() const noexcept
     {
-      assert_true("isInit must return true before getInit!", isInit());
       return value;
     }
 
