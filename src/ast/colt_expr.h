@@ -594,14 +594,14 @@ namespace clt::lng
     /// @brief The local variable declarations
     Vector<const VarDeclExpr*> decl{};
     /// @brief The statements contained in the scope (in the order of their declarations)
-    Vector<ProdExprToken> expressions{};
+    Vector<ExprBase*> expressions{};
 
   public:
     /// @brief Constructs a scope with no parents.
     /// @param range The range of tokens
     /// @param type The type (must be void)
     constexpr ScopeExpr(TokenRange range, TypeToken type) noexcept
-      : ExprBase(TypeToExprID<ScopeExpr>(), type, range), parent_expr(ExprBase::INVALID_STMT) {}
+      : ExprBase(TypeToExprID<ScopeExpr>(), type, range), parent_expr(None) {}
 
     /// @brief Constructs a scope with a parent
     /// @param range The range of tokens
@@ -629,10 +629,10 @@ namespace clt::lng
     constexpr const Vector<const VarDeclExpr*>& getDecls() const noexcept { return decl; }
     /// @brief Returns the expressions contained in the scope
     /// @return The expressions
-    constexpr Vector<ProdExprToken>& getExprs() noexcept { return expressions; }
+    constexpr Vector<ExprBase*>& getExprs() noexcept { return expressions; }
     /// @brief Returns the expressions contained in the scope
     /// @return The expressions
-    constexpr const Vector<ProdExprToken>& getExprs() const noexcept { return expressions; }
+    constexpr const Vector<ExprBase*>& getExprs() const noexcept { return expressions; }
   };
 
   /// @brief Represents a conditional expression
