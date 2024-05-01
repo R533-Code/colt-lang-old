@@ -626,15 +626,24 @@ namespace clt::run
         if (a.as<From_t>() < static_cast<From_t>(0.0))
           return { {}, UNSIGNED_UNDERFLOW };
         if (!(a.as<From_t>() - MAX_VALUE < static_cast<From_t>(-0.5)))
-          return { {}, UNSIGNED_OVERFLOW };
+        {
+          a.bit_assign(std::numeric_limits<To_t>::max());
+          return { a, UNSIGNED_OVERFLOW };
+        }
       }
       else if constexpr (std::is_signed_v<To_t>)
       {
         constexpr auto MAX_VALUE = static_cast<From_t>(std::numeric_limits<To_t>::max() / 2 + 1) * static_cast<From_t>(2.0);
-        if (a.as<From_t>() - static_cast<From_t>(std::numeric_limits<To_t>::min()) > static_cast<From_t>(-0.5))
-          return { {}, SIGNED_UNDERFLOW };
         if (!(a.as<From_t>() - MAX_VALUE < static_cast<From_t>(-0.5)))
-          return { {}, SIGNED_OVERFLOW };
+        {
+          a.bit_assign(std::numeric_limits<To_t>::max());
+          return { a, SIGNED_OVERFLOW };
+        }
+        if (!(a.as<From_t>() - static_cast<From_t>(std::numeric_limits<To_t>::min()) > static_cast<From_t>(-0.5)))
+        {
+          a.bit_assign(std::numeric_limits<To_t>::min());
+          return { std::numeric_limits<To_t>::min(), SIGNED_UNDERFLOW };
+        }
       }
     }
     a.bit_assign(static_cast<To_t>(a.as<From_t>()));
