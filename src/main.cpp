@@ -23,7 +23,7 @@ void REPL()
   Vector<std::filesystem::path> includes = {};
   while (true)
   {
-    io::print<"">("Enter line to lex: ");
+    io::print<"">("{}>>>{} ", io::BrightCyanF, io::Reset);
     auto a = String::getLine(64, false);
     if (a.is_error())
       return;
