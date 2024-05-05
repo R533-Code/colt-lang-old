@@ -355,7 +355,7 @@ namespace clt::lng
 	/// @return True if the Lexeme is a comparison Lexeme
 	constexpr bool isComparisonToken(Lexeme tkn) noexcept
 	{
-		return Lexeme::TKN_LESS < tkn
+		return Lexeme::TKN_LESS <= tkn
 			&& tkn <= Lexeme::TKN_EQUAL_EQUAL;
 	}
 	
@@ -365,7 +365,7 @@ namespace clt::lng
 	/// @return True if the Lexeme is a comparison Lexeme
 	constexpr bool isBoolProducerToken(Lexeme tkn) noexcept
 	{
-		return Lexeme::TKN_AND_AND < tkn
+		return Lexeme::TKN_AND_AND <= tkn
 			&& tkn <= Lexeme::TKN_EQUAL_EQUAL;
 	}
 
@@ -374,8 +374,8 @@ namespace clt::lng
 	/// @return True if the Lexeme is a literal token
 	constexpr bool isLiteralToken(Lexeme tkn) noexcept
 	{
-		return Lexeme::TKN_BOOL_L < tkn
-			&& tkn < Lexeme::TKN_STRING_L;
+		return Lexeme::TKN_BOOL_L <= tkn
+			&& tkn <= Lexeme::TKN_STRING_L;
 	}
 
 	/// @brief Check if a Lexeme represents any unary operator (&, ++, ...)
@@ -383,12 +383,13 @@ namespace clt::lng
 	/// @return True if the Lexeme is a unary operator token
 	constexpr bool isUnaryToken(Lexeme tkn) noexcept
 	{
-		return (Lexeme::TKN_PLUS <= tkn && tkn <= Lexeme::TKN_STAR)
-			|| tkn == Lexeme::TKN_AND
-			|| tkn == Lexeme::TKN_PLUS_PLUS
-			|| tkn == Lexeme::TKN_MINUS_MINUS
-			|| tkn == Lexeme::TKN_TILDE
-			|| tkn == Lexeme::TKN_EXCLAM;
+		using enum clt::lng::Lexeme;
+		return (TKN_PLUS <= tkn && tkn <= TKN_STAR)
+			|| tkn == TKN_AND
+			|| tkn == TKN_PLUS_PLUS
+			|| tkn == TKN_MINUS_MINUS
+			|| tkn == TKN_TILDE
+			|| tkn == TKN_EXCLAM;
 	}
 
 	/// @brief Check if a Lexeme represents any binary operator (+, -, ...).
