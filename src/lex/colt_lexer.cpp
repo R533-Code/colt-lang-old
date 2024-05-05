@@ -352,8 +352,8 @@ namespace clt::lng
     break; case '=':
       lexer.next = lexer.getNext(); // consume '='
       lexer.addToken(Lexeme::TKN_OR_EQUAL, snap);
-    break; case '&':
-      lexer.next = lexer.getNext(); // consume '&'
+    break; case '|':
+      lexer.next = lexer.getNext(); // consume '|'
       lexer.addToken(Lexeme::TKN_OR_OR, snap);
     break; default:
       lexer.addToken(Lexeme::TKN_OR, snap);
