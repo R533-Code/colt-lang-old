@@ -78,11 +78,11 @@ namespace clt::lng
     /// @brief Assigns a value to the optional
     /// @param t The value to assign
     /// @return this
-    constexpr OptTok& operator=(T t) noexcept { index = t; }
+    constexpr OptTok& operator=(T t) noexcept { index = t.getID(); return *this; }
     /// @brief Clears the optional
     /// @param  None
     /// @return this
-    constexpr OptTok& operator=(decltype(None)) noexcept { index = INVALID; }
+    constexpr OptTok& operator=(decltype(None)) noexcept { index = INVALID; return *this; }
 
     /// @brief Check if the optional does not contain a value
     /// @return True if the optional is empty
