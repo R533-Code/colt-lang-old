@@ -19,7 +19,7 @@ void REPL()
   io::print_warn("REPL is not implemented...");
 
   auto reporter = lng::make_error_reporter<lng::ConsoleReporter>();
-  auto warn = GlobalWarnFor;
+  const auto& warn = GlobalWarnFor;
   Vector<std::filesystem::path> includes = {};
   while (true)
   {
