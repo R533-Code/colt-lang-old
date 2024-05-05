@@ -37,6 +37,51 @@ namespace clt::lng
     return static_cast<BuiltinID>(static_cast<u8>(tkn) - static_cast<u8>(TKN_KEYWORD_bool));
   }
 
+  enum class ComparisonSet
+  {
+    /// @brief {<, <=}
+    LE_OR_LEQ,
+    /// @brief ==
+    EQUAL,
+    /// @brief {>, >=}
+    GE_OR_GEQ,
+    /// @brief !=
+    NONE
+  };
+
+  /// @brief Returns the comparison set to which a comparison operator belongs to
+  /// @param comparison The comparison operator
+  /// @return The comparison set representing 'comparison'
+  constexpr ComparisonSet getComparisonSet(Token comparison) noexcept
+  {
+    using enum Lexeme;
+    using enum ComparisonSet;
+    assert_true("Expected comparison token", isComparisonToken(comparison));
+    if (comparison == TKN_EQUAL_EQUAL)
+      return EQUAL;
+    else if (comparison == TKN_LESS || comparison == TKN_LESS_EQUAL)
+      return LE_OR_LEQ;
+    else if (comparison == TKN_GREAT || comparison == TKN_GREAT_EQUAL)
+      return GE_OR_GEQ;
+    return NONE;
+  }
+
+  constexpr StringView toStr(ComparisonSet set) noexcept
+  {
+    using enum ComparisonSet;
+    switch_no_default (set)
+    {
+    case LE_OR_LEQ:
+      return "'<' or '<='";
+    case EQUAL:
+      return "'=='";
+    case GE_OR_GEQ:
+      return "'>' or '>='";
+    case NONE:
+      return "!=";
+    }
+  }
+
   /// @brief Flags for checking if a variable is initialized or not
   enum class VarStateFlag
     : u8
@@ -133,6 +178,8 @@ namespace clt::lng
     u8 is_private : 1 = true;
     /// @brief The current function being parsed
     FnGlobal* current_fn = nullptr;
+    /// @brief The current scope being parsed
+    OptTok<StmtExprToken> current_scope = None;
     
     /// @brief The local variable table
     Vector<LocalVarInfo> local_var_table = {};
@@ -160,6 +207,7 @@ namespace clt::lng
     ASTMaker(ParsedUnit& unit) noexcept
       : to_parse(unit)
     {
+      auto s = scopedSetPanic(&ASTMaker::panic_consume_semicolon);
       while (current() != Lexeme::TKN_EOF)
         PrintExpr(parse_binary(), to_parse);
     }
@@ -401,8 +449,10 @@ namespace clt::lng
     /// @return True if the current token is equal to any of 'args...'
     bool is_current_one_of(Args&&... args) const noexcept;
 
+    void handle_comparison_chain_error(Token comparison, ComparisonSet comparison_set) noexcept;
+
     /*----------------------
-      | CONSUMING FUNCTIONS |
+     | CONSUMING FUNCTIONS |
      ----------------------*/
 
     /**
@@ -473,14 +523,28 @@ namespace clt::lng
     ProdExprToken parse_unary_star(ProdExprToken child, const TokenRangeGenerator& range) noexcept;
 
     ProdExprToken parse_binary();
+
+    ProdExprToken parse_binary_condition();
     
-    ProdExprToken parse_binary_internal(Token previous, bool is_parsing_comp = false);
+    ProdExprToken parse_binary_internal(Token previous);
 
     ProdExprToken parse_conversion(ProdExprToken to_conv, const TokenRangeGenerator& range);
 
     ProdExprToken parse_assignment(ProdExprToken assign_to, const TokenRangeGenerator& range);
     
     ProdExprToken parse_comparison(Token comparison, ProdExprToken lhs, const TokenRangeGenerator& range);
+    
+    ProdExprToken parse_comparison(Token comparison, ProdExprToken lhs, ProdExprToken rhs, const TokenRangeGenerator& range);
+
+    StmtExprToken parse_scope(bool accepts_single = true);
+
+    StmtExprToken parse_var_decl(bool is_global = false);
+
+    OptTok<StmtExprToken> parse_condition(bool is_elif = false);
+
+    /// @brief 
+    /// @return  
+    ExprBase* parse_statement();
 
     TypeToken parse_typename() noexcept;
 
@@ -548,7 +612,24 @@ namespace clt::lng
     /// @return ErrorExpr or UnaryExpr
     ProdExprToken makeUnary(TokenRange range, UnaryOp op, ProdExprToken child) noexcept;
     
+    /// @brief Verify that a type supports a conversion and creates a CastExpr
+    /// @param range The range of tokens representing the expression
+    /// @param to_cast The expression to cast
+    /// @param to The type to cast to
+    /// @param is_bit_cast True if bit cast
+    /// @return CastExpr or ErrorExpr
     ProdExprToken makeCast(TokenRange range, ProdExprToken to_cast, TypeToken to, bool is_bit_cast) noexcept;
+
+    /// @brief Creates a condition expression.
+    /// This method is also responsible of constant folding, which
+    /// could mean that an if without an else could be optimized to nothing.
+    /// @param range The range of tokens representing the expression
+    /// @param condition The if condition
+    /// @param if_stmt The if statement
+    /// @param else_stmt The else statement or None for no else
+    /// @return None if the whole condition was optimized away or ConditionExpr
+    OptTok<StmtExprToken> makeCondition(TokenRange range, ProdExprToken condition,
+      StmtExprToken if_stmt, OptTok<StmtExprToken> else_stmt) noexcept;
 
     /// @brief Constant folds two literals using 'op' as the binary operator.
     /// This method will print warnings following 'WarnAll'
@@ -578,6 +659,8 @@ namespace clt::lng
     /// @param expr The expression whose value to check
     /// @return True if the expr is a LiteralExpr with value 0
     bool isLiteralZero(ProdExprToken expr) const noexcept;
+
+    bool isInvalidChain(ComparisonSet old, ComparisonSet new_set) const noexcept;
   };
   
   template<ASTMaker::report_as AS, typename ...Args>
