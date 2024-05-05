@@ -352,6 +352,10 @@ namespace clt::lng
     /// @brief Returns the list of tokens
     /// @return List of tokens
     auto& getTokens() const noexcept { return tokens; }
+
+    /// @brief Returns the list of lines
+    /// @return The list of lines
+    auto& getLines() const noexcept { return lines; }
   };
 }
 
