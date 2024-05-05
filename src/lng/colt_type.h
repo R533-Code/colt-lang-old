@@ -509,6 +509,12 @@ namespace clt::lng
     }
 
     template<ColtType T>
+    constexpr bool is() const noexcept
+    {
+      return getTypeID() == TypeToTypeID<T>();
+    }
+
+    template<ColtType T>
     /// @brief Casts the current type to 'T'
     /// @tparam T The type to cast to
     /// @return nullptr if the variant does not contain 'T', or valid pointer to 'T'
