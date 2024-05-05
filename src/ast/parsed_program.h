@@ -38,7 +38,7 @@ namespace clt::lng
     /// @brief Represents the include paths of the program
     const Vector<std::filesystem::path>& includes;
     /// @brief Dictates which warnings to generate
-    WarnFor& warn_for;
+    WarnFor warn_for;
 
   public:
     /// @brief Represents an empty path (used when the StringView constructor overload is used)
@@ -50,7 +50,7 @@ namespace clt::lng
     /// @param start The starting file to parse (main.ct)
     /// @param includes The include path used by the program
     /// @param warn_for The warnings to reports
-    explicit ParsedProgram(ErrorReporter& reporter, const std::filesystem::path& start, const Vector<std::filesystem::path>& includes, WarnFor& warn_for) noexcept;
+    explicit ParsedProgram(ErrorReporter& reporter, const std::filesystem::path& start, const Vector<std::filesystem::path>& includes, const WarnFor& warn_for) noexcept;
 
     /// @brief Constructs a parsed program.
     /// This does not parse anything.
@@ -58,7 +58,7 @@ namespace clt::lng
     /// @param start The starting string to parse (for REPL)
     /// @param includes The include path used by the program
     /// @param warn_for The warnings to reports
-    explicit ParsedProgram(ErrorReporter& reporter, StringView start, const Vector<std::filesystem::path>& includes, WarnFor& warn_for) noexcept;
+    explicit ParsedProgram(ErrorReporter& reporter, StringView start, const Vector<std::filesystem::path>& includes, const WarnFor& warn_for) noexcept;
 
     /// @brief Returns the reporter used for errors and warnings
     /// @return The reporter
