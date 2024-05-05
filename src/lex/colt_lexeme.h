@@ -350,10 +350,20 @@ namespace clt::lng
 	}
 
 	/// @brief Check if a Lexeme represents any comparison Lexeme (==, !=, ...)
-	/// '||' and '&&' are considered comparison tokens.
+	/// '||' and '&&' are not considered comparison tokens.
 	/// @param tkn The token to check for
 	/// @return True if the Lexeme is a comparison Lexeme
 	constexpr bool isComparisonToken(Lexeme tkn) noexcept
+	{
+		return Lexeme::TKN_LESS < tkn
+			&& tkn <= Lexeme::TKN_EQUAL_EQUAL;
+	}
+	
+	/// @brief Check if a Lexeme represents any comparison Lexeme (==, !=, ...)
+	/// '||' and '&&' are considered comparison tokens.
+	/// @param tkn The token to check for
+	/// @return True if the Lexeme is a comparison Lexeme
+	constexpr bool isBoolProducerToken(Lexeme tkn) noexcept
 	{
 		return Lexeme::TKN_AND_AND < tkn
 			&& tkn <= Lexeme::TKN_EQUAL_EQUAL;
