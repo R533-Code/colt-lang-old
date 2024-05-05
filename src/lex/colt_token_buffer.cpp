@@ -28,9 +28,15 @@ namespace clt::lng
     
     lex.next = lex.getNext();
     while (lex.next != EOF)
-      Lexer::LexingTable[(u8)lex.next](lex);    
+      Lexer::LexingTable[(u8)lex.next](lex);
     // Add EOF (even if there is already an EOF)
-    buffer.addToken(Lexeme::TKN_EOF, lex.line_nb, 0, 0);
+    if (buffer.getTokens().is_empty())
+      buffer.addToken(Lexeme::TKN_EOF, 0, 0, 0);
+    else
+    {
+      auto& token = buffer.getTokens().back();
+      buffer.addToken(Lexeme::TKN_EOF, buffer.getLine(token) - 1, buffer.getColumn(token) + 1, 0);
+    }
   }
 
   void CreateLines(StringView strv, TokenBuffer& buffer) noexcept
