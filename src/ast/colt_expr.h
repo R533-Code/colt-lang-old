@@ -664,18 +664,10 @@ namespace clt::lng
     /// @param type The type (must be void)
     /// @param if_cond The if condition (must evaluate to bool)
     /// @param if_stmt The scope to execute if the condition evaluates to true
-    constexpr ConditionExpr(TokenRange range, TypeToken type, ProdExprToken if_cond, StmtExprToken if_stmt)
-      : ExprBase(TypeToExprID<ConditionExpr>(), type, range), if_cond(if_cond), if_stmt(if_stmt), else_stmt(None) {}
-    
-    /// @brief Constructs a condition expression that has an else branch
-    /// @param range The range of tokens
-    /// @param type The type (must be void)
-    /// @param if_cond The if condition (must evaluate to bool)
-    /// @param if_stmt The scope to execute if the condition evaluates to true
     /// @param else_stmt The scope to execute if the condition evaluates to false
-    constexpr ConditionExpr(TokenRange range, TypeToken type, ProdExprToken if_cond, StmtExprToken if_stmt, StmtExprToken else_stmt)
+    constexpr ConditionExpr(TokenRange range, TypeToken type, ProdExprToken if_cond, StmtExprToken if_stmt, OptTok<StmtExprToken> else_stmt)
       : ExprBase(TypeToExprID<ConditionExpr>(), type, range), if_cond(if_cond), if_stmt(if_stmt), else_stmt(else_stmt) {}
-
+    
     /// @brief Check if this condition has an else branch
     /// @return True if this condition has an else branch
     constexpr bool hasElse() const noexcept { return else_stmt.isValue(); }

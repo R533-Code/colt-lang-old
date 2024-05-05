@@ -113,6 +113,14 @@ namespace clt::lng
       return (const ExprBase*)&_buffer;
     }
     
+    template<ProducerExpr Ty>
+    /// @brief Check if the stored expression is a 'Ty'
+    /// @return True if the stored expression is a 'Ty'
+    constexpr bool is() const noexcept
+    {
+      return classof() == TypeToExprID<Ty>();
+    }
+
     /// @brief Check if the current expression is an error
     /// @return True if error
     constexpr bool isError() const noexcept { return classof() == ExprID::EXPR_ERROR; }
@@ -163,7 +171,7 @@ namespace clt::lng
     template<StatementExpr T>
     /// @brief Downcasts the variant to 'T'
     /// @return nullptr if type does not match else pointer to the type
-    constexpr T* getExpr() noexcept
+    constexpr T* as() noexcept
     {
       if (classof() != TypeToExprID<T>())
         return nullptr;
@@ -173,11 +181,19 @@ namespace clt::lng
     template<StatementExpr T>
     /// @brief Downcasts the variant to 'T'
     /// @return nullptr if type does not match else pointer to the type
-    constexpr const T* getExpr() const noexcept
+    constexpr const T* as() const noexcept
     {
       if (classof() != TypeToExprID<T>())
         return nullptr;
       return &getUnionMember<T>();
+    }
+
+    template<StatementExpr Ty>
+    /// @brief Check if the stored expression is a 'Ty'
+    /// @return True if the stored expression is a 'Ty'
+    constexpr bool is() const noexcept
+    {
+      return classof() == TypeToExprID<Ty>();
     }
 
     /// @brief Check if the current expression is a local variable declaration
@@ -190,6 +206,20 @@ namespace clt::lng
     /// @return True if classof() returns EXPR_SCOPE
     constexpr bool isScope() const noexcept { return classof() == ExprID::EXPR_SCOPE; }
 
+    /// @brief Returns the expression as an ExprBase pointer
+    /// @return ExprBase* (never null)
+    constexpr ExprBase* asBase() noexcept
+    {
+      return (ExprBase*)&_buffer;
+    }
+
+    /// @brief Returns the expression as an ExprBase pointer
+    /// @return ExprBase* (never null)
+    constexpr const ExprBase* asBase() const noexcept
+    {
+      return (const ExprBase*)&_buffer;
+    }
+
     /// @brief Destructor
     ~StmtExprVariant()
     {
@@ -198,8 +228,8 @@ namespace clt::lng
     }
   };
 
-  // Ensure all the types are divided between Prod and Stmt
-  static_assert(meta::type_list<COLTC_PROD_EXPR_LIST>::size + meta::type_list<COLTC_STMT_EXPR_LIST>::size
+  // Ensure all the types are divided between Prod and Stmt (-1 as ErrorExpr is in both)
+  static_assert(meta::type_list<COLTC_PROD_EXPR_LIST>::size + meta::type_list<COLTC_STMT_EXPR_LIST>::size - 1
     == meta::type_list<COLTC_EXPR_LIST>::size,
     "Some types are missing from COLTC_PROD_EXPR_LIST or COLTC_STMT_EXPR_LIST");
 
@@ -300,6 +330,14 @@ namespace clt::lng
       return addNewProd<ErrorExpr>(range, types.getErrorType());
     }
     
+    /// @brief Creates an error statement
+    /// @param range The range of tokens
+    /// @return ErrorExpr
+    StmtExprToken addErrorStmt(TokenRange range) noexcept
+    {
+      return addNewStmt<ErrorExpr>(range, types.getErrorType());
+    }
+    
     /// @brief Creates a no-op expression
     /// @param range The range of tokens
     /// @return NOPExpr
@@ -378,10 +416,10 @@ namespace clt::lng
     ProdExprToken addAddressOf(TokenRange range, StmtExprToken decl) noexcept
     {
       auto& ref = getExpr(decl);
-      if (auto ptr = ref.getExpr<VarDeclExpr>(); ptr)
+      if (auto ptr = ref.as<VarDeclExpr>(); ptr)
         return addNewProd<AddressOfExpr>(range,
           ptr->isMut() ? types.addMutPtr(ptr->getType()) : types.addPtr(ptr->getType()), decl);
-      if (auto ptr = ref.getExpr<GlobalDeclExpr>(); ptr)
+      if (auto ptr = ref.as<GlobalDeclExpr>(); ptr)
         return addNewProd<AddressOfExpr>(range,
           ptr->isMut() ? types.addMutPtr(ptr->getType()) : types.addPtr(ptr->getType()), decl);
 
@@ -522,17 +560,6 @@ namespace clt::lng
       assert_true("Expected a scope as a parent!", getExpr(parent).isScope());
       return addNewStmt<ScopeExpr>(range, types.getVoidType(), parent);
     }
-
-    /// @brief Creates a condition
-    /// @param range The range of tokens
-    /// @param if_cond The if condition
-    /// @param if_stmt The if statement
-    /// @return ConditionExpr
-    StmtExprToken addCondition(TokenRange range, ProdExprToken if_cond, StmtExprToken if_stmt) noexcept
-    {
-      assert_true("Expected bool type!", getType(if_cond).isBuiltinAnd(&isBool));
-      return addNewStmt<ConditionExpr>(range, types.getVoidType(), if_cond, if_stmt);
-    }
     
     /// @brief Creates a condition
     /// @param range The range of tokens
@@ -540,7 +567,7 @@ namespace clt::lng
     /// @param if_stmt The if statement
     /// @param else_stmt The else statement
     /// @return ConditionExpr
-    StmtExprToken addCondition(TokenRange range, ProdExprToken if_cond, StmtExprToken if_stmt, StmtExprToken else_stmt) noexcept
+    StmtExprToken addCondition(TokenRange range, ProdExprToken if_cond, StmtExprToken if_stmt, OptTok<StmtExprToken> else_stmt) noexcept
     {
       assert_true("Expected bool type!", getType(if_cond).isBuiltinAnd(&isBool));
       return addNewStmt<ConditionExpr>(range, types.getVoidType(), if_cond, if_stmt, else_stmt);

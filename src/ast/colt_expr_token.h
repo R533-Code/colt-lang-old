@@ -41,7 +41,7 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, ExprID,
   BinaryExpr, CastExpr, AddressOfExpr, PtrLoadExpr, VarReadExpr, GlobalReadExpr, \
   FnCallExpr, VarWriteExpr, PtrStoreExpr, GlobalWriteExpr, MoveExpr, CopyExpr, CMoveExpr
 
-#define COLTC_STMT_EXPR_LIST VarDeclExpr, GlobalDeclExpr, ScopeExpr, ConditionExpr
+#define COLTC_STMT_EXPR_LIST VarDeclExpr, GlobalDeclExpr, ScopeExpr, ConditionExpr, ErrorExpr
 
 namespace clt::lng
 {
