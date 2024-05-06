@@ -230,16 +230,26 @@ namespace clt::lng
 #endif // COLT_DEBUG
     }
 
+    TokenRange getRangeFrom(Token start) const noexcept
+    {
+      assert_true("Invalid range!", start == Lexeme::TKN_EOF);
+#ifdef COLT_DEBUG
+      owns(start);
+      return TokenRange{ start.info_index, start.info_index + 1, buffer_id };
+#else
+      return TokenRange{ start.info_index, end.info_index };
+#endif // COLT_DEBUG
+    }
+
     TokenRange getRangeFrom(Token start, Token end) const noexcept
     {
-      assert_true("Invalid range!", start.info_index < end.info_index);
+      assert_true("Invalid range!", start.info_index <= end.info_index);
 #ifdef COLT_DEBUG
       owns(start), owns(end);
       return TokenRange{ start.info_index, end.info_index, buffer_id };
 #else
       return TokenRange{ start.info_index, end.info_index };
 #endif // COLT_DEBUG
-
     }
 
     void addIdentifier(StringView value, Lexeme lexeme, u32 line, u32 column, u32 size) noexcept
