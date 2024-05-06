@@ -191,6 +191,8 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, Lexeme,
 
 	/// @brief var
 	TKN_KEYWORD_var,
+	/// @brief var
+	TKN_KEYWORD_let,
 	/// @brief mut
 	TKN_KEYWORD_mut,
 	/// @brief global
