@@ -518,15 +518,6 @@ namespace clt::lng
     u32 local_id;
 
   public:
-    /// @brief Constructor, for uninitialized variables
-    /// @param range The range of tokens
-    /// @param type The type of the variable
-    /// @param local_id The local ID of the variable
-    /// @param name The name of the variable
-    /// @param is_mut True if the variable is mutable
-    constexpr VarDeclExpr(TokenRange range, TypeToken type, u32 local_id, StringView name, bool is_mut) noexcept
-      : ExprBase(TypeToExprID<VarDeclExpr>(), type, range, false, is_mut), name(name), value(None), local_id(local_id) {}
-    
     /// @brief Constructor, for initialized variables
     /// @param range The range of tokens
     /// @param type The type of the variable
@@ -534,7 +525,7 @@ namespace clt::lng
     /// @param name The name of the variable
     /// @param init The initial value of the variable
     /// @param is_mut True if the variable is mutable
-    constexpr VarDeclExpr(TokenRange range, TypeToken type, u32 local_id, StringView name, ProdExprToken init, bool is_mut) noexcept
+    constexpr VarDeclExpr(TokenRange range, TypeToken type, u32 local_id, StringView name, OptTok<ProdExprToken> init, bool is_mut) noexcept
       : ExprBase(TypeToExprID<VarDeclExpr>(), type, range, true, is_mut), name(name), value(init), local_id(local_id) {}
 
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(VarDeclExpr);

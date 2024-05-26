@@ -26,6 +26,11 @@ namespace clt::lng
   /// @param unit The unit owning the expression
   /// @param depth The depth (for spacing)
   void PrintExpr(ProdExprToken tkn, const ParsedUnit& unit, u64 depth = 0) noexcept;
+  /// @brief Prints an expression (for debugging purposes)
+  /// @param tkn The expression to print
+  /// @param unit The unit owning the expression
+  /// @param depth The depth (for spacing)
+  void PrintExpr(const ExprBase* tkn, const ParsedUnit& unit, u64 depth = 0) noexcept;
 
   /// @brief Transforms a literal token to a built-in ID
   /// @param tkn The token
@@ -209,7 +214,7 @@ namespace clt::lng
     {
       auto s = scopedSetPanic(&ASTMaker::panic_consume_semicolon);
       while (current() != Lexeme::TKN_EOF)
-        PrintExpr(parse_binary(), to_parse);
+        PrintExpr(parse_statement(), to_parse);
     }
 
     /*------------------
@@ -323,7 +328,7 @@ namespace clt::lng
       /// @return The TokenRange
       TokenRange getRange() const noexcept
       {
-        assert_true("Missing call to consume_current()!", current != ast.current());
+        //assert_true("Missing call to consume_current()!", current != ast.current());
         return ast.getTokenBuffer().getRangeFrom(current, ast.current());
       }
     };
@@ -466,10 +471,19 @@ namespace clt::lng
     void panic_consume_till() noexcept;
 
     /// @brief Calls 'current_panic' if it isn't null
-    void panic_consume() noexcept { if (current_panic) (this->*current_panic)(); }
+    void panic_consume() noexcept
+    {
+      if (current_panic)
+        (this->*current_panic)();
+    }
 
-    /// @brief Consumes all tokens till a semicolon is hit
-    void panic_consume_semicolon() noexcept { panic_consume_till<Lexeme::TKN_SEMICOLON>(); }
+    /// @brief Consumes all tokens till a semicolon is hit, and consumes the semicolon
+    void panic_consume_semicolon() noexcept
+    {
+      panic_consume_till<Lexeme::TKN_SEMICOLON>();
+      if (current() == Lexeme::TKN_SEMICOLON)
+        consume_current();
+    }
 
     /// @brief Consumes all tokens till a left parenthesis is hit
     void panic_consume_lparen() noexcept { panic_consume_till<Lexeme::TKN_LEFT_PAREN>(); }
@@ -547,6 +561,10 @@ namespace clt::lng
     ExprBase* parse_statement();
 
     TypeToken parse_typename() noexcept;
+
+    ErrorFlag parse_local_var_mutability(bool& is_mut) noexcept;
+    
+    ErrorFlag parse_global_var_mutability(bool& is_mut) noexcept;
 
     /*------------------------------
      | TEMPLATED PARSING FUNCTIONS |

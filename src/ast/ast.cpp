@@ -434,7 +434,51 @@ namespace clt::lng
     using enum Lexeme;
     auto depth = addDepth();
     auto range = startRange();
-    unreachable("Not implemented!");
+    auto panic = scopedSetPanic(&ASTMaker::panic_consume_semicolon);
+    
+    bool is_mut = false;
+    if (is_global ?
+      parse_global_var_mutability(is_mut).is_error() :
+      parse_local_var_mutability(is_mut).is_error())
+    {
+      return Expr().addErrorStmt(range.getRange());
+    }
+    
+    auto identifier = current();
+    if (check_consume(TKN_IDENTIFIER, current_panic, "Expected an identifier!").is_error())
+      return Expr().addErrorStmt(getTokenBuffer().getRangeFrom(identifier));
+    StringView name = getTokenBuffer().getIdentifier(identifier);
+    OptTok<TypeToken> var_type = None;
+    if (current() == TKN_COLON)
+    {
+      parse_typename()
+    }
+    if (auto equal = current();
+      check_consume(TKN_EQUAL, current_panic, "Expected a '='!").is_error())
+      return Expr().addErrorStmt(getTokenBuffer().getRangeFrom(equal));
+    
+    OptTok<ProdExprToken> init = None;
+    if (current() != TKN_KEYWORD_undefined)
+    {
+      auto rhs = parse_binary();
+      auto& rhs_ref = Expr(rhs);
+      if (rhs_ref.isError())
+        return Expr().addErrorStmt(rhs_ref.getTokenRange());
+      init = rhs;
+    }
+    else // undefined
+      consume_current();    
+
+    if (auto semicolon = current();
+      check_consume(TKN_SEMICOLON, current_panic, "Expected a ';'!").is_error())
+      return Expr().addErrorStmt(getTokenBuffer().getRangeFrom(semicolon));
+
+    if (is_global)
+    {
+      if (init.isValue())
+        return Expr().addGlobalDecl(range, type)
+
+    }
   }
 
   OptTok<StmtExprToken> ASTMaker::parse_condition(bool is_elif)
@@ -504,6 +548,8 @@ namespace clt::lng
 
         // EXPECTS ';'
     break; default:
+    {
+      auto panic = scopedSetPanic(&ASTMaker::panic_consume_semicolon);
       if (to_parse.getTokenBuffer().makeSourceInfo(current()).expr == "pass")
       {
         consume_current();
@@ -511,6 +557,7 @@ namespace clt::lng
       }
       else
         to_ret = Expr(parse_binary()).asBase();
+    }
     }
     //TODO: recheck strategy
     if (check_consume(TKN_SEMICOLON, "Expected a ';'!").is_success())
@@ -571,6 +618,57 @@ namespace clt::lng
     report<report_as::ERROR>(range.getRange(), current_panic,
       "Expected a typename!");
     return Type().getErrorType();
+  }
+
+  ErrorFlag ASTMaker::parse_local_var_mutability(bool& is_mut) noexcept
+  {
+    using enum Lexeme;
+    
+    is_mut = false;
+    if (current() == TKN_KEYWORD_var)
+    {
+      consume_current();
+      is_mut = true;
+      if (current() == TKN_KEYWORD_mut)
+      {
+        report_current<report_as::WARNING>(nullptr, "Unecessary 'mut' as 'var' is a shorthand for 'let mut'!");
+        consume_current();
+      }
+      return ErrorFlag::success();
+    }
+    else if (current() == TKN_KEYWORD_let)
+    {
+      consume_current();
+      if (current() == TKN_KEYWORD_mut)
+      {
+        is_mut = true;
+        consume_current();
+      }
+      return ErrorFlag::success();
+    }
+    report_current<report_as::ERROR>(current_panic, "Expected a local variable declaration!");
+    getReporter().message("A local variable declaration begins with 'var' or 'let'.");
+    return ErrorFlag::error();
+  }
+
+  ErrorFlag ASTMaker::parse_global_var_mutability(bool& is_mut) noexcept
+  {
+    using enum Lexeme;
+
+    is_mut = false;
+    if (current() == TKN_KEYWORD_global)
+    {
+      consume_current();
+      if (current() == TKN_KEYWORD_mut)
+      {
+        is_mut = true;
+        consume_current();
+      }
+      return ErrorFlag::success();
+    }
+    report_current<report_as::ERROR>(current_panic, "Expected a global variable declaration!");
+    getReporter().message("A global variable declaration begins with 'global' or 'global mut'.");
+    return ErrorFlag::error();
   }
 
   OptTok<StmtExprToken> ASTMaker::decl_from_read(ProdExprToken expr) const noexcept
@@ -790,15 +888,15 @@ namespace clt::lng
     return Type(expr).isBuiltinAnd(&isIntegral)
       && Expr(expr).as<LiteralExpr>()->getValue().is_none_set();
   }
-
-  void PrintExpr(ProdExprToken tkn, const ParsedUnit& unit, u64 depth) noexcept
+  
+  void PrintExpr(const ExprBase* tkn, const ParsedUnit& unit, u64 depth) noexcept
   {
-    using enum clt::lng::ExprID;
+    using enum ExprID;
     auto& buffer = unit.getExprBuffer();
     auto& types = unit.getProgram().getTypes();
     auto& tkn_buffer = unit.getTokenBuffer();
-    auto& expr = buffer.getExpr(tkn);
-
+    auto& expr = *tkn;
+    
     auto info = tkn_buffer.makeSourceInfo(expr.getTokenRange());
     switch (expr.classof())
     {
@@ -807,33 +905,53 @@ namespace clt::lng
 
     break; case EXPR_LITERAL:
       io::print("{}{:^{}}({:h}: {}, {} {}){}", io::BrightGreenF, "", depth * 3, expr.classof(),
-        info.expr, fmt_TypedQWORD{ expr.as<LiteralExpr>()->getValue(), types.getType(expr.getType()).as<BuiltinType>()->typeID() },
+        info.expr, fmt_TypedQWORD{ static_cast<const LiteralExpr*>(&expr)->getValue(), types.getType(expr.getType()).as<BuiltinType>()->typeID() },
         types.getTypeName(expr.getType()), io::Reset);
 
     break; case EXPR_UNARY:
+    {
+      auto ptr = static_cast<const UnaryExpr*>(&expr);
+      
       io::print("{}{:^{}}({:h}: '{:h}'", io::YellowF, "", depth * 3, expr.classof(),
-        expr.as<UnaryExpr>()->getOp());
-      PrintExpr(expr.as<UnaryExpr>()->getExpr(), unit, depth + 1);
+        ptr->getOp());
+      PrintExpr(ptr->getExpr(), unit, depth + 1);
       io::print("{}{:^{}}{}){}", io::YellowF, "", depth * 3, types.getTypeName(expr.getType()), io::Reset);
+    }
 
     break; case EXPR_BINARY:
+    {
+      auto ptr = static_cast<const BinaryExpr*>(&expr);
+      
       io::print("{}{:^{}}({:h}:", io::BrightCyanF, "", depth * 3, expr.classof());
-      PrintExpr(expr.as<BinaryExpr>()->getLHS(), unit, depth + 1);
+      PrintExpr(ptr->getLHS(), unit, depth + 1);
       io::print("{}{:^{}} {:h}", io::BrightCyanF, "", depth * 3,
-        expr.as<BinaryExpr>()->getOp());
-      PrintExpr(expr.as<BinaryExpr>()->getRHS(), unit, depth + 1);
+        ptr->getOp());
+      PrintExpr(ptr->getRHS(), unit, depth + 1);
       io::print("{}{:^{}}{}){}", io::BrightCyanF, "", depth * 3, types.getTypeName(expr.getType()), io::Reset);
+    }
 
     break; case EXPR_CAST:
+    {
+      auto ptr = static_cast<const CastExpr*>(&expr);
+
       io::print("{}{:^{}}({:h}: '{}' -> '{}'", io::BrightMagentaF, "", depth * 3, expr.classof(),
-        types.getTypeName(expr.as<CastExpr>()->getType()), types.getTypeName(expr.as<CastExpr>()->getTypeToCastTo()));
-      PrintExpr(expr.as<CastExpr>()->getToCast(), unit, depth + 1);
-      io::print("{}{:^{}}{}){}", io::BrightMagentaF, "", depth * 3, types.getTypeName(expr.as<CastExpr>()->getType()), io::Reset);
+        types.getTypeName(ptr->getType()), types.getTypeName(ptr->getTypeToCastTo()));
+      PrintExpr(ptr->getToCast(), unit, depth + 1);
+      io::print("{}{:^{}}{}){}", io::BrightMagentaF, "", depth * 3, types.getTypeName(ptr->getType()), io::Reset);
+    }
 
     break; default:
       io::print("{:^{}}{:h}", "", depth * 3, expr.classof());
       break;
     }
+  }
+
+  void PrintExpr(ProdExprToken tkn, const ParsedUnit& unit, u64 depth) noexcept
+  {
+    using enum ExprID;
+    auto& buffer = unit.getExprBuffer();
+    auto& expr = buffer.getExpr(tkn);
+    PrintExpr(expr.asBase(), unit, depth);
   }
 }
 

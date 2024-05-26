@@ -200,7 +200,7 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, Lexeme,
 
 	/********* BEGINNING OF BUILTIN TYPES *******/
 
-		// DO NOT REORDER THIS TYPES
+		// DO NOT REORDER THESE TYPES
 
 	/// @brief void
 	TKN_KEYWORD_void,
@@ -298,6 +298,8 @@ DECLARE_ENUM_WITH_TYPE(u8, clt::lng, Lexeme,
 
 	/// @brief goto
 	TKN_KEYWORD_goto,
+	/// @brief undefined
+	TKN_KEYWORD_undefined,
 
 	/********* ADD NEW KEYWORDS BEGINNING HERE *******/
 	// Do not forget to add them to the table of keywords in getKeywordTable

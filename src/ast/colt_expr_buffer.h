@@ -572,6 +572,16 @@ namespace clt::lng
       assert_true("Expected bool type!", getType(if_cond).isBuiltinAnd(&isBool));
       return addNewStmt<ConditionExpr>(range, types.getVoidType(), if_cond, if_stmt, else_stmt);
     }
+
+    StmtExprToken addGlobalDecl(TokenRange range, TypeToken type, StringView name, ProdExprToken init, bool is_mut) noexcept
+    {
+      return addNewStmt<GlobalDeclExpr>(range, type, name, init, is_mut);
+    }
+
+    StmtExprToken addVarDecl(TokenRange range, TypeToken type, u32 local_id, StringView name, OptTok<ProdExprToken> init, bool is_mut) noexcept
+    {
+      return addNewStmt<VarDeclExpr>(range, type, local_id, name, init, is_mut);
+    }
   };
 }
 
