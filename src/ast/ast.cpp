@@ -10,6 +10,34 @@
  /// @brief Pops the elements added to a vector in the current scope at the end of the scope
 #define SCOPED_SAVE_VECTOR(vec) const auto COLT_CONCAT(SCOPED_SIZE_, COLT_LINE_NUM) = vec.size(); ON_SCOPE_EXIT { vec.pop_back_n(vec.size() - COLT_CONCAT(SCOPED_SIZE_, COLT_LINE_NUM)); }
 
+#define __IMPL_WRAP_IN_IILAMBDA(expr) [&]() { return expr; }()
+#define PROPAGATE_ERROR(expr, to_ret) \
+[&](auto f) {\
+using ___IMPL_type = std::remove_cvref_t<decltype(expr)>; \
+if constexpr (std::same_as<___IMPL_type, clt::ErrorFlag>) \
+  if (__IMPL_WRAP_IN_IILAMBDA(expr.is_error())) \
+    return to_ret; \
+if constexpr (std::same_as<___IMPL_type, clt::lng::StmtExprToken>) \
+  if (__IMPL_WRAP_IN_IILAMBDA(Expr(expr).isError())) \
+    return to_ret; \
+if constexpr (std::same_as<___IMPL_type, clt::lng::StmtExprVariant>) \
+  if (__IMPL_WRAP_IN_IILAMBDA(expr.isError())) \
+    return to_ret; \
+if constexpr (std::same_as<___IMPL_type, clt::lng::ProdExprToken>) \
+  if (__IMPL_WRAP_IN_IILAMBDA(Expr(expr).isError())) \
+    return to_ret; \
+if constexpr (std::same_as<___IMPL_type, clt::lng::ProdExprVariant>) \
+  if (__IMPL_WRAP_IN_IILAMBDA(expr.isError())) \
+    return to_ret; \
+if constexpr (std::same_as<___IMPL_type, clt::lng::TypeToken>) \
+  if (__IMPL_WRAP_IN_IILAMBDA(Type(expr).isError())) \
+    return to_ret; \
+if constexpr (std::same_as<___IMPL_type, clt::lng::TypeVariant>) \
+  if (__IMPL_WRAP_IN_IILAMBDA(expr.isError())) \
+    return to_ret; \
+}([&]() -> decltype(auto) {})
+
+
 namespace clt::lng
 {
   void MakeAST(ParsedUnit& unit) noexcept
@@ -151,8 +179,7 @@ namespace clt::lng
     //Parse the child expression, without handling conversions:
     // '-5 as i32' is equivalent to '(-5) as i32'
     ProdExprToken child = parse_primary(false);
-    if (Expr(child).isError())
-      return child;
+    PROPAGATE_ERROR(child, range.getRange());
 
     switch (op)
     {
@@ -186,11 +213,7 @@ namespace clt::lng
     auto range = startRange();
 
     ProdExprToken lhs = parse_primary();
-    if (Expr(lhs).isError())
-    {
-      panic_consume();
-      return lhs;
-    }
+    PROPAGATE_ERROR(lhs, lhs);
 
     // The binary operators
     Token binary_op = current();
@@ -211,8 +234,7 @@ namespace clt::lng
       consume_current();
       //Recurse: 10 + 5 + 8 -> (10 + (5 + 8))
       ProdExprToken rhs = parse_binary_internal(binary_op);
-      if (Expr(rhs).isError())
-        return rhs;
+      PROPAGATE_ERROR(rhs, rhs);
 
       if (!isBinaryToken(binary_op))
       {
@@ -264,11 +286,7 @@ namespace clt::lng
     auto range = startRange();
 
     ProdExprToken lhs = parse_primary();
-    if (Expr(lhs).isError())
-    {
-      panic_consume();
-      return lhs;
-    }
+    PROPAGATE_ERROR(lhs, lhs);
 
     // The binary operators
     Token binary_op = current();
@@ -280,8 +298,7 @@ namespace clt::lng
       consume_current();
       //Recurse: 10 + 5 + 8 -> (10 + (5 + 8))
       ProdExprToken rhs = parse_binary_internal(binary_op);
-      if (Expr(rhs).isError())
-        return rhs;
+      PROPAGATE_ERROR(rhs, rhs);
 
       if (!isBinaryToken(binary_op))
       {
@@ -345,10 +362,8 @@ namespace clt::lng
     consume_current();
 
     TypeToken cnv_type = parse_typename();
-    if (Type(cnv_type).isError())
-      return Expr().addError(range.getRange());
-    if (Expr(to_conv).isError())
-      return to_conv;
+    PROPAGATE_ERROR(cnv_type, Expr().addError(range.getRange()));
+    PROPAGATE_ERROR(to_conv, to_conv);
 
     // A bit_as conversion must have either the target or the starting
     // type be a byte type
@@ -445,14 +460,19 @@ namespace clt::lng
     }
     
     auto identifier = current();
-    if (check_consume(TKN_IDENTIFIER, current_panic, "Expected an identifier!").is_error())
-      return Expr().addErrorStmt(getTokenBuffer().getRangeFrom(identifier));
+    PROPAGATE_ERROR(
+      check_consume(TKN_IDENTIFIER, current_panic, "Expected an identifier!").is_error(),
+      Expr().addErrorStmt(getTokenBuffer().getRangeFrom(identifier))
+    );
+
     StringView name = getTokenBuffer().getIdentifier(identifier);
     OptTok<TypeToken> var_type = None;
     if (current() == TKN_COLON)
     {
-      parse_typename()
+      auto type = parse_typename();
+      PROPAGATE_ERROR(type, Expr().addErrorStmt(range.getRange()));
     }
+    
     if (auto equal = current();
       check_consume(TKN_EQUAL, current_panic, "Expected a '='!").is_error())
       return Expr().addErrorStmt(getTokenBuffer().getRangeFrom(equal));
@@ -462,12 +482,11 @@ namespace clt::lng
     {
       auto rhs = parse_binary();
       auto& rhs_ref = Expr(rhs);
-      if (rhs_ref.isError())
-        return Expr().addErrorStmt(rhs_ref.getTokenRange());
+      PROPAGATE_ERROR(rhs_ref, Expr().addErrorStmt(rhs_ref.getTokenRange()));
       init = rhs;
     }
     else // undefined
-      consume_current();    
+      consume_current();
 
     if (auto semicolon = current();
       check_consume(TKN_SEMICOLON, current_panic, "Expected a ';'!").is_error())
@@ -609,8 +628,7 @@ namespace clt::lng
       if (check_consume(TKN_DOT, current_panic, "Expected a '.'!").is_success())
       {
         auto ptr_to = parse_typename();
-        if (Type(ptr_to).isError())
-          return ptr_to;
+        PROPAGATE_ERROR(ptr_to, ptr_to);
         return is_mut ? Type().addMutPtr(ptr_to) : Type().addPtr(ptr_to);
       }
       return Type().getErrorType();
@@ -756,9 +774,7 @@ namespace clt::lng
   ProdExprToken ASTMaker::makeCast(TokenRange range, ProdExprToken to_cast, TypeToken to, bool is_bit_cast) noexcept
   {
     using enum ConversionSupport;
-    if (Expr(to_cast).isError())
-      return to_cast;
-
+    PROPAGATE_ERROR(to_cast, to_cast);
     if (is_bit_cast)
     {
       unreachable("Not implemented!");
