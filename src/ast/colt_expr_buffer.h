@@ -573,11 +573,26 @@ namespace clt::lng
       return addNewStmt<ConditionExpr>(range, types.getVoidType(), if_cond, if_stmt, else_stmt);
     }
 
+    /// @brief Creates a global variable declaration
+    /// @param range The range of tokens
+    /// @param type The type of the variable
+    /// @param name The name of the global
+    /// @param init The initial value of the global
+    /// @param is_mut True if mutable
+    /// @return GlobalDeclExpr
     StmtExprToken addGlobalDecl(TokenRange range, TypeToken type, StringView name, ProdExprToken init, bool is_mut) noexcept
     {
       return addNewStmt<GlobalDeclExpr>(range, type, name, init, is_mut);
     }
 
+    /// @brief Creates a local variable declaration
+    /// @param range The range of tokens
+    /// @param type The type of the variable
+    /// @param local_id The local ID
+    /// @param name The name of the variable
+    /// @param init The initial value of the global
+    /// @param is_mut True if mutable
+    /// @return VarDeclExpr
     StmtExprToken addVarDecl(TokenRange range, TypeToken type, u32 local_id, StringView name, OptTok<ProdExprToken> init, bool is_mut) noexcept
     {
       return addNewStmt<VarDeclExpr>(range, type, local_id, name, init, is_mut);
