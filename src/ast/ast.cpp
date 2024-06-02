@@ -478,15 +478,34 @@ namespace clt::lng
       return Expr().addErrorStmt(getTokenBuffer().getRangeFrom(equal));
     
     OptTok<ProdExprToken> init = None;
+    // TODO: handle default constructor?
     if (current() != TKN_KEYWORD_undefined)
     {
       auto rhs = parse_binary();
       auto& rhs_ref = Expr(rhs);
       PROPAGATE_ERROR(rhs_ref, Expr().addErrorStmt(rhs_ref.getTokenRange()));
       init = rhs;
+      // If no type was specified, then the variable type is
+      // the type of right hand side.
+      if (var_type.isNone())
+        var_type = rhs_ref.getType();
     }
     else // undefined
+    {
       consume_current();
+      if (is_global)
+      {
+        report<report_as::ERROR>(identifier, current_panic,
+          "Global variables must be initialized!");
+        return Expr().addErrorStmt(range.getRange());
+      }
+      if (var_type.isNone())
+      {
+        report<report_as::ERROR>(identifier, current_panic,
+          "An uninitialized variable must have a type!");
+        return Expr().addErrorStmt(range.getRange());
+      }      
+    }
 
     if (auto semicolon = current();
       check_consume(TKN_SEMICOLON, current_panic, "Expected a ';'!").is_error())
@@ -494,9 +513,25 @@ namespace clt::lng
 
     if (is_global)
     {
-      if (init.isValue())
-        return Expr().addGlobalDecl(range, type)
-
+      return Expr().addGlobalDecl(
+        range.getRange(), var_type.getValue(),
+        name, init.getValue(), is_mut);
+    }
+    else
+    {
+      assert_true("Scope not set!", current_scope != nullptr);
+      // Create the variable declaration
+      // Its ID is its index into the current scope.
+      auto decl = Expr().addVarDecl(range.getRange(), var_type.getValue(),
+        local_var_table.size(), name, init, is_mut);
+      auto decl_ptr = Expr(decl).as<VarDeclExpr>();
+      // Save the variable initialization info
+      local_var_table.push_back(LocalVarInfo{ name, *decl_ptr,
+        init.isValue() ? VarStateFlag::INIT : VarStateFlag::UNDEF
+        });
+      // Register the current variable
+      current_scope->getDecls().push_back(decl_ptr);
+      return decl;
     }
   }
 

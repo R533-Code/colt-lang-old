@@ -184,7 +184,7 @@ namespace clt::lng
     /// @brief The current function being parsed
     FnGlobal* current_fn = nullptr;
     /// @brief The current scope being parsed
-    OptTok<StmtExprToken> current_scope = None;
+    ScopeExpr* current_scope = nullptr;
     
     /// @brief The local variable table
     Vector<LocalVarInfo> local_var_table = {};
