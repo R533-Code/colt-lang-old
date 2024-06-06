@@ -466,7 +466,7 @@ namespace clt
         : value(0) {}
       /// @brief Constructs a BitSet from an Integer
       /// @param value The value of the bit-set
-      constexpr BitSet(T value) noexcept
+      explicit constexpr BitSet(T value) noexcept
         : value(value) {}
       constexpr BitSet(const BitSet&)             noexcept = default;
       constexpr BitSet(BitSet&&)                  noexcept = default;
