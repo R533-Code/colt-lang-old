@@ -3,6 +3,8 @@
 
 #include <dyncall/dyncall.h>
 #include <util/assertions.h>
+#include <util/types.h>
+#include <run/qword_op.h>
 #include <util/raii_helper.h>
 
 namespace clt::run
@@ -21,8 +23,6 @@ namespace clt::run
     DynamicBinder& operator=(const DynamicBinder&) = delete;
     DynamicBinder& operator=(DynamicBinder&&) noexcept = default;
 
-    void start() const noexcept { dcReset(vm.get()); }
-    
     template<typename T>
     void push_arg(T value) const noexcept
     {
@@ -48,9 +48,43 @@ namespace clt::run
         clt::unreachable("Invalid type for push_arg!");
     }
 
+    void push_qword(QWORD_t qword, run::TypeOp type) noexcept
+    {
+      using enum clt::run::TypeOp;
+      
+      switch (type)
+      {
+      case i8_t:
+      case u8_t:
+        push_arg(qword.as<i8>());
+        break;
+      case i16_t:
+      case u16_t:
+        push_arg(qword.as<i16>());
+        break;
+      case i32_t:
+      case u32_t:
+        push_arg(qword.as<i32>());
+        break;
+      case i64_t:
+      case u64_t:
+        push_arg(qword.as<i64>());
+        break;
+      case f32_t:
+        push_arg(qword.as<f32>());
+        break;
+      case f64_t:
+        push_arg(qword.as<f64>());
+        break;
+      }
+    }
+
     template<typename T, typename... Args>
     T call_fn(T(*fn)(Args...)) noexcept
     {
+      ON_SCOPE_EXIT{
+        dcReset(vm.get());
+      };
       if constexpr (std::same_as<T, char> || std::same_as<T, unsigned char> || std::same_as<T, signed char>)
         return (T)dcCallChar(vm.get(), fn);
       else if constexpr (std::same_as<T, bool>)
@@ -72,7 +106,7 @@ namespace clt::run
       else if constexpr (std::is_void_v<T>)
         return dcCallVoid(vm.get(), fn);
       else
-        clt::unreachable("Invalid type for push_arg!");
+        clt::unreachable("Invalid type for call_fn!");
     }
   };
 }
