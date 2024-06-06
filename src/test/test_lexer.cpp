@@ -1,5 +1,12 @@
+/*****************************************************************//**
+ * @file   test_lexer.cpp
+ * @brief  Implementation of 'test_lexer'.
+ * 
+ * @author RPC
+ * @date   June 2024
+ *********************************************************************/
 #include "test_lexer.h"
-#include "colt_token_buffer.h"
+#include "lex/colt_token_buffer.h"
 #include "err/composable_reporter.h"
 #include <fstream>
 
