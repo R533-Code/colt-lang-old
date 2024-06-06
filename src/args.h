@@ -29,8 +29,12 @@ namespace clt
   inline std::string_view   OutputFile = {};
   /// @brief The input file name
   inline std::string_view   InputFile = {};
+  
   /// @brief Lexer test file name
   inline std::string_view   LexerTestFile = {};
+  /// @brief Test Foreign Functional Inteface used by the interpreter
+  inline bool               FFITest = false;
+
   /// @brief The maximum number of messages
   inline Option<u16>        MaxMessages = 128;
   /// @brief The maximum number of warnings
@@ -92,6 +96,8 @@ namespace clt
 
     cl::Opt<"test-lexer", cl::desc<"Lexer test file name (if -run-tests)">,
       cl::location<LexerTestFile>, cl::value_desc<"file_path">>,
+    cl::Opt<"test-ffi", cl::desc<"Test FFI (if -run-tests)">,
+      cl::callback<[] { clt::FFITest = true; }>>,
     
     NO_WARN_FOR_ARG("cf_nan", "No warnings for NaNs when constant folding.",
       GlobalWarnFor.constant_folding_nan),
