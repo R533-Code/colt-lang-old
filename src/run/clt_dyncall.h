@@ -113,6 +113,9 @@ namespace clt::run
     template<typename T, typename... Args>
     T call(T(*fn)(Args...)) noexcept
     {
+      ON_SCOPE_EXIT{
+        dcReset(vm.get());
+      };
       if constexpr (std::same_as<T, char> || std::same_as<T, unsigned char> || std::same_as<T, signed char>)
         return (T)dcCallChar(vm.get(), (void*)fn);
       else if constexpr (std::same_as<T, bool>)
@@ -151,10 +154,7 @@ namespace clt::run
     /// @param return_t The return type of the function
     /// @return QWORD that represents the return value
     QWORD_t call_fn(void* fn, run::TypeOp return_t) noexcept
-    {
-      ON_SCOPE_EXIT{
-        dcReset(vm.get());
-      };
+    {      
       QWORD_t ret;
       switch (return_t)
       {
