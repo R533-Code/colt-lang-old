@@ -1,6 +1,5 @@
 #include "run_tests.h"
 #include "args.h"
-#include "lex/test_lexer.h"
 
 namespace clt
 {

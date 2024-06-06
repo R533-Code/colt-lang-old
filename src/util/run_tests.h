@@ -9,7 +9,8 @@
 #define HG_COLT_RUN_TESTS
 
 #include "io/print.h"
-#include "lex/test_lexer.h"
+#include "test/test_lexer.h"
+#include "test/test_ffi.h"
 
 namespace clt
 {
