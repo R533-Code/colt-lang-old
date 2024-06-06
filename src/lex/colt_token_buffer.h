@@ -237,7 +237,7 @@ namespace clt::lng
       owns(start);
       return TokenRange{ start.info_index, start.info_index + 1, buffer_id };
 #else
-      return TokenRange{ start.info_index, end.info_index };
+      return TokenRange{ start.info_index, start.info_index + 1 };
 #endif // COLT_DEBUG
     }
 
