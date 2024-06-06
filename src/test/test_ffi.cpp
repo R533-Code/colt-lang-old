@@ -8,9 +8,9 @@
 #include "test_ffi.h"
 
 #define TEST_IDENTITY(type, value) do { binder.push_arg((type)value); \
-if (binder.call(+[](decltype(value) a) { return a; }) != (type)value) \
+if (binder.call(+[](decltype(value) a) { return a; }) != (type)value) { \
   ++error_count, \
-  io::print_error("FFI does not work for '" #type "'."); \
+  io::print_error("FFI does not work for '" #type "'."); }\
 } while (false)
 
 extern "C" void CLT_NOP()
@@ -30,7 +30,7 @@ namespace clt::test
     TEST_IDENTITY(char, 'a');
     TEST_IDENTITY(bool, true);
     TEST_IDENTITY(bool, false);
-    
+
     TEST_IDENTITY(i8, std::numeric_limits<i8>::min());
     TEST_IDENTITY(u8, std::numeric_limits<u8>::max());
     
