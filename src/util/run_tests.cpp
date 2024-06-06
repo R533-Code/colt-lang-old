@@ -18,6 +18,11 @@ namespace clt
       ++run_test_count;
       test::test_lexer(LexerTestFile, error_count);
     }
+    if (FFITest)
+    {
+      ++run_test_count;
+      test::test_ffi(error_count);
+    }
 
     if (run_test_count == 0)
     {
