@@ -4,3 +4,6 @@
 [submodule "libraries/scnlib"]
 	path = libraries/scnlib
 	url = https://github.com/eliaskosunen/scnlib.git
+[submodule "libraries/dyncall"]
+	path = libraries/dyncall
+	url = https://github.com/LWJGL-CI/dyncall.git
