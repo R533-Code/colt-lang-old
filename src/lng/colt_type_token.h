@@ -16,7 +16,7 @@ namespace clt::lng
   class TypeBuffer;
 
   /// @brief Represent a type through its index
-  CREATE_TOKEN_TYPE(TypeToken, u32, std::numeric_limits<u32>::max(),
+  CREATE_TOKEN_TYPE(TypeToken, u32, std::numeric_limits<u32>::max() - 1,
     TypeBuffer);
 }
 
