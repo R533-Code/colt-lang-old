@@ -35,6 +35,7 @@ if constexpr (std::same_as<___IMPL_type, clt::lng::TypeToken>) \
 if constexpr (std::same_as<___IMPL_type, clt::lng::TypeVariant>) \
   if (__IMPL_WRAP_IN_IILAMBDA(expr.isError())) \
     return to_ret; \
+clt::unreachable("Invalid type!"); \
 }([&]() -> decltype(auto) {})
 
 
