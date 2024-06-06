@@ -113,6 +113,9 @@ target_link_libraries(${COLT_EXECUTABLE_NAME} PUBLIC fmt::fmt)
 add_subdirectory("${PROJECT_SOURCE_DIR}/libraries/scnlib")
 target_link_libraries(${COLT_EXECUTABLE_NAME} PUBLIC scn::scn)
 
+add_subdirectory("${PROJECT_SOURCE_DIR}/libraries/dyncall")
+target_link_libraries(${COLT_EXECUTABLE_NAME} PUBLIC dyncall_s)
+
 
 # Directories for '#include <...>'
 target_include_directories(${COLT_EXECUTABLE_NAME} PUBLIC 
@@ -120,6 +123,7 @@ target_include_directories(${COLT_EXECUTABLE_NAME} PUBLIC
   SYSTEM # So no warning is shown
   "${CMAKE_SOURCE_DIR}/libraries/fmt/include"
   "${CMAKE_SOURCE_DIR}/libraries/scnlib/include"
+  "${CMAKE_SOURCE_DIR}/libraries/dyncall/"
   #"${CMAKE_SOURCE_DIR}/libraries/llvm-project/llvm/include"
   #"${CMAKE_BINARY_DIR}/libraries/llvm-project/llvm/include"
 )
