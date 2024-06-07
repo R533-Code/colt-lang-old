@@ -27,7 +27,6 @@
 #include <exception>
 
 #include "meta/meta_traits.h"
-#include "config_type.h"
 #include "assertions.h"
 
  /// @brief 8-bit signed integer
@@ -55,23 +54,6 @@ using f64 = double;
 
 namespace clt
 {
-#ifdef COLT_DEBUG
-  /// @brief Check if the current build is on DEBUG configuration
-  /// @return True if on DEBUG
-  [[nodiscard]]
-  consteval bool isDebugBuild() noexcept { return true; }
-#else
-  /// @brief Check if the current build is on DEBUG configuration
-  /// @return True if on DEBUG
-  [[nodiscard]]
-  consteval bool isDebugBuild() noexcept { return false; }
-#endif // COLT_DEBUG
-
-  /// @brief Check if the current build is on RELEASE configuration
-  /// @return True if on RELEASE (not on DEBUG)
-  [[nodiscard]]
-  consteval bool isReleaseBuild() noexcept { return !isDebugBuild(); }
-
   template<typename To, typename From>
   /// @brief Helper to converts a pointer to a type to a pointer to another type
   /// @tparam To The type to convert

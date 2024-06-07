@@ -40,7 +40,6 @@
 #include <source_location>
 #include "io/print.h"
 #include "macros.h"
-#include "config_type.h"
 
 namespace clt::details
 {

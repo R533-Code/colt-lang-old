@@ -17,7 +17,6 @@
 #include <dyncall/dyncall.h>
 #include <common/assertions.h>
 #include <common/types.h>
-#include <common/raii_helper.h>
 #include <run/qword_op.h>
 
 namespace clt::run

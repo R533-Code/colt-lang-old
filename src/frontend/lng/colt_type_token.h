@@ -9,7 +9,7 @@
 #define HG_COLTC_TYPE_TOKEN
 
 #include "common/types.h"
-#include "common/token_helper.h"
+#include "common/token_type.h"
 
 namespace clt::lng
 {

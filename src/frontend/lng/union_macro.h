@@ -10,7 +10,7 @@
 #define HG_COLTC_MACRO_HELPER
 
 #include "common/macros.h"
-#include "common/token_helper.h"
+#include "common/token_type.h"
 #include <algorithm>
 
 #define IMPL_FORWARD_DECLARE_TYPE_LIST(a) class a;

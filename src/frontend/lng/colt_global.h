@@ -1,7 +1,7 @@
 #ifndef HG_COLT_GLOBAL
 #define HG_COLT_GLOBAL
 
-#include "lng/macro_helper.h"
+#include "lng/union_macro.h"
 
 DECLARE_ENUM_WITH_TYPE(u8, clt::lng, GlobalID,
   GLOBAL_FN,

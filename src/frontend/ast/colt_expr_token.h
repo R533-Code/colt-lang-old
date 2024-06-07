@@ -9,7 +9,7 @@
 #define HG_COLT_EXPR_TOKEN
 
 #include "meta/meta_type_list.h"
-#include "lng/macro_helper.h"
+#include "lng/union_macro.h"
 #include "lex/colt_token_buffer.h"
 #include "lng/colt_type_buffer.h"
 

@@ -54,7 +54,7 @@ namespace clt
     {
       if (!is_none_v)
       {
-        details::ptr_to<T*>(opt_buffer)->~T();
+        ptr_to<T*>(opt_buffer)->~T();
         is_none_v = true;
       }
     }
@@ -107,7 +107,7 @@ namespace clt
       : is_none_v(to_copy.is_none_v)
     {
       if (!is_none_v)
-        new(opt_buffer) T(*details::ptr_to<const T*>(to_copy.opt_buffer));
+        new(opt_buffer) T(*ptr_to<const T*>(to_copy.opt_buffer));
     }
 
     /// @brief Move constructor.
@@ -117,7 +117,7 @@ namespace clt
       : is_none_v(to_move.is_none_v)
     {
       if (!is_none_v)
-        new(opt_buffer) T(std::move(*details::ptr_to<T*>(to_move.opt_buffer)));
+        new(opt_buffer) T(std::move(*ptr_to<T*>(to_move.opt_buffer)));
     }
 
     /// @brief Copy assignment operator
@@ -132,7 +132,7 @@ namespace clt
       if (to_copy.is_value())
       {
         is_none_v = false;
-        new(opt_buffer) T(*details::ptr_to<const T*>(to_copy.opt_buffer));
+        new(opt_buffer) T(*ptr_to<const T*>(to_copy.opt_buffer));
       }
       return *this;
     }
@@ -149,7 +149,7 @@ namespace clt
       if (to_move.is_value())
       {
         is_none_v = false;
-        new(opt_buffer) T(std::move(*details::ptr_to<T*>(to_move.opt_buffer)));
+        new(opt_buffer) T(std::move(*ptr_to<T*>(to_move.opt_buffer)));
       }
       return *this;
     }
@@ -217,7 +217,7 @@ namespace clt
     constexpr const T* operator->() const noexcept
     {
       assert_true("Option does not contain a value!", is_value());
-      return details::ptr_to<const T*>(opt_buffer);
+      return ptr_to<const T*>(opt_buffer);
     }
 
       /// @brief Returns the stored value.
@@ -225,7 +225,7 @@ namespace clt
     constexpr T* operator->() noexcept
     {
       assert_true("Option does not contain a value!", is_value());
-      return details::ptr_to<T*>(opt_buffer);
+      return ptr_to<T*>(opt_buffer);
     }
 
     /// @brief Returns the stored value.
@@ -233,7 +233,7 @@ namespace clt
     constexpr const T& operator*() const& noexcept
     {
       assert_true("Option does not contain a value!", is_value());
-      return *details::ptr_to<const T*>(opt_buffer);
+      return *ptr_to<const T*>(opt_buffer);
     }
 
     /// @brief Returns the stored value.
@@ -241,7 +241,7 @@ namespace clt
     constexpr T& operator*() & noexcept
     {
       assert_true("Option does not contain a value!", is_value());
-      return *details::ptr_to<T*>(opt_buffer);
+      return *ptr_to<T*>(opt_buffer);
     }
 
     /// @brief Returns the stored value.
@@ -249,7 +249,7 @@ namespace clt
     constexpr const T&& operator*() const&& noexcept
     {
       assert_true("Option does not contain a value!", is_value());
-      return *details::ptr_to<const T*>(opt_buffer);
+      return *ptr_to<const T*>(opt_buffer);
     }
 
     /// @brief Returns the stored value.
@@ -257,7 +257,7 @@ namespace clt
     constexpr T&& operator*() && noexcept
     {
       assert_true("Option does not contain a value!", is_value());
-      return std::move(*details::ptr_to<T*>(opt_buffer));
+      return std::move(*ptr_to<T*>(opt_buffer));
     }
 
     /// @brief Returns the stored value.
@@ -265,7 +265,7 @@ namespace clt
     constexpr const T& value() const& noexcept
     {
       assert_true("Option does not contain a value!", is_value());
-      return *details::ptr_to<const T*>(opt_buffer);
+      return *ptr_to<const T*>(opt_buffer);
     }
 
     /// @brief Returns the stored value.
@@ -273,7 +273,7 @@ namespace clt
     constexpr T& value() & noexcept
     {
       assert_true("Option does not contain a value!", is_value());
-      return *details::ptr_to<T*>(opt_buffer);
+      return *ptr_to<T*>(opt_buffer);
     }
 
     /// @brief Returns the stored value.
@@ -281,7 +281,7 @@ namespace clt
     constexpr const T&& value() const&& noexcept
     {
       assert_true("Option does not contain a value!", is_value());
-      return *details::ptr_to<const T*>(opt_buffer);
+      return *ptr_to<const T*>(opt_buffer);
     }
 
     /// @brief Returns the stored value.
@@ -290,7 +290,7 @@ namespace clt
     constexpr T&& value() && noexcept
     {
       assert_true("Option does not contain a value!", is_value());
-      return std::move(*details::ptr_to<T*>(opt_buffer));
+      return std::move(*ptr_to<T*>(opt_buffer));
     }
 
     /// @brief Returns the value if contained, else 'default_value'

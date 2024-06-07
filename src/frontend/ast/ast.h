@@ -12,7 +12,6 @@
 #include "parsed_unit.h"
 #include "colt_expr.h"
 #include "run/qword_op.h"
-#include "common/exit_recursion.h"
 
 namespace clt::lng
 {

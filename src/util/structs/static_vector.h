@@ -25,10 +25,10 @@ namespace clt
 
     /// @brief Returns a pointer to the internal buffer
     /// @return Pointer to the buffer
-    constexpr T* ptr() noexcept { return details::ptr_to<T*>(buffer); }
+    constexpr T* ptr() noexcept { return ptr_to<T*>(buffer); }
     /// @brief Returns a pointer to the internal buffer
     /// @return Pointer to the buffer
-    constexpr const T* ptr() const noexcept { return details::ptr_to<const T*>(buffer); }
+    constexpr const T* ptr() const noexcept { return ptr_to<const T*>(buffer); }
 
   public:
     /// @brief The value type stored in the list

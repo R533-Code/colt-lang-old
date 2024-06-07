@@ -13,7 +13,6 @@
 #include "ascii.h"
 #include "err/error_reporter.h"
 #include "colt_token_buffer.h"
-#include "common/exit_recursion.h"
 
 namespace clt::lng
 {

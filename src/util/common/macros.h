@@ -11,6 +11,8 @@
 #include <cstdio>
 #include <cstdlib>
 
+#include "colt_config.h"
+
 #if defined(__has_builtin)
   #if __has_builtin(__builtin_debugtrap)
     /// @brief Intrinsic trap

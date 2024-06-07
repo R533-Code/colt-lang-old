@@ -9,7 +9,7 @@
 #define HG_META_TRAITS
 
 #include <type_traits>
-#include "common/config_type.h"
+#include "common/colt_config.h"
 
 namespace clt::meta
 {

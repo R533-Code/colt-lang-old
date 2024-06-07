@@ -20,7 +20,7 @@
 #include "io/input.h"
 
 #include "types.h"
-#include "config_type.h"
+#include "colt_config.h"
 #include "macros.h"
 #include "assertions.h"
 
