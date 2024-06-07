@@ -106,15 +106,20 @@ endif()
 message(STATUS "Setting up libraries...")
 
 # Add {fmt}
+message(STATUS "Adding 'fmt'...")
 add_subdirectory("${PROJECT_SOURCE_DIR}/libraries/fmt")
 target_link_libraries(${COLT_EXECUTABLE_NAME} PUBLIC fmt::fmt)
 
 # Add scnlib
+message(STATUS "Adding 'scnlib'...")
 add_subdirectory("${PROJECT_SOURCE_DIR}/libraries/scnlib")
 target_link_libraries(${COLT_EXECUTABLE_NAME} PUBLIC scn::scn)
 
+# Add dyncall and dynload
+message(STATUS "Adding 'dyncall' and 'dynload'...")
 add_subdirectory("${PROJECT_SOURCE_DIR}/libraries/dyncall")
 target_link_libraries(${COLT_EXECUTABLE_NAME} PUBLIC dyncall_s)
+target_link_libraries(${COLT_EXECUTABLE_NAME} PUBLIC dynload_s)
 
 
 # Directories for '#include <...>'
