@@ -5,9 +5,9 @@
  * @author RPC
  * @date   February 2024
  *********************************************************************/
-#include <util/colt_pch.h>
+#include "common/colt_pch.h"
 #include "args.h"
-#include "util/run_tests.h"
+#include "test/run_tests.h"
 #include "ast/parsed_program.h"
 
 using namespace clt;

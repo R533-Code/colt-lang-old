@@ -36,7 +36,7 @@ endif()
 
 # Add precompiled header
 target_precompile_headers(${COLT_EXECUTABLE_NAME} PUBLIC 
-  "$<$<COMPILE_LANGUAGE:CXX>:${PROJECT_SOURCE_DIR}/src/util/colt_pch.h>")
+  "$<$<COMPILE_LANGUAGE:CXX>:${PROJECT_SOURCE_DIR}/src/util/common/colt_pch.h>")
 
 # Define COLT_DEBUG_BUILD for debug config
 target_compile_definitions(
@@ -125,6 +125,9 @@ target_link_libraries(${COLT_EXECUTABLE_NAME} PUBLIC dynload_s)
 # Directories for '#include <...>'
 target_include_directories(${COLT_EXECUTABLE_NAME} PUBLIC 
   "${CMAKE_SOURCE_DIR}/src"
+  "${CMAKE_SOURCE_DIR}/src/frontend"
+  "${CMAKE_SOURCE_DIR}/src/backend"
+  "${CMAKE_SOURCE_DIR}/src/util"
   SYSTEM # So no warning is shown
   "${CMAKE_SOURCE_DIR}/libraries/fmt/include"
   "${CMAKE_SOURCE_DIR}/libraries/scnlib/include"
@@ -310,6 +313,6 @@ else()
 endif()
 
 configure_file("${CMAKE_SOURCE_DIR}/resources/cmake/cmake_colt_config.in"
-  "${CMAKE_SOURCE_DIR}/src/util/colt_config.h")
+  "${CMAKE_SOURCE_DIR}/src/util/common/colt_config.h")
 
 message(STATUS "Finished configuring 'colt_config.h'!")

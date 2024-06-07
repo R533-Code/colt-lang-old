@@ -9,8 +9,8 @@
 #define HG_CMD_OPTIONS
 
 #include <io/print.h>
-#include "util/colt_config.h"
-#include <util/args_parsing.h>
+#include "common/colt_config.h"
+#include <common/args_parsing.h>
 #include <err/warn.h>
 
 #define NO_WARN_FOR_ARG(name, descr, member) \
