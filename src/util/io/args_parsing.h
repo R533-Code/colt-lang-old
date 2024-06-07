@@ -18,21 +18,6 @@
 
 namespace clt::cl
 {
-  /// @brief Controls how the value is specified
-  enum SpecifyValue
-    : u8
-  {
-    /// @brief Value can be specified using '=' or not specified at all.
-    /// -foo or -foo=true but not -foo true
-    ValueOptional,
-    /// @brief Value need to be specified using '=' or in the argument after.
-    /// -foo=true or -foo true
-    ValueRequired,
-    /// @brief Value should not be specified.
-    /// -foo only.
-    ValueDisallowed,
-  };
-
   namespace details
   {
     template<meta::StringLiteral DESC>
@@ -145,26 +130,6 @@ namespace clt::cl
       static constexpr bool value = IsCallback<T>;
     };
 
-    template<SpecifyValue T>
-    struct SpecifyValueT
-    {
-      /// @brief Concept helper
-      static constexpr bool is_specify = true;
-
-      static constexpr SpecifyValue value = T;
-    };
-
-    template<typename T>
-    /// @brief True if Callback
-    concept IsSpecifyValueT = T::is_specify;
-
-    template<typename T>
-    /// @brief ::value is true if T IsCallback
-    struct is_specify_value
-    {
-      static constexpr bool value = IsSpecifyValueT<T>;
-    };
-
     template<typename T, typename... Ts>
     /// @brief Finds a Description type in the parameter pack, or returns Description<"">
     using find_description_t = meta::find_first_match_t<is_description, Description<"">, T, Ts...>;
@@ -184,10 +149,6 @@ namespace clt::cl
     template<typename T, typename... Ts>
     /// @brief Finds a Description type in the parameter pack, or returns an empty callback
     using find_callback_t = meta::find_first_match_t<is_callback, Callback<nullptr>, T, Ts...>;
-
-    template<typename T, typename... Ts>
-    /// @brief Finds a Description type in the parameter pack, or returns SpecifyValue{255}
-    using find_specify_t = meta::find_first_match_t<is_specify_value, SpecifyValueT<SpecifyValue{ 255 }>, T, Ts...>;
   }
 
   template<meta::StringLiteral T>
@@ -229,11 +190,6 @@ namespace clt::cl
     static constexpr auto location = details::find_location_t<T, Ts...>::ptr;
     /// @brief The callback to call upon detection (can be null if location is not null)
     static constexpr auto callback = details::find_callback_t<T, Ts...>::ptr;
-
-    static constexpr auto _Specify = details::find_specify_t<T, Ts...>::value;
-
-    static constexpr SpecifyValue specify = (_Specify != SpecifyValue{ 255 }) ? _Specify
-      : (std::is_same_v<decltype(location), bool*>) ? SpecifyValue::ValueOptional : SpecifyValue::ValueRequired;
 
     static_assert(name != "",
       "Empty name is not allowed!");
