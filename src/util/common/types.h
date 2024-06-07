@@ -23,6 +23,9 @@
 
 #include <cstdint>
 #include <type_traits>
+#include <memory>
+#include <exception>
+
 #include "meta/meta_traits.h"
 #include "config_type.h"
 #include "assertions.h"
@@ -52,23 +55,40 @@ using f64 = double;
 
 namespace clt
 {
+#ifdef COLT_DEBUG
+  /// @brief Check if the current build is on DEBUG configuration
+  /// @return True if on DEBUG
+  [[nodiscard]]
+  consteval bool isDebugBuild() noexcept { return true; }
+#else
+  /// @brief Check if the current build is on DEBUG configuration
+  /// @return True if on DEBUG
+  [[nodiscard]]
+  consteval bool isDebugBuild() noexcept { return false; }
+#endif // COLT_DEBUG
+
+  /// @brief Check if the current build is on RELEASE configuration
+  /// @return True if on RELEASE (not on DEBUG)
+  [[nodiscard]]
+  consteval bool isReleaseBuild() noexcept { return !isDebugBuild(); }
+
+  template<typename To, typename From>
+  /// @brief Helper to converts a pointer to a type to a pointer to another type
+  /// @tparam To The type to convert
+  /// @tparam From The type to convert from
+  /// @param frm The value to convert
+  /// @return Converted value
+  constexpr To ptr_to(From frm) noexcept
+    requires std::is_pointer_v<To>&& std::is_pointer_v<From>
+  {
+    return static_cast<To>(
+      static_cast<
+      meta::match_cv_t<std::remove_pointer_t<From>, void>*
+      >(frm));
+  }
+
   namespace details
   {
-    template<typename To, typename From>
-    /// @brief Helper to converts a pointer to a type to a pointer to another type
-    /// @tparam To The type to convert
-    /// @tparam From The type to convert from
-    /// @param frm The value to convert
-    /// @return Converted value
-    constexpr To ptr_to(From frm) noexcept
-      requires std::is_pointer_v<To>&& std::is_pointer_v<From>
-    {
-      return static_cast<To>(
-        static_cast<
-        meta::match_cv_t<std::remove_pointer_t<From>, void>*
-        >(frm));
-    }
-
     template<typename T> requires (!std::is_reference_v<T>) && (!std::is_const_v<T>)
     /// @brief Represents an out parameter (with runtime checks)
     class OutDebug
@@ -659,6 +679,39 @@ namespace clt
   {
     using cnv_t = typename T::underlying_type;
     return T(std::bit_cast<cnv_t>(what));
+  }
+
+  namespace details
+  {
+    template <auto fn>
+    /// @brief Custom deleter for unique pointer
+    struct deleter_from_fn
+    {
+      template <typename T>
+      constexpr void operator()(T* arg) const { fn(arg); }
+    };
+  }  
+
+  template <typename T, auto fn>
+  /// @brief Move-only resource that is automatically closed
+  using RAIIResource = std::unique_ptr<T, details::deleter_from_fn<fn>>;
+
+  /// @brief Used to unwind a recursion (to avoid stack overflow)
+  class ExitRecursionExcept
+    : public std::exception
+  {
+  public:
+    ExitRecursionExcept() = default;
+  };
+
+  template<meta::Integral T>
+  /// @brief Increments an integer and throw on overflow (ExitRecursionExcept)
+  /// @param a The integer to increment
+  void checked_inc(T& a)
+  {
+    if (a == std::numeric_limits<T>::max())
+      throw ExitRecursionExcept{};
+    ++a;
   }
 }
 

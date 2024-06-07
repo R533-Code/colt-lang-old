@@ -1,5 +1,5 @@
 /*****************************************************************//**
- * @file   token_helper.h
+ * @file   token_type.h
  * @brief  Contains macros to simplify creating tokens.
  * 
  * @author RPC
