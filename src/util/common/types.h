@@ -396,6 +396,9 @@ namespace clt
     };    
   }
 
+  /// @brief Boolean that represents a success/failure state that must be checked.
+  using ErrorFlag = std::conditional_t<isDebugBuild(), details::ErrorDebug, details::ErrorRelease>;
+
   template<typename T> requires (!std::is_reference_v<T>) && (!std::is_const_v<T>)
   /// @brief An 'out' parameter, which is a uninitialized reference that must be
   /// initialized inside the function. 'out' parameters are taken as is (without const or references).
@@ -405,11 +408,7 @@ namespace clt
   template<typename T> requires (!std::is_reference_v<T>) && (!std::is_const_v<T>)
   /// @brief An uninitialized variable.
   /// @tparam T The type of the uninitialized variable
-  using uninit = std::conditional_t<isDebugBuild(), details::UninitDebug<T>, details::UninitRelease<T>>;
-
-  /// @brief Boolean that represents a success/failure state that must be checked.
-  using ErrorFlag = std::conditional_t<isDebugBuild(), details::ErrorDebug, details::ErrorRelease>;
-
+  using uninit = std::conditional_t<isDebugBuild(), details::UninitDebug<T>, details::UninitRelease<T>>;  
 
   namespace meta
   {
