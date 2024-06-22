@@ -6,9 +6,6 @@ namespace clt
 #ifdef COLT_DEBUG
   void run_tests() noexcept
   {
-    if (!RunTests)
-      return;
-
     u32 error_count = 0;
     u32 run_test_count = 0;
     
