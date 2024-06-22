@@ -30,7 +30,7 @@ namespace clt::lng
 
 		/// @brief Return a WarnFor object which warns for everything
 		/// @return WarnFor that warns for everything
-		static constexpr WarnFor WarnAll() noexcept
+		static constexpr WarnFor warn_all() noexcept
 		{
 			return WarnFor{};
 		}

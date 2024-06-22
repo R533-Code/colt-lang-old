@@ -42,7 +42,7 @@ namespace clt
   /// @brief The maximum number of errors
   inline Option<u16>        MaxErrors = 32;
   /// @brief What to warn for
-  inline lng::WarnFor       GlobalWarnFor = lng::WarnFor::WarnAll();
+  inline lng::WarnFor       GlobalWarnFor = lng::WarnFor::warn_all();
 
   namespace details
   {

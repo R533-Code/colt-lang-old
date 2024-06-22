@@ -529,7 +529,7 @@ namespace clt::lng
 
     /// @brief Check if the variable was declared with an initial value.
     /// @return True if the variable was declared with an initial value
-    constexpr bool is_init() const noexcept { return value.isValue(); }
+    constexpr bool is_init() const noexcept { return value.is_value(); }
 
     /// @brief Returns the initial value of the declared variable
     /// @return The initial value of the variable
@@ -612,7 +612,7 @@ namespace clt::lng
 
     /// @brief Check if the current scope has a parent
     /// @return True if the scope has a parent
-    constexpr bool has_parent() const noexcept { return parent_expr.isValue(); }
+    constexpr bool has_parent() const noexcept { return parent_expr.is_value(); }
 
     /// @brief Returns the parent of the current scope.
     /// @return The parent of the current scope
@@ -658,7 +658,7 @@ namespace clt::lng
     
     /// @brief Check if this condition has an else branch
     /// @return True if this condition has an else branch
-    constexpr bool has_else() const noexcept { return else_stmt.isValue(); }
+    constexpr bool has_else() const noexcept { return else_stmt.is_value(); }
 
     /// @brief Returns the else statement of the condition.
     /// @return The else statement

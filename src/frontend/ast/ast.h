@@ -655,7 +655,7 @@ namespace clt::lng
       StmtExprToken if_stmt, OptTok<StmtExprToken> else_stmt) noexcept;
 
     /// @brief Constant folds two literals using 'op' as the binary operator.
-    /// This method will print warnings following 'WarnAll'
+    /// This method will print warnings following 'warn_all'
     /// @param range The range of tokens representing the expression
     /// @param lhs The left hand side of the expression
     /// @param op The operator
@@ -663,7 +663,7 @@ namespace clt::lng
     /// @return LiteralExpr or ErrorExpr
     ProdExprToken constant_fold(TokenRange range, const LiteralExpr& lhs, BinaryOp op, const LiteralExpr& rhs) noexcept;
     /// @brief Constant folds a literal using 'op' as the unary operator.
-    /// This method will print warnings following 'WarnAll'
+    /// This method will print warnings following 'warn_all'
     /// @param range The range of tokens representing the expression
     /// @param op The operator
     /// @param lhs The expression on which the operator is applied
@@ -671,7 +671,7 @@ namespace clt::lng
     ProdExprToken constant_fold(TokenRange range, UnaryOp op, const LiteralExpr& lhs) noexcept;
 
     /// @brief Constant folds a cast
-    /// This method will print warnings following 'WarnAll'
+    /// This method will print warnings following 'warn_all'
     /// @param range The range of tokens representing the expression
     /// @param to_conv The literal to convert
     /// @param to The type to convert to

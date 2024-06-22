@@ -86,16 +86,16 @@ namespace clt::lng
 
     /// @brief Check if the optional does not contain a value
     /// @return True if the optional is empty
-    constexpr bool isNone() const noexcept { return index == INVALID; }
+    constexpr bool is_none() const noexcept { return index == INVALID; }
     /// @brief Check if the optional contains a value
     /// @return True if the optional is not empty
-    constexpr bool isValue() const noexcept { return !isNone(); }
+    constexpr bool is_value() const noexcept { return !is_none(); }
 
-    /// @brief Returns the value, isValue must be true.
+    /// @brief Returns the value, is_value must be true.
     /// @return The value
     constexpr T value() const noexcept
     {
-      assert_true("OptTok was empty!", isValue());
+      assert_true("OptTok was empty!", is_value());
       return T{ index };
     }
   };

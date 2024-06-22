@@ -139,7 +139,7 @@ namespace clt::lng
 
   ProdExprToken ASTMaker::parse_unary_and(ProdExprToken child, const TokenRangeGenerator& range) noexcept
   {
-    if (auto pchild = decl_from_read(child); pchild.isValue())
+    if (auto pchild = decl_from_read(child); pchild.is_value())
       return Expr().add_address_of(range.range(), pchild.value());
 
     report<ERROR>(range.range(), nullptr,
@@ -488,7 +488,7 @@ namespace clt::lng
       init = rhs;
       // If no type was specified, then the variable type is
       // the type of right hand side.
-      if (var_type.isNone())
+      if (var_type.is_none())
         var_type = rhs_ref.type();
     }
     else // undefined
@@ -500,7 +500,7 @@ namespace clt::lng
           "Global variables must be initialized!");
         return Expr().add_error_stmt(range.range());
       }
-      if (var_type.isNone())
+      if (var_type.is_none())
       {
         report<report_as::ERROR>(identifier, current_panic,
           "An uninitialized variable must have a type!");
@@ -528,7 +528,7 @@ namespace clt::lng
       auto decl_ptr = Expr(decl).as<VarDeclExpr>();
       // Save the variable initialization info
       local_var_table.push_back(LocalVarInfo{ name, *decl_ptr,
-        init.isValue() ? VarStateFlag::INIT : VarStateFlag::UNDEF
+        init.is_value() ? VarStateFlag::INIT : VarStateFlag::UNDEF
         });
       // Register the current variable
       current_scope->decls().push_back(decl_ptr);
@@ -582,7 +582,7 @@ namespace clt::lng
     case TKN_LEFT_CURLY:
       return Expr(parse_scope(false)).as_base();
     case TKN_KEYWORD_if:
-      if (auto cond = parse_condition(); cond.isValue())
+      if (auto cond = parse_condition(); cond.is_value())
         return Expr(cond.value()).as_base();
       return Expr(Expr().add_nop(range.range())).as_base();
       /*case TKN_KEYWORD_while:
