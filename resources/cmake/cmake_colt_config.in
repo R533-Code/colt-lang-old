@@ -66,7 +66,7 @@ namespace clt
   /// @brief Check if the current build is on RELEASE configuration
   /// @return True if on RELEASE (not on DEBUG)
   [[nodiscard]]
-  consteval bool is_release_build() noexcept { return !isDebugBuild(); }
+  consteval bool is_release_build() noexcept { return !is_debug_build(); }
 }
 
 #endif //COLT_CONFIG
