@@ -5,8 +5,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 project(Colt-Lang VERSION 0.0.1.8 LANGUAGES CXX)
 
-# Set default build type to Release
-set(CMAKE_BUILD_TYPE "Release")
+# Set default build type to Debug
+# set(CMAKE_BUILD_TYPE "Debug")
 
 # Save all the files to compile
 file(GLOB_RECURSE ColtHeaders "src/*.h")
