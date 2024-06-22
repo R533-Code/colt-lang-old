@@ -67,13 +67,13 @@ namespace clt::lng
     
     /// @brief Returns the count of errors generated
     /// @return The count of errors
-    u64 error_count()   const noexcept { return error_count; }
+    u64 error_count()   const noexcept { return _error_count; }
     /// @brief Returns the count of warnings generated
     /// @return The count of warnings
-    u64 warn_count()    const noexcept { return warn_count; }
+    u64 warn_count()    const noexcept { return _warn_count; }
     /// @brief Returns the count of messages generated
     /// @return The count of messages
-    u64 message_count() const noexcept { return message_count; }
+    u64 message_count() const noexcept { return _message_count; }
 
     /// @brief Destructor
     virtual ~ErrorReporter() noexcept {};

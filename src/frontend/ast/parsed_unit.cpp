@@ -41,7 +41,7 @@ namespace clt::lng
     u64 warn_c = reporter.warn_count();    
     
     // Lexing of the file
-    Lex(tokens, reporter, to_parse);
+    lex(tokens, reporter, to_parse);
     // Create AST of the file
     make_ast(*this);
     
@@ -49,16 +49,16 @@ namespace clt::lng
     _error_count = static_cast<u32>(reporter.error_count() - error_c);
     _warn_count = static_cast<u32>(reporter.warn_count() - warn_c);
 
-    return error_count ? ParseResult::COMP_ERROR : ParseResult::SUCCESS;
+    return _error_count ? ParseResult::COMP_ERROR : ParseResult::SUCCESS;
   }
   
   const ErrorReporter& ParsedUnit::reporter() const noexcept
   {
-    return program.reporter();
+    return _program.reporter();
   }
   
   ErrorReporter& ParsedUnit::reporter() noexcept
   {
-    return program.reporter();
+    return _program.reporter();
   }
 }

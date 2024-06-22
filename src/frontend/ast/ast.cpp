@@ -50,7 +50,7 @@ namespace clt::lng
 
   ProdExprToken ASTMaker::parse_primary_literal(const TokenRangeGenerator& range) noexcept
   {
-    assert_true("Expected literal token!", isLiteralToken(current()));
+    assert_true("Expected literal token!", is_literal(current()));
     //Save literal token
     auto literal_tkn = current();
 
@@ -58,9 +58,9 @@ namespace clt::lng
     consume_current();
 
     //TODO: add support for string literal
-    QWORD_t value = token_buffer().getLiteral(literal_tkn);
+    QWORD_t value = token_buffer().literal(literal_tkn);
     return Expr().add_literal(
-      range.range(), value, LiteralToBuiltinID(literal_tkn)
+      range.range(), value, literal_to_builtin(literal_tkn)
     );
   }
 
@@ -119,10 +119,10 @@ namespace clt::lng
     uninit<ProdExprToken> to_ret;
 
     // Handles literals (10, 0.5, ...)
-    if (isLiteralToken(current()))
+    if (is_literal(current()))
       to_ret = parse_primary_literal(range);
     // Handles unary operators (&, *, -, ...)
-    else if (isUnaryToken(current()))
+    else if (is_unary(current()))
       to_ret = parse_unary();
     // Handles (...)
     else if (current() == TKN_LEFT_PAREN)
@@ -149,13 +149,13 @@ namespace clt::lng
 
   ProdExprToken ASTMaker::parse_unary_star(ProdExprToken child, const TokenRangeGenerator& range) noexcept
   {
-    if (!Type(child).isAnyOpaquePtr())
+    if (!Type(child).is_any_opaque_ptr())
     {
       report<ERROR>(range.range(), nullptr,
         "Unary '*' can only be applied on a non-opaque pointer!");
       return Expr().add_error(range.range());
     }
-    else if (!Type(child).isAnyPtr())
+    else if (!Type(child).is_any_ptr())
     {
       report<ERROR>(range.range(), nullptr,
         "Unary '*' can only be applied on pointer types!");
@@ -166,7 +166,7 @@ namespace clt::lng
 
   ProdExprToken ASTMaker::parse_unary()
   {
-    assert_true("parse_unary must be called when a unary token is hit!", isUnaryToken(current()));
+    assert_true("parse_unary must be called when a unary token is hit!", is_unary(current()));
     using enum Lexeme;
     auto depth = add_depth();
     auto range = start_range();
@@ -218,9 +218,9 @@ namespace clt::lng
 
     // The binary operators
     Token binary_op = current();
-    if (isAssignmentToken(binary_op))
+    if (is_assignment(binary_op))
       return parse_assignment(lhs, range);
-    if (isComparisonToken(binary_op))
+    if (is_comparison(binary_op))
     {
       lhs = parse_comparison(binary_op, lhs, range);
       binary_op = current();
@@ -237,14 +237,14 @@ namespace clt::lng
       ProdExprToken rhs = parse_binary_internal(binary_op);
       PROPAGATE_ERROR(rhs, rhs);
 
-      if (!isBinaryToken(binary_op))
+      if (!is_binary(binary_op))
       {
         report<report_as::ERROR>(binary_op, current_panic, "Expected a binary operator!");
         return Expr().add_error(range.range());
       }
       //Pratt's parsing, which allows operators priority
       lhs = make_binary(range.range(), lhs, TokenToBinary(binary_op), rhs);
-      if (isComparisonToken(current()))
+      if (is_comparison(current()))
         lhs = parse_comparison(current(), lhs, range);
 
       //Update the Token
@@ -263,7 +263,7 @@ namespace clt::lng
       return condition;
 
     auto range = Expr(condition).token_range();
-    if (!Type(condition).isBuiltinAnd(&is_bool))
+    if (!Type(condition).is_builtin_and(&is_bool))
     {
       report<report_as::ERROR>(range, nullptr,
         "Expression should be of type 'bool'!");
@@ -301,12 +301,12 @@ namespace clt::lng
       ProdExprToken rhs = parse_binary_internal(binary_op);
       PROPAGATE_ERROR(rhs, rhs);
 
-      if (!isBinaryToken(binary_op))
+      if (!is_binary(binary_op))
       {
         report<report_as::ERROR>(binary_op, current_panic, "Expected a binary operator!");
         return Expr().add_error(range.range());
       }
-      else if (isComparisonToken(binary_op))
+      else if (is_comparison(binary_op))
         lhs = parse_comparison(binary_op, lhs, rhs, range);
       else //Pratt's parsing, which allows operators priority
         lhs = make_binary(range.range(), lhs, TokenToBinary(binary_op), rhs);
@@ -324,7 +324,7 @@ namespace clt::lng
   {
     using enum Lexeme;
     using enum ComparisonSet;
-    assert_true("parse_comparison must be called when isComparisonToken(current())", isComparisonToken(comparison));
+    assert_true("parse_comparison must be called when isComparisonToken(current())", is_comparison(comparison));
     
     if (comparison == current())
       consume_current();    
@@ -336,7 +336,7 @@ namespace clt::lng
     ComparisonSet comparison_set = token_to_comparison_set(comparison);
     auto ret = make_binary(range.range(), lhs, TokenToBinary(comparison), rhs);
 
-    while (isComparisonToken(current()))
+    while (is_comparison(current()))
     {
       comparison = current();
       if (is_invalid_comparison_chain(comparison_set, token_to_comparison_set(comparison)))
@@ -369,7 +369,7 @@ namespace clt::lng
     // A bit_as conversion must have either the target or the starting
     // type be a byte type
     if (cnv == TKN_KEYWORD_bit_as
-      && !(Type(cnv_type).isBuiltinAnd(&is_bytes) || Type(to_conv).isBuiltinAnd(&is_bytes)))
+      && !(Type(cnv_type).is_builtin_and(&is_bytes) || Type(to_conv).is_builtin_and(&is_bytes)))
     {
       report<report_as::ERROR>(range.range(), nullptr,
         "'bit_as' conversion can only be applied on/to bytes types!");
@@ -463,10 +463,10 @@ namespace clt::lng
     auto identifier = current();
     PROPAGATE_ERROR(
       check_consume(TKN_IDENTIFIER, current_panic, "Expected an identifier!").is_error(),
-      Expr().add_error_stmt(token_buffer().getRangeFrom(identifier))
+      Expr().add_error_stmt(token_buffer().range_from(identifier))
     );
 
-    StringView name = token_buffer().getIdentifier(identifier);
+    StringView name = token_buffer().identifier(identifier);
     OptTok<TypeToken> var_type = None;
     if (current() == TKN_COLON)
     {
@@ -476,7 +476,7 @@ namespace clt::lng
     
     if (auto equal = current();
       check_consume(TKN_EQUAL, current_panic, "Expected a '='!").is_error())
-      return Expr().add_error_stmt(token_buffer().getRangeFrom(equal));
+      return Expr().add_error_stmt(token_buffer().range_from(equal));
     
     OptTok<ProdExprToken> init = None;
     // TODO: handle default constructor?
@@ -510,7 +510,7 @@ namespace clt::lng
 
     if (auto semicolon = current();
       check_consume(TKN_SEMICOLON, current_panic, "Expected a ';'!").is_error())
-      return Expr().add_error_stmt(token_buffer().getRangeFrom(semicolon));
+      return Expr().add_error_stmt(token_buffer().range_from(semicolon));
 
     if (is_global)
     {
@@ -605,7 +605,7 @@ namespace clt::lng
     break; default:
     {
       auto panic = scoped_set_panic(&ASTMaker::panic_consume_semicolon);
-      if (to_parse.token_buffer().makeSourceInfo(current()).expr == "pass")
+      if (to_parse.token_buffer().make_source_info(current()).expr == "pass")
       {
         consume_current();
         to_ret = Expr(Expr().add_nop(range.range())).as_base();
@@ -638,23 +638,23 @@ namespace clt::lng
     if (current() == TKN_KEYWORD_void)
     {
       consume_current(); //void
-      return Type().getVoidType();
+      return Type().void_type();
     }
-    if (isBuiltinToken(current()))
+    if (is_builtin(current()))
     {
       auto type = current();
       consume_current();
-      return Type().addBuiltin(keyword_to_builtin_id(type));
+      return Type().add_builtin(keyword_to_builtin_id(type));
     }
     if (current() == TKN_KEYWORD_opaque)
     {
       consume_current();
-      return Type().addOpaquePtr();
+      return Type().add_opaque_ptr();
     }
     if (current() == TKN_KEYWORD_mutopaque)
     {
       consume_current();
-      return Type().addMutOpaquePtr();
+      return Type().add_mut_opaque_ptr();
     }
     if (current() == TKN_KEYWORD_ptr || current() == TKN_KEYWORD_mutptr)
     {
@@ -665,13 +665,13 @@ namespace clt::lng
       {
         auto ptr_to = parse_typename();
         PROPAGATE_ERROR(ptr_to, ptr_to);
-        return is_mut ? Type().addMutPtr(ptr_to) : Type().addPtr(ptr_to);
+        return is_mut ? Type().add_mut_ptr(ptr_to) : Type().add_ptr(ptr_to);
       }
-      return Type().getErrorType();
+      return Type().error_type();
     }
     report<report_as::ERROR>(range.range(), current_panic,
       "Expected a typename!");
-    return Type().getErrorType();
+    return Type().error_type();
   }
 
   ErrorFlag ASTMaker::parse_local_var_mutability(bool& is_mut) noexcept
@@ -817,7 +817,7 @@ namespace clt::lng
       return Expr().add_error(range);
     }
 
-    auto support = Type(to_cast).castableTo(Type(to));
+    auto support = Type(to_cast).castable_to(Type(to));
     switch_no_default(support)
     {
     case BUILTIN:
@@ -852,10 +852,10 @@ namespace clt::lng
   ProdExprToken ASTMaker::constant_fold(TokenRange range, const LiteralExpr& lhs, BinaryOp op, const LiteralExpr& rhs) noexcept
   {
     assert_true("Expected built-in type!", Type(lhs).is<BuiltinType>(), Type(rhs).is<BuiltinType>());
-    const auto typeID = Type(lhs).as<BuiltinType>()->typeID();
+    const auto type_id = Type(lhs).as<BuiltinType>()->type_id();
 
-    auto [res, err] = constant_fold(op, lhs.value(), rhs.value(),
-      BuiltinToTypeOp(typeID));
+    auto [res, err] = lng::constant_fold(op, lhs.value(), rhs.value(),
+      BuiltinToTypeOp(type_id));
 
     if (err == run::DIV_BY_ZERO)
     {
@@ -874,13 +874,13 @@ namespace clt::lng
     const bool is_ret_bool = family == OpFamily::BOOL_LOGIC || family == OpFamily::COMPARISON;
 
     return Expr().add_literal(range, res,
-      is_ret_bool ? BuiltinID::BOOL : typeID
+      is_ret_bool ? BuiltinID::BOOL : type_id
     );
   }
 
   OptTok<StmtExprToken> ASTMaker::make_condition(TokenRange range, ProdExprToken condition, StmtExprToken if_stmt, OptTok<StmtExprToken> else_stmt) noexcept
   {
-    assert_true("Expected boolean type!", Type(condition).isBuiltinAnd(&is_bool));
+    assert_true("Expected boolean type!", Type(condition).is_builtin_and(&is_bool));
     if (auto literal = Expr(condition).as<LiteralExpr>(); literal != nullptr)
       return literal->value().is_none_set() ? else_stmt : OptTok<StmtExprToken>{ if_stmt };
     return Expr().add_condition(range, condition, if_stmt, else_stmt);
@@ -894,7 +894,7 @@ namespace clt::lng
     {
     case OP_NEGATE:
     {
-      const auto ID = Type(lhs).as<BuiltinType>()->typeID();
+      const auto ID = Type(lhs).as<BuiltinType>()->type_id();
       auto [result, err] = run::neg(lhs.value(), BuiltinToTypeOp(ID));
       if (warn_for(err))
         report<report_as::WARNING>(range, nullptr, "{}", run::toExplanation(err));
@@ -909,7 +909,7 @@ namespace clt::lng
     case OP_BIT_NOT:
     {
       // No errors are possible
-      const auto ID = Type(lhs).as<BuiltinType>()->typeID();
+      const auto ID = Type(lhs).as<BuiltinType>()->type_id();
       auto [result, err] = run::bit_not(lhs.value(), run::to_sizeof(BuiltinToTypeOp(ID)));
       return Expr().add_literal(range, result, ID);
     }
@@ -919,15 +919,15 @@ namespace clt::lng
   ProdExprToken ASTMaker::constant_fold(TokenRange range, const LiteralExpr& to_conv, const BuiltinType& to) noexcept
   {
     auto [result, err] = run::cnv(to_conv.value(),
-      BuiltinToTypeOp(Type(to_conv).as<BuiltinType>()->typeID()), BuiltinToTypeOp(to.typeID()));
+      BuiltinToTypeOp(Type(to_conv).as<BuiltinType>()->type_id()), BuiltinToTypeOp(to.type_id()));
     if (warn_for(err))
       report<report_as::WARNING>(range, nullptr, "{}", run::toExplanation(err));
-    return Expr().add_literal(range, result, to.typeID());
+    return Expr().add_literal(range, result, to.type_id());
   }
 
   bool ASTMaker::is_literal_zero(ProdExprToken expr) const noexcept
   {
-    return Type(expr).isBuiltinAnd(&is_integral)
+    return Type(expr).is_builtin_and(&is_integral)
       && Expr(expr).as<LiteralExpr>()->value().is_none_set();
   }
   
@@ -980,7 +980,7 @@ namespace clt::lng
     auto& tkn_buffer = unit.token_buffer();
     auto& expr = *tkn;
     
-    auto info = tkn_buffer.makeSourceInfo(expr.token_range());
+    auto info = tkn_buffer.make_source_info(expr.token_range());
     switch (expr.classof())
     {
     break; case EXPR_ERROR:
@@ -988,7 +988,7 @@ namespace clt::lng
 
     break; case EXPR_LITERAL:
       io::print("{}{:^{}}({:h}: {}, {} {}){}", io::BrightGreenF, "", depth * 3, expr.classof(),
-        info.expr, TypedQWORD{ static_cast<const LiteralExpr*>(&expr)->value(), types.type(expr.type()).as<BuiltinType>()->typeID() },
+        info.expr, TypedQWORD{ static_cast<const LiteralExpr*>(&expr)->value(), types.type(expr.type()).as<BuiltinType>()->type_id() },
         types.type_name(expr.type()), io::Reset);
 
     break; case EXPR_UNARY:

@@ -47,10 +47,10 @@ namespace clt::lng
 
     /// @brief Check if the current global is private
     /// @return True if private
-    constexpr bool isPrivate() const noexcept { return isprivate; }
+    constexpr bool is_private() const noexcept { return isprivate; }
     /// @brief Check if the current global is public
     /// @return True if public
-    constexpr bool isPublic() const noexcept { return !isprivate; }
+    constexpr bool is_public() const noexcept { return !isprivate; }
 
     /// @brief Returns the ID of the type (used for down-casts)
     /// @return The GlobalID of the current type
@@ -58,16 +58,16 @@ namespace clt::lng
 
     /// @brief Check if the Global is a function
     /// @return True if function
-    constexpr bool isFn() const noexcept { return classof() == GlobalID::GLOBAL_FN; }
+    constexpr bool is_fn() const noexcept { return classof() == GlobalID::GLOBAL_FN; }
     /// @brief Check if the Global is a global variable
     /// @return True if variable
-    constexpr bool isVar() const noexcept { return classof() == GlobalID::GLOBAL_VAR; }
+    constexpr bool is_var() const noexcept { return classof() == GlobalID::GLOBAL_VAR; }
     /// @brief Check if the Global is a type
     /// @return True if type
-    constexpr bool isType() const noexcept { return classof() == GlobalID::GLOBAL_TYPE; }
+    constexpr bool is_type() const noexcept { return classof() == GlobalID::GLOBAL_TYPE; }
     /// @brief Check if the Global is an alias
     /// @return True if an alias
-    constexpr bool isAlias() const noexcept { return classof() == GlobalID::GLOBAL_ALIAS; }
+    constexpr bool is_alias() const noexcept { return classof() == GlobalID::GLOBAL_ALIAS; }
   };
 
   template<typename T>
@@ -121,20 +121,20 @@ namespace clt::lng
     final : public GlobalBase
   {
     /// @brief The aliased global
-    GlobalVariant* alias_to;
+    GlobalVariant* _alias_to;
 
   public:
     /// @brief Constructs an alias to another global
     /// @param alias_to The aliased global
     /// @param is_private True if private
     constexpr AliasGlobal(GlobalVariant& alias_to, bool is_private) noexcept
-      : GlobalBase(TypeToGlobalID<AliasGlobal>(), is_private), alias_to(&alias_to) {}
+      : GlobalBase(TypeToGlobalID<AliasGlobal>(), is_private), _alias_to(&alias_to) {}
 
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(AliasGlobal);
 
     /// @brief Returns the aliased global
     /// @return The aliased global
-    constexpr GlobalVariant& getAliasTo() const noexcept { return *alias_to; }
+    constexpr GlobalVariant& alias_to() const noexcept { return *_alias_to; }
   };
 
   /// @brief Represents a global.
@@ -160,7 +160,7 @@ namespace clt::lng
 
     /// @brief Returns the global ID of the current type
     /// @return The ID of the current type
-    constexpr GlobalID getGlobalID() const noexcept
+    constexpr GlobalID global_id() const noexcept
     {
       // Most likely UB, but for know leave it as is.
       return std::bit_cast<GlobalBase>(_FnGlobal).classof();
@@ -168,22 +168,22 @@ namespace clt::lng
 
     /// @brief Check if this global is private
     /// @return True if private
-    constexpr bool isPrivate() const noexcept
+    constexpr bool is_private() const noexcept
     {
-      return std::bit_cast<GlobalBase>(_FnGlobal).isPrivate();
+      return std::bit_cast<GlobalBase>(_FnGlobal).is_private();
     }
 
     /// @brief Check if this global is public
     /// @return True if public
-    constexpr bool isPublic() const noexcept { return !isPrivate(); }
+    constexpr bool is_public() const noexcept { return !is_private(); }
 
     template<ColtGlobal T>
     /// @brief Casts the current type to 'T'
     /// @tparam T The type to cast to
     /// @return nullptr if the variant does not contain 'T', or valid pointer to 'T'
-    constexpr T* getGlobal() noexcept
+    constexpr T* as() noexcept
     {
-      if (getGlobalID() != TypeToGlobalID<T>())
+      if (global_id() != TypeToGlobalID<T>())
         return nullptr;
       return &getUnionMember<T>();
     }
@@ -192,25 +192,25 @@ namespace clt::lng
     /// @brief Casts the current type to 'T'
     /// @tparam T The type to cast to
     /// @return nullptr if the variant does not contain 'T', or valid pointer to 'T'
-    constexpr const T* getGlobal() const noexcept
+    constexpr const T* as() const noexcept
     {
-      if (getGlobalID() != TypeToGlobalID<T>())
+      if (global_id() != TypeToGlobalID<T>())
         return nullptr;
       return &getUnionMember<T>();
     }
 
     /// @brief Check if the Global is a function
     /// @return True if function
-    constexpr bool isFn() const noexcept { return getGlobalID() == GlobalID::GLOBAL_FN; }
+    constexpr bool is_fn() const noexcept { return global_id() == GlobalID::GLOBAL_FN; }
     /// @brief Check if the Global is a global variable
     /// @return True if variable
-    constexpr bool isVar() const noexcept { return getGlobalID() == GlobalID::GLOBAL_VAR; }
+    constexpr bool is_var() const noexcept { return global_id() == GlobalID::GLOBAL_VAR; }
     /// @brief Check if the Global is a type
     /// @return True if type
-    constexpr bool isType() const noexcept { return getGlobalID() == GlobalID::GLOBAL_TYPE; }
+    constexpr bool is_type() const noexcept { return global_id() == GlobalID::GLOBAL_TYPE; }
     /// @brief Check if the Global is an alias
     /// @return True if an alias
-    constexpr bool isAlias() const noexcept { return getGlobalID() == GlobalID::GLOBAL_ALIAS; }
+    constexpr bool is_alias() const noexcept { return global_id() == GlobalID::GLOBAL_ALIAS; }
   };
 }
 

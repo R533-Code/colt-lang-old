@@ -37,7 +37,7 @@ namespace clt::lng
   constexpr BuiltinID keyword_to_builtin_id(Lexeme tkn) noexcept
   {
     using enum Lexeme;
-    assert_true("Token must be TKN_.*_L", isBuiltinToken(tkn));
+    assert_true("Token must be TKN_.*_L", is_builtin(tkn));
     return static_cast<BuiltinID>(static_cast<u8>(tkn) - static_cast<u8>(TKN_KEYWORD_bool));
   }
 
@@ -68,7 +68,7 @@ namespace clt::lng
   {
     using enum Lexeme;
     using enum ComparisonSet;
-    assert_true("Expected comparison token", isComparisonToken(comparison));
+    assert_true("Expected comparison token", is_comparison(comparison));
     if (comparison == TKN_EQUAL_EQUAL)
       return EQUAL;
     else if (comparison == TKN_LESS || comparison == TKN_LESS_EQUAL)
@@ -206,7 +206,7 @@ namespace clt::lng
     /// When parsing an identifier, if MODULE1::MODULE2::IDENTIFIER
     /// is parsed, then force_lookup should contain 0:MODULE1 1:MODULE2.
     /// The `lookup` method will then use these information.
-    ModuleName forced_lookup = ModuleName::getGlobalModule();
+    ModuleName forced_lookup = ModuleName::global_module();
     /// @brief The current panic function
     panic_consume_t current_panic = nullptr;
   
@@ -304,7 +304,7 @@ namespace clt::lng
 
     /// @brief Returns the current token
     /// @return The current token
-    Token current() const noexcept { return to_parse.token_buffer().getTokens()[current_tkn]; }
+    Token current() const noexcept { return to_parse.token_buffer().token_buffer()[current_tkn]; }
     /// @brief Advances to the next token    
     void consume_current() noexcept
     {
@@ -336,7 +336,7 @@ namespace clt::lng
       TokenRange range() const noexcept
       {
         //assert_true("Missing call to consume_current()!", current != ast.current());
-        return ast.token_buffer().getRangeFrom(current, ast.current());
+        return ast.token_buffer().range_from(current, ast.current());
       }
     };
 
@@ -689,7 +689,7 @@ namespace clt::lng
   template<ASTMaker::report_as AS, typename ...Args>
   void ASTMaker::report(TokenRange range, panic_consume_t consume, io::fmt_str<Args...> fmt, Args&&... args) noexcept
   {
-    auto source_info = token_buffer().makeSourceInfo(range);
+    auto source_info = token_buffer().make_source_info(range);
     StringView str;
     if constexpr (sizeof...(Args) == 0)
       str = StringView{ fmt.get().data(), fmt.get().size() };
@@ -709,7 +709,7 @@ namespace clt::lng
   template<ASTMaker::report_as AS, typename ...Args>
   void ASTMaker::report(Token tkn, panic_consume_t consume, io::fmt_str<Args...> fmt, Args && ...args) noexcept
   {
-    auto source_info = token_buffer().makeSourceInfo(tkn);
+    auto source_info = token_buffer().make_source_info(tkn);
     StringView str;
     if constexpr (sizeof...(Args) == 0)
       str = StringView{ fmt.get().data(), fmt.get().size() };

@@ -318,7 +318,7 @@ namespace clt::lng
 	/// @brief Transforms a literal token to a built-in ID
 	/// @param tkn The token
 	/// @return BuiltinID equivalent of the literal token
-	constexpr BuiltinID LiteralToBuiltinID(Lexeme tkn) noexcept
+	constexpr BuiltinID literal_to_builtin(Lexeme tkn) noexcept
 	{
 		assert_true("Token must be TKN_.*_L", Lexeme::TKN_BOOL_L <= tkn, tkn <= Lexeme::TKN_DOUBLE_L);
 		return static_cast<BuiltinID>((u8)(tkn) - (u8)(Lexeme::TKN_BOOL_L));
@@ -327,7 +327,7 @@ namespace clt::lng
 	/// @brief Check if a Lexeme represents any assignment Lexeme (=, +=, ...)
 	/// @param tkn The token to check for
 	/// @return True if the Lexeme is an assignment Lexeme
-	constexpr bool isAssignmentToken(Lexeme tkn) noexcept
+	constexpr bool is_assignment(Lexeme tkn) noexcept
 	{
 		return Lexeme::TKN_EQUAL <= tkn
 			&& tkn <= Lexeme::TKN_GREAT_GREAT_EQUAL;
@@ -336,7 +336,7 @@ namespace clt::lng
 	/// @brief Check if Lexeme represents any direct assignment (+=, -=, ...)
 	/// @param tkn The token to check for
 	/// @return True if the Lexeme is an direct assignment Lexeme
-	constexpr bool isDirectAssignmentToken(Lexeme tkn) noexcept
+	constexpr bool is_direct_assignment(Lexeme tkn) noexcept
 	{
 		return Lexeme::TKN_EQUAL < tkn
 			&& tkn <= Lexeme::TKN_GREAT_GREAT_EQUAL;
@@ -346,10 +346,10 @@ namespace clt::lng
 	/// Example: '+=' -> '+'
 	/// @param tkn The direct assignment Lexeme
 	/// @return Non-assigning Lexeme
-	/// @pre isDirectAssignmentToken(tkn)
-	constexpr Lexeme DirectAssignToNonAssignToken(Lexeme tkn) noexcept
+	/// @pre is_direct_assignment(tkn)
+	constexpr Lexeme direct_assignment_to_operation(Lexeme tkn) noexcept
 	{
-		assert_true("Invalid token!", isDirectAssignmentToken(tkn));
+		assert_true("Invalid token!", is_direct_assignment(tkn));
 		return static_cast<Lexeme>(static_cast<u8>(tkn) - 19);
 	}
 
@@ -357,7 +357,7 @@ namespace clt::lng
 	/// '||' and '&&' are not considered comparison tokens.
 	/// @param tkn The token to check for
 	/// @return True if the Lexeme is a comparison Lexeme
-	constexpr bool isComparisonToken(Lexeme tkn) noexcept
+	constexpr bool is_comparison(Lexeme tkn) noexcept
 	{
 		return Lexeme::TKN_LESS <= tkn
 			&& tkn <= Lexeme::TKN_EQUAL_EQUAL;
@@ -367,7 +367,7 @@ namespace clt::lng
 	/// '||' and '&&' are considered comparison tokens.
 	/// @param tkn The token to check for
 	/// @return True if the Lexeme is a comparison Lexeme
-	constexpr bool isBoolProducerToken(Lexeme tkn) noexcept
+	constexpr bool is_bool_producer(Lexeme tkn) noexcept
 	{
 		return Lexeme::TKN_AND_AND <= tkn
 			&& tkn <= Lexeme::TKN_EQUAL_EQUAL;
@@ -376,7 +376,7 @@ namespace clt::lng
 	/// @brief Check if a Lexeme represents any literal token ('.', "...", ...)
 	/// @param tkn The token to check for
 	/// @return True if the Lexeme is a literal token
-	constexpr bool isLiteralToken(Lexeme tkn) noexcept
+	constexpr bool is_literal(Lexeme tkn) noexcept
 	{
 		return Lexeme::TKN_BOOL_L <= tkn
 			&& tkn <= Lexeme::TKN_STRING_L;
@@ -385,7 +385,7 @@ namespace clt::lng
 	/// @brief Check if a Lexeme represents any unary operator (&, ++, ...)
 	/// @param tkn The token to check for
 	/// @return True if the Lexeme is a unary operator token
-	constexpr bool isUnaryToken(Lexeme tkn) noexcept
+	constexpr bool is_unary(Lexeme tkn) noexcept
 	{
 		using enum clt::lng::Lexeme;
 		return (TKN_PLUS <= tkn && tkn <= TKN_STAR)
@@ -400,7 +400,7 @@ namespace clt::lng
 	/// This does not check for assignment operators.
 	/// @param tkn The token to check for
 	/// @return True if the Lexeme is a binary operator token
-	constexpr bool isBinaryToken(Lexeme tkn) noexcept
+	constexpr bool is_binary(Lexeme tkn) noexcept
 	{
 		return tkn <= Lexeme::TKN_EQUAL_EQUAL;
 	}
@@ -408,7 +408,7 @@ namespace clt::lng
 	/// @brief Check if a Lexeme is a built-in type keyword (TKN_KEYWORD_bool...)
 	/// @param tkn The token to check for
 	/// @return True if any TKN_KEYWORD_* that represents a type (PTR and VOID are not types)
-	constexpr bool isBuiltinToken(Lexeme tkn) noexcept
+	constexpr bool is_builtin(Lexeme tkn) noexcept
 	{
 		return Lexeme::TKN_KEYWORD_bool <= tkn && tkn <= Lexeme::TKN_KEYWORD_QWORD;
 	}
@@ -417,7 +417,7 @@ namespace clt::lng
 	/// This function counts the number of lexeme declared
 	/// as TKN_KEYWORD_* in code.
 	/// @return The number of keywords in Lexeme
-	consteval u8 getKeywordCount() noexcept
+	consteval u8 keyword_count() noexcept
 	{
 		u8 count = 0;
 		for (auto i : reflect<Lexeme>::iter())
@@ -429,12 +429,12 @@ namespace clt::lng
 	/// @brief Returns a sorted map of the keywords string to
 	/// their corresponding lexeme.
 	/// @return Table from keyword string to lexeme
-	consteval auto getKeywordMap() noexcept
+	consteval auto keyword_map() noexcept
 	{
-		constexpr u8 count = getKeywordCount();
+		constexpr u8 count = keyword_count();
 		// Offset to the first keyword
 		constexpr u8 first_key_offset = static_cast<u8>(Lexeme::TKN_KEYWORD_if);
-		std::array<std::pair<std::string_view, Lexeme>, getKeywordCount()> array{};
+		std::array<std::pair<std::string_view, Lexeme>, keyword_count()> array{};
 		for (size_t i = 0; i < count; i++)
 		{
 			Lexeme lex = static_cast<Lexeme>(first_key_offset + i);

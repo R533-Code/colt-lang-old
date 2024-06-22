@@ -191,7 +191,7 @@ namespace clt::lng
     final : public ExprBase
   {
     /// @brief The expression to cast
-    ProdExprToken to_cast;
+    ProdExprToken _to_cast;
 
   public:
     /// @brief Constuctor
@@ -200,13 +200,13 @@ namespace clt::lng
     /// @param to_cast The expression to cast
     /// @param is_bit_cast True if bit cast
     constexpr CastExpr(TokenRange range, TypeToken cast_to, ProdExprToken to_cast, bool is_bit_cast) noexcept
-      : ExprBase(TypeToExprID<CastExpr>(), cast_to, range, is_bit_cast), to_cast(to_cast) {}
+      : ExprBase(TypeToExprID<CastExpr>(), cast_to, range, is_bit_cast), _to_cast(to_cast) {}
 
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(CastExpr);
 
     /// @brief Returns the expression to cast
     /// @return The expression to cast
-    constexpr ProdExprToken to_cast() const noexcept { return to_cast; }
+    constexpr ProdExprToken to_cast() const noexcept { return _to_cast; }
 
     /// @brief Returns the type to cast
     /// @return The type to cast to
@@ -340,7 +340,7 @@ namespace clt::lng
     final : public ExprBase
   {
     /// @brief The declaration of the variable to which to write
-    StmtExprToken decl;
+    StmtExprToken _decl;
     /// @brief The value to write to the variable
     ProdExprToken value;
 
@@ -351,13 +351,13 @@ namespace clt::lng
     /// @param decl The declaration of the variable from which to write
     /// @param value The value to write to the variable
     constexpr VarWriteExpr(TokenRange range, TypeToken type, StmtExprToken decl, ProdExprToken value) noexcept
-      : ExprBase(TypeToExprID<VarWriteExpr>(), type, range), decl(decl), value(value) {}
+      : ExprBase(TypeToExprID<VarWriteExpr>(), type, range), _decl(decl), value(value) {}
 
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(VarWriteExpr);
 
     /// @brief Returns the declaration of the variable from which to write
     /// @return The declaration of the variable from which to write
-    constexpr StmtExprToken decl() const noexcept { return decl; }
+    constexpr StmtExprToken decl() const noexcept { return _decl; }
 
     /// @brief Returns the value to write to the variable
     /// @return The value to write to the variable

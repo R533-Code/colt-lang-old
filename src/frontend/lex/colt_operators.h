@@ -157,7 +157,7 @@ namespace clt::lng
 	/// @return Assertion failure or a valid BinaryOp
 	constexpr BinaryOp TokenToBinary(Lexeme tkn) noexcept
 	{
-		assert_true("Expected a valid binary token!", isBinaryToken(tkn));
+		assert_true("Expected a valid binary token!", is_binary(tkn));
 		return static_cast<BinaryOp>(tkn);
 	}  
 

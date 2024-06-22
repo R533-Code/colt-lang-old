@@ -67,24 +67,24 @@ namespace clt::test
         // There was an error parsing expected lexemes so skip
         if (!consume_line)
         {
-          Lex(buffer, *reporter, str);
-          for (size_t i = 0; i < clt::min(buffer.getTokens().size(), expected_lexemes.size()); i++)
+          lex(buffer, *reporter, str);
+          for (size_t i = 0; i < clt::min(buffer.token_buffer().size(), expected_lexemes.size()); i++)
           {
-            if (expected_lexemes[i] != buffer.getTokens()[i])
+            if (expected_lexemes[i] != buffer.token_buffer()[i])
             {
               error_count++;
               io::print_error("Expected '{:h}' but Lexer returned '{:h}' instead (on line {})!",
-                expected_lexemes[i], buffer.getTokens()[i].getLexeme(), true_line_nb);
+                expected_lexemes[i], buffer.token_buffer()[i].lexeme(), true_line_nb);
             }
           }
-          if (buffer.getTokens().size() != expected_lexemes.size())
+          if (buffer.token_buffer().size() != expected_lexemes.size())
           {
             error_count++;
             io::print_error("Expected '{}' lexemes but Lexer returned '{}' instead (on line {})!",
-              expected_lexemes.size(), buffer.getTokens().size(), true_line_nb);
+              expected_lexemes.size(), buffer.token_buffer().size(), true_line_nb);
           }
           // To avoid constructing a TokenBuffer in each iteration
-          buffer.unsafeClear();
+          buffer.unsafe_clear();
         }
         else
           consume_line = false;

@@ -45,48 +45,48 @@ namespace clt::lng
   /// @brief Check which unary operators are supported by an error type
   /// @param op The unary operator whose support to check
   /// @return BUILTIN
-  UnarySupport ErrorSupport([[maybe_unused]] UnaryOp op) noexcept;  
+  UnarySupport error_support([[maybe_unused]] UnaryOp op) noexcept;  
   
   /// @brief Check which unary operators are supported by an error type
   /// @param op The unary operator whose support to check
   /// @return INVALID
-  UnarySupport NoSupport([[maybe_unused]] UnaryOp op) noexcept;  
+  UnarySupport no_support([[maybe_unused]] UnaryOp op) noexcept;  
 
   /// @brief Check which unary operators are supported by a pointer type
   /// @param op The unary operator whose support to check
   /// @return INVALID
-  UnarySupport PtrSupport([[maybe_unused]] UnaryOp op) noexcept;  
+  UnarySupport ptr_support([[maybe_unused]] UnaryOp op) noexcept;  
 
   /// @brief Check which unary operators are supported by a BOOL type
   /// @param op The unary operator whose support to check
   /// @return INVALID or BUILTIN
-  UnarySupport BoolSupport(UnaryOp op) noexcept;
+  UnarySupport bool_support(UnaryOp op) noexcept;
 
   /// @brief Check which unary operators are supported by a signed int type
   /// @param op The unary operator whose support to check
   /// @return INVALID or BUILTIN
-  UnarySupport SIntSupport(UnaryOp op) noexcept;
+  UnarySupport sint_support(UnaryOp op) noexcept;
   
   /// @brief Check which unary operators are supported by an unsigned int type
   /// @param op The unary operator whose support to check
   /// @return INVALID or BUILTIN
-  UnarySupport UIntSupport(UnaryOp op) noexcept;
+  UnarySupport uint_support(UnaryOp op) noexcept;
   
   /// @brief Check which unary operators are supported by a floating point type
   /// @param op The unary operator whose support to check
   /// @return INVALID or BUILTIN
-  UnarySupport FPSupport(UnaryOp op) noexcept;
+  UnarySupport fp_support(UnaryOp op) noexcept;
   
   /// @brief Check which unary operators are supported by byte type
   /// @param op The unary operator whose support to check
   /// @return INVALID or BUILTIN
-  UnarySupport BytesSupport(UnaryOp op) noexcept;  
+  UnarySupport bytes_support(UnaryOp op) noexcept;  
 
   /// @brief Check if the type with ID 'ID' supports 'op'
   /// @param ID The type ID
   /// @param op The operator whose support to check
   /// @return UnarySupport
-  UnarySupport BuiltinSupport(BuiltinID ID, UnaryOp op) noexcept;  
+  UnarySupport builtin_support(BuiltinID ID, UnaryOp op) noexcept;  
 
   /************* BINARY *************/
 
@@ -94,84 +94,84 @@ namespace clt::lng
   /// @param op The binary operator whose support to check
   /// @param var The right hand side of the operator
   /// @return BUILTIN
-  BinarySupport ErrorSupport([[maybe_unused]] BinaryOp op, const TypeVariant& var) noexcept;
+  BinarySupport error_support([[maybe_unused]] BinaryOp op, const TypeVariant& var) noexcept;
 
   /// @brief Check which unary operators are supported by an error type
   /// @param op The binary operator whose support to check
   /// @param var The right hand side of the operator
   /// @return INVALID
-  BinarySupport NoSupport([[maybe_unused]] BinaryOp op, const TypeVariant& var) noexcept;
+  BinarySupport no_support([[maybe_unused]] BinaryOp op, const TypeVariant& var) noexcept;
 
   /// @brief Check which unary operators are supported by a pointer type
   /// @param op The unary operator whose support to check
   /// @param rhs The right hand side of the operator
   /// @return BinarySupport
-  BinarySupport OpaquePtrSupport([[maybe_unused]] BinaryOp op, const TypeVariant& rhs) noexcept;
+  BinarySupport opaque_ptr_support([[maybe_unused]] BinaryOp op, const TypeVariant& rhs) noexcept;
 
   /// @brief Check which unary operators are supported by a pointer type
   /// @param lhs The left hand side
   /// @param op The unary operator whose support to check
   /// @param rhs The right hand side of the operator
   /// @return BinarySupport
-  BinarySupport PtrSupport(const PointerType& tkn, [[maybe_unused]] BinaryOp op, const TypeVariant& var) noexcept;
+  BinarySupport ptr_support(const PointerType& tkn, [[maybe_unused]] BinaryOp op, const TypeVariant& var) noexcept;
 
   /// @brief Check which unary operators are supported by a BOOL type
   /// @param op The unary operator whose support to check
   /// @param var The right hand side of the operator
   /// @return INVALID or BUILTIN
-  BinarySupport BoolSupport(BinaryOp op, const TypeVariant& var) noexcept;
+  BinarySupport bool_support(BinaryOp op, const TypeVariant& var) noexcept;
 
   /// @brief Check which unary operators are supported by a signed int type
   /// @param lhs The left hand side
   /// @param op The unary operator whose support to check
   /// @param var The right hand side of the operator
   /// @return INVALID or BUILTIN
-  BinarySupport SIntSupport(BuiltinID lhs, BinaryOp op, const TypeVariant& var) noexcept;
+  BinarySupport sint_support(BuiltinID lhs, BinaryOp op, const TypeVariant& var) noexcept;
 
   /// @brief Check which unary operators are supported by an unsigned int type
   /// @param lhs The left hand side
   /// @param op The unary operator whose support to check
   /// @param var The right hand side of the operator
   /// @return INVALID or BUILTIN
-  BinarySupport UIntSupport(BuiltinID lhs, BinaryOp op, const TypeVariant& var) noexcept;
+  BinarySupport uint_support(BuiltinID lhs, BinaryOp op, const TypeVariant& var) noexcept;
 
   /// @brief Check which unary operators are supported by a floating point type
   /// @param lhs The left hand side
   /// @param op The unary operator whose support to check
   /// @param var The right hand side of the operator
   /// @return INVALID or BUILTIN
-  BinarySupport FPSupport(BuiltinID lhs, BinaryOp op, const TypeVariant& var) noexcept;
+  BinarySupport fp_support(BuiltinID lhs, BinaryOp op, const TypeVariant& var) noexcept;
 
   /// @brief Check which unary operators are supported by byte type
   /// @param lhs The left hand side
   /// @param op The unary operator whose support to check
   /// @param var The right hand side of the operator
   /// @return INVALID or BUILTIN
-  BinarySupport BytesSupport(BuiltinID lhs, BinaryOp op, const TypeVariant& var) noexcept;
+  BinarySupport bytes_support(BuiltinID lhs, BinaryOp op, const TypeVariant& var) noexcept;
 
   /// @brief Check if the type with ID 'ID' supports 'op'
   /// @param ID The type ID
   /// @param op The operator whose support to check
   /// @param var The right hand side of the operator
   /// @return UnarySupport
-  BinarySupport BuiltinSupport(BuiltinID ID, BinaryOp op, const TypeVariant& var) noexcept;
+  BinarySupport builtin_support(BuiltinID ID, BinaryOp op, const TypeVariant& var) noexcept;
 
   /************* CONVERSIONS *************/
 
   /// @brief Check if an error type is castable to another type
   /// @param var The type to cast to
   /// @return BUILTIN
-  ConversionSupport ErrorCastable([[maybe_unused]] const TypeVariant& var) noexcept;
+  ConversionSupport error_castable([[maybe_unused]] const TypeVariant& var) noexcept;
 
   /// @brief Always return INVALID
   /// @param var The type to cast to (unused)
   /// @return INVALID
-  ConversionSupport NotCastable([[maybe_unused]] const TypeVariant& var) noexcept;
+  ConversionSupport not_castable([[maybe_unused]] const TypeVariant& var) noexcept;
 
   /// @brief Check if a type is castable to another type
   /// @param var The type to cast to
   /// @return BUILTIN or INVALID
-  ConversionSupport BuiltinCastable(const TypeVariant& var) noexcept;
+  ConversionSupport builtin_castable(const TypeVariant& var) noexcept;
 }
 
 #endif // !HG_COLT_SUPPORT_OP

@@ -44,7 +44,7 @@ namespace clt::lng
     /// @brief Check if the current name represents the global module name.
     /// The global module name is empty
     /// @return True if size() == 0
-    constexpr bool isGlobal() const noexcept { return name_size == 0; }
+    constexpr bool is_global() const noexcept { return name_size == 0; }
 
     /// @brief The maximum size of a module name
     /// @return The max size of a module name
@@ -83,12 +83,12 @@ namespace clt::lng
     /// @param name The name to add to the end of the current name
     /// @return The new module name
     /// @pre size() != max_size()
-    constexpr ModuleName addSubmodule(StringView name) const noexcept;
+    constexpr ModuleName add_submodule(StringView name) const noexcept;
 
     /// @brief Returns the global module name.
     /// The global module is the only name whose size is zero.
     /// @return The global module name
-    constexpr static ModuleName getGlobalModule() noexcept
+    constexpr static ModuleName global_module() noexcept
     {
       return ModuleName{};
     }

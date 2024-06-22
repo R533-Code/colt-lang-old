@@ -51,19 +51,19 @@ namespace clt::lng
     case TYPE_ERROR:
       return "<ERROR>";
     case TYPE_BUILTIN:
-      return getBuiltinName(var.as<BuiltinType>()->typeID());
+      return getBuiltinName(var.as<BuiltinType>()->type_id());
     case TYPE_VOID:
       return "void";
     case TYPE_PTR:
     {
       type_names.push_back({});
-      fmt::format_to(std::back_inserter(type_names.back()), "ptr.{}", type_name(var.as<PtrType>()->getPointingTo()));
+      fmt::format_to(std::back_inserter(type_names.back()), "ptr.{}", type_name(var.as<PtrType>()->pointing_to()));
       return type_names.back();
     }
     case TYPE_MUT_PTR:
     {
       type_names.push_back({});
-      fmt::format_to(std::back_inserter(type_names.back()), "mutptr.{}", type_name(var.as<MutPtrType>()->getPointingTo()));
+      fmt::format_to(std::back_inserter(type_names.back()), "mutptr.{}", type_name(var.as<MutPtrType>()->pointing_to()));
       return type_names.back();
     }
     case TYPE_OPTR:

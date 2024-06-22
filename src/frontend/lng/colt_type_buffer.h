@@ -28,7 +28,7 @@ namespace clt::lng
 
     /// @brief Returns the next token to save
     /// @return The token to save
-    constexpr TypeToken createToken(size_t sz) const noexcept
+    constexpr TypeToken create_token(size_t sz) const noexcept
     {
       assert_true("Integer overflow!", sz <= std::numeric_limits<u32>::max());
       return TypeToken(static_cast<u32>(sz));
@@ -44,64 +44,64 @@ namespace clt::lng
     /// @brief Saves a type and return its index number
     /// @param variant The type to save
     /// @return The TypeToken representing the type
-    TypeToken addType(const TypeVariant& variant) noexcept
+    TypeToken add_type(const TypeVariant& variant) noexcept
     {
       auto [pair, insert] = type_map.insert(variant);
-      return createToken(pair);
+      return create_token(pair);
     }
 
     /// @brief Returns an error type
     /// @return Error Type
-    TypeToken getErrorType() noexcept
+    TypeToken error_type() noexcept
     {
-      return addType(make_coltc_type<ErrorType>());
+      return add_type(make_coltc_type<ErrorType>());
     }
 
     /// @brief Returns a void type
     /// @return Void Type
-    TypeToken getVoidType() noexcept
+    TypeToken void_type() noexcept
     {
-      return addType(make_coltc_type<VoidType>());
+      return add_type(make_coltc_type<VoidType>());
     }
 
     /// @brief Saves a built-in type
     /// @param id The type ID
     /// @return The TypeToken representing the type
-    TypeToken addBuiltin(BuiltinID id) noexcept
+    TypeToken add_builtin(BuiltinID id) noexcept
     {
-      return addType(ColtBuiltinTypeTable[static_cast<u8>(id)]);
+      return add_type(ColtBuiltinTypeTable[static_cast<u8>(id)]);
     }
 
     /// @brief Saves a pointer to a type
     /// @param to The type pointed to
     /// @return The TypeToken representing the pointer
-    TypeToken addPtr(TypeToken to) noexcept
+    TypeToken add_ptr(TypeToken to) noexcept
     {
-      return addType(make_coltc_type<PtrType>(to));
+      return add_type(make_coltc_type<PtrType>(to));
     }
     
     /// @brief Saves a mutable pointer to a type
     /// @param to The type pointed to
     /// @return The TypeToken representing the mutable pointer
-    TypeToken addMutPtr(TypeToken to) noexcept
+    TypeToken add_mut_ptr(TypeToken to) noexcept
     {
-      return addType(make_coltc_type<MutPtrType>(to));
+      return add_type(make_coltc_type<MutPtrType>(to));
     }
     
     /// @brief Saves a pointer to a type
     /// @param to The type pointed to
     /// @return The TypeToken representing the pointer
-    TypeToken addOpaquePtr() noexcept
+    TypeToken add_opaque_ptr() noexcept
     {
-      return addType(make_coltc_type<OpaquePtrType>());
+      return add_type(make_coltc_type<OpaquePtrType>());
     }
     
     /// @brief Saves a mutable pointer to a type
     /// @param to The type pointed to
     /// @return The TypeToken representing the mutable pointer
-    TypeToken addMutOpaquePtr() noexcept
+    TypeToken add_mut_opaque_ptr() noexcept
     {
-      return addType(make_coltc_type<MutOpaquePtrType>());
+      return add_type(make_coltc_type<MutOpaquePtrType>());
     }
 
     /// @brief Creates a function type
@@ -109,15 +109,15 @@ namespace clt::lng
     /// @param arguments_type The arguments type of the function
     /// @param is_c_variadic True if the function uses C variadic arguments
     /// @return The TypeToken representing the function
-    TypeToken addFn(TypeToken return_type, Vector<FnTypeArgument>&& arguments_type, bool is_c_variadic = false) noexcept
+    TypeToken add_fn(TypeToken return_type, Vector<FnTypeArgument>&& arguments_type, bool is_c_variadic = false) noexcept
     {
       auto [pair, insert] = fn_payloads.insert({ is_c_variadic, return_type, std::move(arguments_type) });
       assert_true("Integer overflow detected!", pair <= std::numeric_limits<u32>::max());
-      return addType(make_coltc_type<FnType>(static_cast<u32>(pair)));
+      return add_type(make_coltc_type<FnType>(static_cast<u32>(pair)));
     }
 
     /// @brief Get a type using its token.
-    /// The reference is valid as long as addType was not called!
+    /// The reference is valid as long as add_type was not called!
     /// @param tkn The token whose type to return
     /// @return The type represented by 'tkn'
     const TypeVariant& type(TypeToken tkn) const noexcept

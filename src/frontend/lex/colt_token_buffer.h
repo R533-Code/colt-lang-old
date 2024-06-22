@@ -27,7 +27,7 @@ namespace clt::lng
   /// @param reporter The reporter used to generate error/warnings/messages
   /// @param to_parse The StringView to parse
   /// @return A TokenBuffer containing parsed lexemes
-  TokenBuffer Lex(ErrorReporter& reporter, StringView to_parse) noexcept;
+  TokenBuffer lex(ErrorReporter& reporter, StringView to_parse) noexcept;
 
   /// @brief Lexes 'to_parse'.
   /// This does not clear 'buffer' first, use with caution!
@@ -35,18 +35,18 @@ namespace clt::lng
   /// @param reporter The reporter used to generate error/warnings/messages
   /// @param to_parse The StringView to parse
   /// @return A TokenBuffer containing parsed lexemes
-  void Lex(TokenBuffer& buffer, ErrorReporter& reporter, StringView to_parse) noexcept;
+  void lex(TokenBuffer& buffer, ErrorReporter& reporter, StringView to_parse) noexcept;
 
   /// @brief Breaks down a StringView into lines
   /// @param strv The StringView to break down into lines
   /// @param buffer The buffer where to append these lines
-  void CreateLines(StringView strv, TokenBuffer& buffer) noexcept;
+  void create_lines(StringView strv, TokenBuffer& buffer) noexcept;
 
   /// @brief Contains information about a Token
   struct TokenInfo
   {
-    /// @brief 0-based column
-    u32 column;
+    /// @brief 0-based column_nb
+    u32 column_nb;
     /// @brief Size of the lexeme
     u32 size;
     /// @brief 0-based start line number
@@ -62,7 +62,7 @@ namespace clt::lng
   class Token
   {
     /// @brief The actual lexeme
-    u32 lexeme: 8;
+    u32 _lexeme: 8;
     /// @brief 0-based index into the array of literals.
     /// The array in which to index depends on the lexeme.
     u32 literal_index: 24;
@@ -74,7 +74,7 @@ namespace clt::lng
     u32 buffer_id;
 
     constexpr Token(Lexeme lexeme, u32 info_index, u32 buffer_id, u32 literal = 0) noexcept
-      : lexeme(static_cast<u8>(lexeme)), literal_index(literal), info_index(info_index), buffer_id(buffer_id) {}
+      : _lexeme(static_cast<u8>(lexeme)), literal_index(literal), info_index(info_index), buffer_id(buffer_id) {}
 
 #else
     constexpr Token(Lexeme lexeme, u32 info_index, u32 literal = 0) noexcept
@@ -92,11 +92,11 @@ namespace clt::lng
     constexpr Token& operator=(const Token&) noexcept = default;
 
     /// @brief Converts a Token to the Lexeme it represents
-    constexpr operator Lexeme() const noexcept { return static_cast<Lexeme>(lexeme); }
+    constexpr operator Lexeme() const noexcept { return static_cast<Lexeme>(_lexeme); }
 
     /// @brief Returns the Lexeme the Token represents
     /// @return The Lexeme representing the Token
-    constexpr Lexeme getLexeme() const noexcept { return static_cast<Lexeme>(lexeme); }
+    constexpr Lexeme lexeme() const noexcept { return static_cast<Lexeme>(_lexeme); }
   };
 
   /// @brief Represents a range of Token
@@ -176,7 +176,7 @@ namespace clt::lng
 #endif // COLT_DEBUG
     }
 
-    // Friend declaration to use addToken
+    // Friend declaration to use add_token
     friend struct Lexer;
 
   public:
@@ -196,7 +196,7 @@ namespace clt::lng
     TokenBuffer& operator=(TokenBuffer&&) noexcept = delete;
 
     /// @brief Clears the TokenBuffer
-    void unsafeClear() noexcept
+    void unsafe_clear() noexcept
     {
       lines.clear();
       str_literals.clear();
@@ -207,7 +207,7 @@ namespace clt::lng
 
     /// @brief Adds a line
     /// @param line The line to save
-    void addLine(StringView line) noexcept
+    void add_line(StringView line) noexcept
     {
       lines.push_back(line);
     }
@@ -215,22 +215,22 @@ namespace clt::lng
     /// @brief Generates a Token
     /// @param lexeme The lexeme of the Token
     /// @param line The line number
-    /// @param column The column of the line
+    /// @param column_nb The column_nb of the line
     /// @param literal The literal index
     /// @return Generated Token
-    void addToken(Lexeme lexeme, u32 line, u32 column, u32 size) noexcept
+    void add_token(Lexeme lexeme, u32 line, u32 column_nb, u32 size) noexcept
     {
       assert_true("Integer overflow!", tokens_info.size() < std::numeric_limits<u32>::max());
 #ifdef COLT_DEBUG
       tokens.push_back(Token{ lexeme, static_cast<u32>(tokens_info.size()), buffer_id });
-      tokens_info.push_back(TokenInfo{ column, size, line, line });      
+      tokens_info.push_back(TokenInfo{ column_nb, size, line, line });      
 #else
       tokens.push_back(Token{ lexeme, static_cast<u32>(tokens_info.size()) });
-      tokens_info.push_back(TokenInfo{ column, size, line, line });
+      tokens_info.push_back(TokenInfo{ column_nb, size, line, line });
 #endif // COLT_DEBUG
     }
 
-    TokenRange getRangeFrom(Token start) const noexcept
+    TokenRange range_from(Token start) const noexcept
     {
       assert_true("Invalid range!", start == Lexeme::TKN_EOF);
 #ifdef COLT_DEBUG
@@ -241,7 +241,7 @@ namespace clt::lng
 #endif // COLT_DEBUG
     }
 
-    TokenRange getRangeFrom(Token start, Token end) const noexcept
+    TokenRange range_from(Token start, Token end) const noexcept
     {
       assert_true("Invalid range!", start.info_index <= end.info_index);
 #ifdef COLT_DEBUG
@@ -252,7 +252,7 @@ namespace clt::lng
 #endif // COLT_DEBUG
     }
 
-    void addIdentifier(StringView value, Lexeme lexeme, u32 line, u32 column, u32 size) noexcept
+    void add_identifier(StringView value, Lexeme lexeme, u32 line, u32 column_nb, u32 size) noexcept
     {
       u64 ret = identifiers.size();
       identifiers.push_back(value);
@@ -260,14 +260,14 @@ namespace clt::lng
  
 #ifdef COLT_DEBUG
       tokens.push_back(Token{ lexeme, static_cast<u32>(tokens_info.size()), buffer_id, static_cast<u32>(ret) });
-      tokens_info.push_back(TokenInfo{ column, size, line, line });
+      tokens_info.push_back(TokenInfo{ column_nb, size, line, line });
 #else
       tokens.push_back(Token{ lexeme, static_cast<u32>(tokens_info.size()), static_cast<u32>(ret) });
-      tokens_info.push_back(TokenInfo{ column, size, line, line });
+      tokens_info.push_back(TokenInfo{ column_nb, size, line, line });
 #endif // COLT_DEBUG
     }
     
-    void add_literal(QWORD_t value, Lexeme lexeme, u32 line, u32 column, u32 size) noexcept
+    void add_literal(QWORD_t value, Lexeme lexeme, u32 line, u32 column_nb, u32 size) noexcept
     {
       u64 ret = nb_literals.size();
       nb_literals.push_back(value);
@@ -275,17 +275,17 @@ namespace clt::lng
  
 #ifdef COLT_DEBUG
       tokens.push_back(Token{ lexeme, static_cast<u32>(tokens_info.size()), buffer_id, static_cast<u32>(ret) });
-      tokens_info.push_back(TokenInfo{ column, size, line, line });
+      tokens_info.push_back(TokenInfo{ column_nb, size, line, line });
 #else
       tokens.push_back(Token{ lexeme, static_cast<u32>(tokens_info.size()), static_cast<u32>(ret) });
-      tokens_info.push_back(TokenInfo{ column, size, line, line });
+      tokens_info.push_back(TokenInfo{ column_nb, size, line, line });
 #endif // COLT_DEBUG
     }    
 
     /// @brief Returns a StringView over the line in which the token appears
     /// @param tkn The Token whose line to return
     /// @return The line in which appears the token
-    StringView getLineStr(Token tkn) const noexcept
+    StringView line_str(Token tkn) const noexcept
     {
       owns(tkn);
       return lines[tokens_info[tkn.info_index].line_start];
@@ -294,39 +294,39 @@ namespace clt::lng
     /// @brief Returns the line number on which the token appears
     /// @param tkn The Token whose line to return
     /// @return The line in which appears the token (1-based)
-    u32 getLine(Token tkn) const noexcept
+    u32 line_nb(Token tkn) const noexcept
     {
       owns(tkn);
       return tokens_info[tkn.info_index].line_start + 1;
     }
 
-    /// @brief Returns the column on which the token appears
-    /// @param tkn The Token whose column to return
-    /// @return The column to return (1-based)
-    u32 getColumn(Token tkn) const noexcept
+    /// @brief Returns the column_nb on which the token appears
+    /// @param tkn The Token whose column_nb to return
+    /// @return The column_nb to return (1-based)
+    u32 column_nb(Token tkn) const noexcept
     {
       owns(tkn);
-      return tokens_info[tkn.info_index].column + 1;
+      return tokens_info[tkn.info_index].column_nb + 1;
     }
 
-    StringView getIdentifier(Token tkn) const noexcept
+    StringView identifier(Token tkn) const noexcept
     {
-      assert_true("Token does not represent an identifier!", tkn.getLexeme() == Lexeme::TKN_IDENTIFIER);
+      assert_true("Token does not represent an identifier!", tkn.lexeme() == Lexeme::TKN_IDENTIFIER);
       owns(tkn);
       return identifiers[tkn.literal_index];
     }
 
-    QWORD_t getLiteral(Token tkn) const noexcept
+    QWORD_t literal(Token tkn) const noexcept
     {
-      assert_true("Token does not represent a literal!", isLiteralToken(tkn.getLexeme()), tkn.getLexeme() != Lexeme::TKN_STRING_L);
+      assert_true("Token does not represent a literal!", is_literal(tkn.lexeme()), tkn.lexeme() != Lexeme::TKN_STRING_L);
       owns(tkn);
       return nb_literals[tkn.literal_index];
     }
 
     /// @brief Returns the size of the Token
     /// @param tkn The Token whose size to return
-    /// @return The column to return (1-based)
-    TokenInfo getInfo(Token tkn) const noexcept
+    /// @return The column_nb to return (1-based)
+    TokenInfo info(Token tkn) const noexcept
     {
       owns(tkn);
       return tokens_info[tkn.info_index];
@@ -335,37 +335,37 @@ namespace clt::lng
     /// @brief Constructs a source information from a token range
     /// @param range The token range
     /// @return SourceInfo represented by the token range
-    SourceInfo makeSourceInfo(TokenRange range) const noexcept
+    SourceInfo make_source_info(TokenRange range) const noexcept
     {
       owns(range);
       auto& tkn1_info = tokens_info[range.start_index];
       auto& tkn2_info = tokens_info[range.end_index - 1];
       auto line = StringView{ lines[tkn1_info.line_start].data(),
         lines[tkn2_info.line_end].data() + lines[tkn2_info.line_end].size() };
-      auto expr = StringView{ lines[tkn1_info.line_start].data() + tkn1_info.column,
-        lines[tkn2_info.line_end].data() + tkn2_info.size + tkn2_info.column };
+      auto expr = StringView{ lines[tkn1_info.line_start].data() + tkn1_info.column_nb,
+        lines[tkn2_info.line_end].data() + tkn2_info.size + tkn2_info.column_nb };
       return SourceInfo{ tkn1_info.line_start + 1, tkn2_info.line_end + 1, expr, line };
     }
 
     /// @brief Constructs a source information from a token
     /// @param tkn The token
     /// @return SourceInfo represented by the token
-    SourceInfo makeSourceInfo(Token tkn) const noexcept
+    SourceInfo make_source_info(Token tkn) const noexcept
     {
       owns(tkn);
       auto& tkn_info = tokens_info[tkn.info_index];
-      auto expr = StringView{ lines[tkn_info.line_start].data() + tkn_info.column,
-        lines[tkn_info.line_end].data() + tkn_info.size + tkn_info.column};
+      auto expr = StringView{ lines[tkn_info.line_start].data() + tkn_info.column_nb,
+        lines[tkn_info.line_end].data() + tkn_info.size + tkn_info.column_nb};
       return SourceInfo{ tkn_info.line_start + 1, expr, lines[tkn_info.line_start] };
     }
 
     /// @brief Returns the list of tokens
     /// @return List of tokens
-    auto& getTokens() const noexcept { return tokens; }
+    auto& token_buffer() const noexcept { return tokens; }
 
     /// @brief Returns the list of lines
     /// @return The list of lines
-    auto& getLines() const noexcept { return lines; }
+    auto& line_buffer() const noexcept { return lines; }
   };
 }
 

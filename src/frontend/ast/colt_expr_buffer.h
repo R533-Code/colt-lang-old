@@ -327,7 +327,7 @@ namespace clt::lng
     /// @return ErrorExpr
     ProdExprToken add_error(TokenRange range) noexcept
     {
-      return add_new_prod<ErrorExpr>(range, types.getErrorType());
+      return add_new_prod<ErrorExpr>(range, types.error_type());
     }
     
     /// @brief Creates an error statement
@@ -335,7 +335,7 @@ namespace clt::lng
     /// @return ErrorExpr
     StmtExprToken add_error_stmt(TokenRange range) noexcept
     {
-      return add_new_stmt<ErrorExpr>(range, types.getErrorType());
+      return add_new_stmt<ErrorExpr>(range, types.error_type());
     }
     
     /// @brief Creates a no-op expression
@@ -343,7 +343,7 @@ namespace clt::lng
     /// @return NOPExpr
     ProdExprToken add_nop(TokenRange range) noexcept
     {
-      return add_new_prod<NOPExpr>(range, types.getVoidType());
+      return add_new_prod<NOPExpr>(range, types.void_type());
     }
 
     /// @brief Creates a literal expression
@@ -353,7 +353,7 @@ namespace clt::lng
     /// @return LiteralExpr
     ProdExprToken add_literal(TokenRange range, QWORD_t value, BuiltinID type) noexcept
     {
-      return add_new_prod<LiteralExpr>(range, types.addBuiltin(type), value);
+      return add_new_prod<LiteralExpr>(range, types.add_builtin(type), value);
     }
 
     /// @brief Creates a unary expression
@@ -378,7 +378,7 @@ namespace clt::lng
     {
       assert_true("Both expression must be of the same type!", type_token(lhs) == type_token(rhs));
       return add_new_prod<BinaryExpr>(range,
-        FamilyOf(op) == OpFamily::COMPARISON ? types.addBuiltin(BuiltinID::BOOL) : type_token(lhs),
+        FamilyOf(op) == OpFamily::COMPARISON ? types.add_builtin(BuiltinID::BOOL) : type_token(lhs),
         lhs, op, rhs);
     }
 
@@ -390,7 +390,7 @@ namespace clt::lng
     ProdExprToken add_cast(TokenRange range, TypeToken cast_to, ProdExprToken to_cast) noexcept
     {
       assert_true("Both expression must be of built-in type!",
-        type(cast_to).isBuiltin(), type(cast_to).isBuiltin());
+        type(cast_to).is_builtin(), type(cast_to).is_builtin());
       return add_new_prod<CastExpr>(range, cast_to, to_cast, false);
     }
 
@@ -403,9 +403,9 @@ namespace clt::lng
     ProdExprToken add_bit_cast(TokenRange range, TypeToken cast_to, ProdExprToken to_cast) noexcept
     {
       assert_true("Both expression must be of built-in type!",
-        type(cast_to).isBuiltin(), type(cast_to).isBuiltin());
+        type(cast_to).is_builtin(), type(cast_to).is_builtin());
       assert_true("Both expression must be of built-in type!",
-        type(cast_to).isBuiltinAnd(&is_bytes) || type(cast_to).isBuiltinAnd(&is_bytes));
+        type(cast_to).is_builtin_and(&is_bytes) || type(cast_to).is_builtin_and(&is_bytes));
       return add_new_prod<CastExpr>(range, cast_to, to_cast, true);
     }
 
@@ -418,10 +418,10 @@ namespace clt::lng
       auto& ref = expr(decl);
       if (auto ptr = ref.as<VarDeclExpr>(); ptr)
         return add_new_prod<AddressOfExpr>(range,
-          ptr->is_mut() ? types.addMutPtr(ptr->type()) : types.addPtr(ptr->type()), decl);
+          ptr->is_mut() ? types.add_mut_ptr(ptr->type()) : types.add_ptr(ptr->type()), decl);
       if (auto ptr = ref.as<GlobalDeclExpr>(); ptr)
         return add_new_prod<AddressOfExpr>(range,
-          ptr->is_mut() ? types.addMutPtr(ptr->type()) : types.addPtr(ptr->type()), decl);
+          ptr->is_mut() ? types.add_mut_ptr(ptr->type()) : types.add_ptr(ptr->type()), decl);
 
       clt::unreachable("Expected a variable declaration!");
     }
@@ -432,13 +432,13 @@ namespace clt::lng
     /// @return PtrLoadExpr
     ProdExprToken add_ptr_load(TokenRange range, ProdExprToken to_cast) noexcept
     {
-      assert_true("Expression must have a pointer type!", type(to_cast).isAnyPtr()
-        && !type(to_cast).isAnyOpaquePtr());
+      assert_true("Expression must have a pointer type!", type(to_cast).is_any_ptr()
+        && !type(to_cast).is_any_opaque_ptr());
       auto& ref = type(to_cast);
       if (auto ptr = ref.as<MutPtrType>(); ptr)
-        return add_new_prod<PtrLoadExpr>(range, ptr->getPointingTo(), to_cast);
+        return add_new_prod<PtrLoadExpr>(range, ptr->pointing_to(), to_cast);
       if (auto ptr = ref.as<PtrType>(); ptr)
-        return add_new_prod<PtrLoadExpr>(range, ptr->getPointingTo(), to_cast);      
+        return add_new_prod<PtrLoadExpr>(range, ptr->pointing_to(), to_cast);      
       clt::unreachable("Invalid type!");
     }
 
@@ -477,7 +477,7 @@ namespace clt::lng
     {
       assert_true("Expected a VarDeclExpr!", expr(var_decl).is_var_decl());
       assert_true("Types must match!", expr(var_decl).type() == type_token(value));
-      return add_new_prod<VarWriteExpr>(range, types.getVoidType(), var_decl, value);
+      return add_new_prod<VarWriteExpr>(range, types.void_type(), var_decl, value);
     }
     
     /// @brief Creates a write to a global variable
@@ -489,7 +489,7 @@ namespace clt::lng
     {
       assert_true("Expected a GlobalDeclExpr!", expr(var_decl).is_global_decl());
       assert_true("Types must match!", expr(var_decl).type() == type_token(value));
-      return add_new_prod<GlobalWriteExpr>(range, types.getVoidType(), var_decl, value);
+      return add_new_prod<GlobalWriteExpr>(range, types.void_type(), var_decl, value);
     }
 
     /// @brief Creates a store to a pointer
@@ -499,10 +499,10 @@ namespace clt::lng
     /// @return PtrStoreExpr
     ProdExprToken add_ptr_store(TokenRange range, ProdExprToken write_to, ProdExprToken to_write) noexcept
     {
-      assert_true("Expected a non-opaque pointer to mutable type!", type(write_to).isMutPtr()
-        && !type(write_to).isAnyOpaquePtr());
-      assert_true("Types must match!", type(write_to).as<MutPtrType>()->getPointingTo() == type_token(to_write));
-      return add_new_prod<PtrStoreExpr>(range, types.getVoidType(), write_to, to_write);
+      assert_true("Expected a non-opaque pointer to mutable type!", type(write_to).is_mut_ptr()
+        && !type(write_to).is_any_opaque_ptr());
+      assert_true("Types must match!", type(write_to).as<MutPtrType>()->pointing_to() == type_token(to_write));
+      return add_new_prod<PtrStoreExpr>(range, types.void_type(), write_to, to_write);
     }
 
     /// @brief Creates a move from a variable to another
@@ -513,7 +513,7 @@ namespace clt::lng
     ProdExprToken add_move(TokenRange range, StmtExprToken from, StmtExprToken to) noexcept
     {
       assert_true("Expected two local variable declarations!", expr(from).is_var_decl(), expr(to).is_var_decl());
-      return add_new_prod<MoveExpr>(range, types.getVoidType(), from, to);
+      return add_new_prod<MoveExpr>(range, types.void_type(), from, to);
     }
     
     /// @brief Creates a copy from a variable to another
@@ -526,7 +526,7 @@ namespace clt::lng
       assert_true("Expected two variable declarations!",
         expr(from).is_var_decl() || expr(from).is_global_decl(),
         expr(to).is_var_decl() || expr(to).is_global_decl());
-      return add_new_prod<CopyExpr>(range, types.getVoidType(), from, to);
+      return add_new_prod<CopyExpr>(range, types.void_type(), from, to);
     }
     
     /// @brief Creates a conditional move from a variable to another
@@ -539,7 +539,7 @@ namespace clt::lng
       assert_true("Expected two variable declarations!",
         expr(from).is_var_decl() || expr(from).is_global_decl(),
         expr(to).is_var_decl() || expr(to).is_global_decl());
-      return add_new_prod<CMoveExpr>(range, types.getVoidType(), from, to);
+      return add_new_prod<CMoveExpr>(range, types.void_type(), from, to);
     }
 
     /// @brief Creates a scope
@@ -547,7 +547,7 @@ namespace clt::lng
     /// @return ScopeExpr
     StmtExprToken add_scope(TokenRange range) noexcept
     {
-      return add_new_stmt<ScopeExpr>(range, types.getVoidType());
+      return add_new_stmt<ScopeExpr>(range, types.void_type());
     }
 
 
@@ -558,7 +558,7 @@ namespace clt::lng
     StmtExprToken add_scope(TokenRange range, StmtExprToken parent) noexcept
     {
       assert_true("Expected a scope as a parent!", expr(parent).is_scope());
-      return add_new_stmt<ScopeExpr>(range, types.getVoidType(), parent);
+      return add_new_stmt<ScopeExpr>(range, types.void_type(), parent);
     }
     
     /// @brief Creates a condition
@@ -569,8 +569,8 @@ namespace clt::lng
     /// @return ConditionExpr
     StmtExprToken add_condition(TokenRange range, ProdExprToken if_cond, StmtExprToken if_stmt, OptTok<StmtExprToken> else_stmt) noexcept
     {
-      assert_true("Expected bool type!", type(if_cond).isBuiltinAnd(&is_bool));
-      return add_new_stmt<ConditionExpr>(range, types.getVoidType(), if_cond, if_stmt, else_stmt);
+      assert_true("Expected bool type!", type(if_cond).is_builtin_and(&is_bool));
+      return add_new_stmt<ConditionExpr>(range, types.void_type(), if_cond, if_stmt, else_stmt);
     }
 
     /// @brief Creates a global variable declaration
