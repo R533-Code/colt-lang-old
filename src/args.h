@@ -101,11 +101,11 @@ namespace clt
     
     NO_WARN_FOR_ARG("cf_nan", "No warnings for NaNs when constant folding.",
       GlobalWarnFor.constant_folding_nan),
-    NO_WARN_FOR_ARG("cf_uOUflow", "No warnings for unsigned over/underflow when constant folding.",
+    NO_WARN_FOR_ARG("cf_unsigned_overflow", "No warnings for unsigned over/underflow when constant folding.",
       GlobalWarnFor.constant_folding_unsigned_ou),
-    NO_WARN_FOR_ARG("cf_iOUflow", "No warnings for signed over/underflow when constant folding.",
+    NO_WARN_FOR_ARG("cf_signed_overflow", "No warnings for signed over/underflow when constant folding.",
       GlobalWarnFor.constant_folding_signed_ou),
-    NO_WARN_FOR_ARG("cf_shift", "No warnings for left/right shifts by invalid size when constant folding.",
+    NO_WARN_FOR_ARG("cf_invalid_shift", "No warnings for left/right shifts by invalid size when constant folding.",
       GlobalWarnFor.constant_folding_invalid_shift)
     >;
 }
