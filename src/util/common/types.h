@@ -287,7 +287,7 @@ namespace clt
       mutable bool is_checked = false;
 
       /// @brief Constructs an error with a specific state.
-      /// The constructor is marked private so that the more readable sucess and error
+      /// The constructor is marked private so that the more readable success and error
       /// methods are used.
       /// @param is_error True if an error
       ErrorDebug(bool is_error, const std::source_location& src)
@@ -356,7 +356,7 @@ namespace clt
       bool iserror;
 
       /// @brief Constructs an error with a specific state.
-      /// The constructor is marked private so that the more readable sucess and error
+      /// The constructor is marked private so that the more readable success and error
       /// methods are used.
       /// @param is_error True if an error
       constexpr ErrorRelease(bool is_error)
