@@ -1,0 +1,26 @@
+name: MSVC test
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  BUILD_TYPE: Debug
+
+jobs:
+  build:
+    uses : ./.github/workflows/msvc_build.yml
+  
+  test:
+    runs-on: windows-latest
+    needs: [build]
+
+    steps:
+    - name: Run
+      run: cd build/${{env.BUILD_TYPE}} && ./colt
+    
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      run: ctest -C ${{env.BUILD_TYPE}} --output-on-failure

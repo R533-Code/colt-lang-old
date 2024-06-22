@@ -1,0 +1,26 @@
+name: g++12 test
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  BUILD_TYPE: Debug
+
+jobs:
+  build:
+    uses : ./.github/workflows/g++12_build.yml
+  
+  test:
+    runs-on: ubuntu-latest
+    needs: [build]
+
+    steps:
+    - name: Run
+      run: cd build/${{env.BUILD_TYPE}} && ./colt
+    
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      run: ctest -C ${{env.BUILD_TYPE}} --output-on-failure
