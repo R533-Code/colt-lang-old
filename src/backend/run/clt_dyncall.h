@@ -180,6 +180,7 @@ namespace clt::run
         ret.bit_assign(call((f64(*)())fn));
         break;
       }
+      return ret;
     }
   };
 }
