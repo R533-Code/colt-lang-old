@@ -38,8 +38,8 @@ namespace clt::lng
     /// @brief Default constructor
     TypeBuffer() noexcept = default;
 
-    StringView getTypeName(const TypeVariant& variant) const noexcept;
-    StringView getTypeName(TypeToken variant) const noexcept;
+    StringView type_name(const TypeVariant& variant) const noexcept;
+    StringView type_name(TypeToken variant) const noexcept;
 
     /// @brief Saves a type and return its index number
     /// @param variant The type to save

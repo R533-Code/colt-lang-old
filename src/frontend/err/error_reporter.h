@@ -33,11 +33,11 @@ namespace clt::lng
 
   protected:
     /// @brief The error count
-    u64 error_count   = 0;
+    u64 _error_count   = 0;
     /// @brief The warning count
-    u64 warn_count    = 0;
+    u64 _warn_count    = 0;
     /// @brief The message count
-    u64 message_count = 0;
+    u64 _message_count = 0;
   
   public:
     template<typename... Args>
@@ -67,13 +67,13 @@ namespace clt::lng
     
     /// @brief Returns the count of errors generated
     /// @return The count of errors
-    u64 getErrorCount()   const noexcept { return error_count; }
+    u64 error_count()   const noexcept { return error_count; }
     /// @brief Returns the count of warnings generated
     /// @return The count of warnings
-    u64 getWarnCount()    const noexcept { return warn_count; }
+    u64 warn_count()    const noexcept { return warn_count; }
     /// @brief Returns the count of messages generated
     /// @return The count of messages
-    u64 getMessageCount() const noexcept { return message_count; }
+    u64 message_count() const noexcept { return message_count; }
 
     /// @brief Destructor
     virtual ~ErrorReporter() noexcept {};
@@ -92,19 +92,19 @@ namespace clt::lng
 
       void message(StringView str, const Option<SourceInfo>& src_info = None, const Option<ReportNumber>& msg_nb = None) noexcept override
       {
-        ++ErrorReporter::message_count;
+        ++ErrorReporter::_message_count;
         Rep::message(str, src_info, msg_nb);
       }
 
       void warn(StringView str, const Option<SourceInfo>& src_info = None, const Option<ReportNumber>& msg_nb = None) noexcept override
       {
-        ++ErrorReporter::warn_count;
+        ++ErrorReporter::_warn_count;
         Rep::warn(str, src_info, msg_nb);
       }
 
       void error(StringView str, const Option<SourceInfo>& src_info = None, const Option<ReportNumber>& msg_nb = None) noexcept override
       {
-        ++ErrorReporter::error_count;
+        ++ErrorReporter::_error_count;
         Rep::error(str, src_info, msg_nb);
       }
 

@@ -43,7 +43,7 @@ namespace clt::lng
 {
   void make_ast(ParsedUnit& unit) noexcept
   {
-    assert_true("Unit already parsed!", !unit.isParsed());
+    assert_true("Unit already parsed!", !unit.is_parsed());
     // The constructor generates the AST directly
     ASTMaker ast = { unit };
   }
@@ -58,9 +58,9 @@ namespace clt::lng
     consume_current();
 
     //TODO: add support for string literal
-    QWORD_t value = getTokenBuffer().getLiteral(literal_tkn);
+    QWORD_t value = token_buffer().getLiteral(literal_tkn);
     return Expr().addLiteral(
-      range.getRange(), value, LiteralToBuiltinID(literal_tkn)
+      range.range(), value, LiteralToBuiltinID(literal_tkn)
     );
   }
 
@@ -74,25 +74,25 @@ namespace clt::lng
     else
       report_current<ERROR>(current_panic, "Expected an expression!");
 
-    return Expr().addError(range.getRange());
+    return Expr().addError(range.range());
   }
 
-  bool ASTMaker::warnFor(run::OpError err) const noexcept
+  bool ASTMaker::warn_for(run::OpError err) const noexcept
   {
     assert_true("DIV_BY_ZERO is an error not a warning!", err != run::OpError::DIV_BY_ZERO);
     switch_no_default(err)
     {
       case run::OpError::RET_NAN:
       case run::OpError::WAS_NAN:
-        return getWarnFor().constant_folding_nan;
+        return warn_for().constant_folding_nan;
       case run::OpError::SIGNED_OVERFLOW:
       case run::OpError::SIGNED_UNDERFLOW:
-        return getWarnFor().constant_folding_signed_ou;
+        return warn_for().constant_folding_signed_ou;
       case run::OpError::UNSIGNED_OVERFLOW:
       case run::OpError::UNSIGNED_UNDERFLOW:
-        return getWarnFor().constant_folding_unsigned_ou;
+        return warn_for().constant_folding_unsigned_ou;
       case run::OpError::SHIFT_BY_GRE_SIZEOF:
-        return getWarnFor().constant_folding_invalid_shift;
+        return warn_for().constant_folding_invalid_shift;
       case run::OpError::NO_ERROR:
         return false;
     }
@@ -113,8 +113,8 @@ namespace clt::lng
   ProdExprToken ASTMaker::parse_primary(bool accepts_conv)
   {
     using enum Lexeme;
-    auto depth = addDepth();
-    auto range = startRange();
+    auto depth = add_depth();
+    auto range = start_range();
 
     uninit<ProdExprToken> to_ret;
 
@@ -140,36 +140,36 @@ namespace clt::lng
   ProdExprToken ASTMaker::parse_unary_and(ProdExprToken child, const TokenRangeGenerator& range) noexcept
   {
     if (auto pchild = decl_from_read(child); pchild.isValue())
-      return Expr().addAddressOf(range.getRange(), pchild.getValue());
+      return Expr().addAddressOf(range.range(), pchild.getValue());
 
-    report<ERROR>(range.getRange(), nullptr,
+    report<ERROR>(range.range(), nullptr,
       "Unary '&' can only be applied on a variable!");
-    return Expr().addError(range.getRange());
+    return Expr().addError(range.range());
   }
 
   ProdExprToken ASTMaker::parse_unary_star(ProdExprToken child, const TokenRangeGenerator& range) noexcept
   {
     if (!Type(child).isAnyOpaquePtr())
     {
-      report<ERROR>(range.getRange(), nullptr,
+      report<ERROR>(range.range(), nullptr,
         "Unary '*' can only be applied on a non-opaque pointer!");
-      return Expr().addError(range.getRange());
+      return Expr().addError(range.range());
     }
     else if (!Type(child).isAnyPtr())
     {
-      report<ERROR>(range.getRange(), nullptr,
+      report<ERROR>(range.range(), nullptr,
         "Unary '*' can only be applied on pointer types!");
-      return Expr().addError(range.getRange());
+      return Expr().addError(range.range());
     }
-    return Expr().addPtrLoad(range.getRange(), child);
+    return Expr().addPtrLoad(range.range(), child);
   }
 
   ProdExprToken ASTMaker::parse_unary()
   {
     assert_true("parse_unary must be called when a unary token is hit!", isUnaryToken(current()));
     using enum Lexeme;
-    auto depth = addDepth();
-    auto range = startRange();
+    auto depth = add_depth();
+    auto range = start_range();
 
     uninit<ProdExprToken> to_ret;
 
@@ -180,7 +180,7 @@ namespace clt::lng
     //Parse the child expression, without handling conversions:
     // '-5 as i32' is equivalent to '(-5) as i32'
     ProdExprToken child = parse_primary(false);
-    PROPAGATE_ERROR(child, range.getRange());
+    PROPAGATE_ERROR(child, range.range());
 
     switch (op)
     {
@@ -189,8 +189,8 @@ namespace clt::lng
 
       // Handles '+', which are not supported by the language
     break; case TKN_PLUS:
-      report<ERROR>(range.getRange(), current_panic, "Unary '+' is not supported!");
-      to_ret = Expr().addError(range.getRange());
+      report<ERROR>(range.range(), current_panic, "Unary '+' is not supported!");
+      to_ret = Expr().addError(range.range());
 
       // Handles '&', which are usually AddressOf expressions
     break; case TKN_AND:
@@ -200,9 +200,9 @@ namespace clt::lng
     break; case TKN_STAR:
       to_ret = parse_unary_star(child, range);
 
-      // Handles the rest of the unary tokens (makeUnary checks for supports())
+      // Handles the rest of the unary tokens (make_unary checks for supports())
     break; default:
-      to_ret = makeUnary(range.getRange(), TokenToUnary(op), child);
+      to_ret = make_unary(range.range(), TokenToUnary(op), child);
     }
     return to_ret;
   }
@@ -210,8 +210,8 @@ namespace clt::lng
   ProdExprToken ASTMaker::parse_binary()
   {
     using enum Lexeme;
-    auto depth = addDepth();
-    auto range = startRange();
+    auto depth = add_depth();
+    auto range = start_range();
 
     ProdExprToken lhs = parse_primary();
     PROPAGATE_ERROR(lhs, lhs);
@@ -240,10 +240,10 @@ namespace clt::lng
       if (!isBinaryToken(binary_op))
       {
         report<report_as::ERROR>(binary_op, current_panic, "Expected a binary operator!");
-        return Expr().addError(range.getRange());
+        return Expr().addError(range.range());
       }
       //Pratt's parsing, which allows operators priority
-      lhs = makeBinary(range.getRange(), lhs, TokenToBinary(binary_op), rhs);
+      lhs = make_binary(range.range(), lhs, TokenToBinary(binary_op), rhs);
       if (isComparisonToken(current()))
         lhs = parse_comparison(current(), lhs, range);
 
@@ -274,7 +274,7 @@ namespace clt::lng
     else if (!Expr(condition).is<BinaryExpr>())
     {
       QWORD_t true_value = 1;
-      condition = makeBinary(range, condition, BinaryOp::OP_EQUAL,
+      condition = make_binary(range, condition, BinaryOp::OP_EQUAL,
         Expr().addLiteral(range, true_value, BuiltinID::BOOL));
     }
     return condition;
@@ -283,8 +283,8 @@ namespace clt::lng
   ProdExprToken ASTMaker::parse_binary_internal(Token previous)
   {
     using enum Lexeme;
-    auto depth = addDepth();
-    auto range = startRange();
+    auto depth = add_depth();
+    auto range = start_range();
 
     ProdExprToken lhs = parse_primary();
     PROPAGATE_ERROR(lhs, lhs);
@@ -304,12 +304,12 @@ namespace clt::lng
       if (!isBinaryToken(binary_op))
       {
         report<report_as::ERROR>(binary_op, current_panic, "Expected a binary operator!");
-        return Expr().addError(range.getRange());
+        return Expr().addError(range.range());
       }
       else if (isComparisonToken(binary_op))
         lhs = parse_comparison(binary_op, lhs, rhs, range);
       else //Pratt's parsing, which allows operators priority
-        lhs = makeBinary(range.getRange(), lhs, TokenToBinary(binary_op), rhs);
+        lhs = make_binary(range.range(), lhs, TokenToBinary(binary_op), rhs);
 
       //Update the Token
       binary_op = current();
@@ -334,19 +334,19 @@ namespace clt::lng
   ProdExprToken ASTMaker::parse_comparison(Token comparison, ProdExprToken lhs, ProdExprToken rhs, const TokenRangeGenerator& range)
   {
     ComparisonSet comparison_set = token_to_comparison_set(comparison);
-    auto ret = makeBinary(range.getRange(), lhs, TokenToBinary(comparison), rhs);
+    auto ret = make_binary(range.range(), lhs, TokenToBinary(comparison), rhs);
 
     while (isComparisonToken(current()))
     {
       comparison = current();
-      if (isInvalidChain(comparison_set, token_to_comparison_set(comparison)))
+      if (is_invalid_comparison_chain(comparison_set, token_to_comparison_set(comparison)))
         handle_comparison_chain_error(comparison, comparison_set);
 
       consume_current();
       auto nrhs = parse_binary_internal(comparison);
-      ret = makeBinary(range.getRange(),
+      ret = make_binary(range.range(),
         ret, BinaryOp::OP_BOOL_AND,
-        makeBinary(range.getRange(), rhs, TokenToBinary(comparison), nrhs));
+        make_binary(range.range(), rhs, TokenToBinary(comparison), nrhs));
       rhs = nrhs;
     }
     return ret;
@@ -355,7 +355,7 @@ namespace clt::lng
   ProdExprToken ASTMaker::parse_conversion(ProdExprToken to_conv, const TokenRangeGenerator& range)
   {
     using enum Lexeme;
-    auto depth = addDepth();
+    auto depth = add_depth();
     assert_true("Function should only be called when 'as' or 'bit_as' is encountered!",
       current() == TKN_KEYWORD_as || current() == TKN_KEYWORD_bit_as);
 
@@ -363,7 +363,7 @@ namespace clt::lng
     consume_current();
 
     TypeToken cnv_type = parse_typename();
-    PROPAGATE_ERROR(cnv_type, Expr().addError(range.getRange()));
+    PROPAGATE_ERROR(cnv_type, Expr().addError(range.range()));
     PROPAGATE_ERROR(to_conv, to_conv);
 
     // A bit_as conversion must have either the target or the starting
@@ -371,31 +371,31 @@ namespace clt::lng
     if (cnv == TKN_KEYWORD_bit_as
       && !(Type(cnv_type).isBuiltinAnd(&isBytes) || Type(to_conv).isBuiltinAnd(&isBytes)))
     {
-      report<report_as::ERROR>(range.getRange(), nullptr,
+      report<report_as::ERROR>(range.range(), nullptr,
         "'bit_as' conversion can only be applied on/to bytes types!");
-      getReporter().message("Bytes types are 'BYTE', 'WORD', 'DWORD' and 'QWORD'.");
-      return Expr().addError(range.getRange());
+      reporter().message("Bytes types are 'BYTE', 'WORD', 'DWORD' and 'QWORD'.");
+      return Expr().addError(range.range());
     }
 
-    return makeCast(range.getRange(), to_conv, cnv_type, cnv == TKN_KEYWORD_bit_as);
+    return make_cast(range.range(), to_conv, cnv_type, cnv == TKN_KEYWORD_bit_as);
   }
 
   ProdExprToken ASTMaker::parse_assignment(ProdExprToken assign_to, const TokenRangeGenerator& range)
   {
-    auto panic = scopedSetPanic(&ASTMaker::panic_consume_semicolon);
+    auto panic = scoped_set_panic(&ASTMaker::panic_consume_semicolon);
     return assign_to;
   }
 
   StmtExprToken ASTMaker::parse_scope(bool accepts_single)
   {
     using enum Lexeme;
-    auto depth = addDepth();
-    auto range = startRange();
+    auto depth = add_depth();
+    auto range = start_range();
 
     SCOPED_SAVE_VECTOR(local_var_table);
 
     //We still want to return a ScopeExpr even for a single expression
-    auto scope = Expr().addScope(range.getRange());
+    auto scope = Expr().addScope(range.range());
     // We add the expression to the scope
     auto& scope_ref = Expr(scope);
     auto& statements = scope_ref.as<ScopeExpr>()->getExprs();
@@ -403,11 +403,11 @@ namespace clt::lng
     {
       consume_current(); // :
       // TODO: check me
-      auto range2 = startRange();
+      auto range2 = start_range();
 
       statements.push_back(parse_statement());
       // Update the token range
-      scope_ref.asBase()->setTokenRange(range2.getRange());
+      scope_ref.asBase()->setTokenRange(range2.range());
       return scope;
     }
     if (current() == TKN_LEFT_CURLY)
@@ -430,10 +430,10 @@ namespace clt::lng
 
       //If empty scope, push a no-op
       if (statements.is_empty())
-        statements.push_back(Expr(Expr().addNOP(range.getRange())).asBase());
+        statements.push_back(Expr(Expr().addNOP(range.range())).asBase());
 
       // Update the token range
-      scope_ref.asBase()->setTokenRange(range.getRange());
+      scope_ref.asBase()->setTokenRange(range.range());
       return scope;
     }
     else
@@ -441,42 +441,42 @@ namespace clt::lng
       //TODO: choose consuming strategy
       report<report_as::ERROR>(current(), nullptr,
         "Expected the beginning of a scope ('{{'{}", accepts_single ? "or ':')!" : ")!");
-      return Expr().addErrorStmt(range.getRange());
+      return Expr().addErrorStmt(range.range());
     }
   }
 
   StmtExprToken ASTMaker::parse_var_decl(bool is_global)
   {
     using enum Lexeme;
-    auto depth = addDepth();
-    auto range = startRange();
-    auto panic = scopedSetPanic(&ASTMaker::panic_consume_semicolon);
+    auto depth = add_depth();
+    auto range = start_range();
+    auto panic = scoped_set_panic(&ASTMaker::panic_consume_semicolon);
     
     bool is_mut = false;
     if (is_global ?
       parse_global_var_mutability(is_mut).is_error() :
       parse_local_var_mutability(is_mut).is_error())
     {
-      return Expr().addErrorStmt(range.getRange());
+      return Expr().addErrorStmt(range.range());
     }
     
     auto identifier = current();
     PROPAGATE_ERROR(
       check_consume(TKN_IDENTIFIER, current_panic, "Expected an identifier!").is_error(),
-      Expr().addErrorStmt(getTokenBuffer().getRangeFrom(identifier))
+      Expr().addErrorStmt(token_buffer().getRangeFrom(identifier))
     );
 
-    StringView name = getTokenBuffer().getIdentifier(identifier);
+    StringView name = token_buffer().getIdentifier(identifier);
     OptTok<TypeToken> var_type = None;
     if (current() == TKN_COLON)
     {
       auto type = parse_typename();
-      PROPAGATE_ERROR(type, Expr().addErrorStmt(range.getRange()));
+      PROPAGATE_ERROR(type, Expr().addErrorStmt(range.range()));
     }
     
     if (auto equal = current();
       check_consume(TKN_EQUAL, current_panic, "Expected a '='!").is_error())
-      return Expr().addErrorStmt(getTokenBuffer().getRangeFrom(equal));
+      return Expr().addErrorStmt(token_buffer().getRangeFrom(equal));
     
     OptTok<ProdExprToken> init = None;
     // TODO: handle default constructor?
@@ -498,24 +498,24 @@ namespace clt::lng
       {
         report<report_as::ERROR>(identifier, current_panic,
           "Global variables must be initialized!");
-        return Expr().addErrorStmt(range.getRange());
+        return Expr().addErrorStmt(range.range());
       }
       if (var_type.isNone())
       {
         report<report_as::ERROR>(identifier, current_panic,
           "An uninitialized variable must have a type!");
-        return Expr().addErrorStmt(range.getRange());
+        return Expr().addErrorStmt(range.range());
       }      
     }
 
     if (auto semicolon = current();
       check_consume(TKN_SEMICOLON, current_panic, "Expected a ';'!").is_error())
-      return Expr().addErrorStmt(getTokenBuffer().getRangeFrom(semicolon));
+      return Expr().addErrorStmt(token_buffer().getRangeFrom(semicolon));
 
     if (is_global)
     {
       return Expr().addGlobalDecl(
-        range.getRange(), var_type.getValue(),
+        range.range(), var_type.getValue(),
         name, init.getValue(), is_mut);
     }
     else
@@ -523,7 +523,7 @@ namespace clt::lng
       assert_true("Scope not set!", current_scope != nullptr);
       // Create the variable declaration
       // Its ID is its index into the current scope.
-      auto decl = Expr().addVarDecl(range.getRange(), var_type.getValue(),
+      auto decl = Expr().addVarDecl(range.range(), var_type.getValue(),
         local_var_table.size(), name, init, is_mut);
       auto decl_ptr = Expr(decl).as<VarDeclExpr>();
       // Save the variable initialization info
@@ -541,8 +541,8 @@ namespace clt::lng
     using enum Lexeme;
     assert_true("Function should only be called if current_tkn == TKN_KEYWORD_(if/elif)",
       current() == TKN_KEYWORD_if || (is_elif && current() == TKN_KEYWORD_elif));
-    auto depth = addDepth();
-    auto range = startRange();
+    auto depth = add_depth();
+    auto range = start_range();
 
     consume_current(); //consume if (or elif if is_elif)
 
@@ -552,7 +552,7 @@ namespace clt::lng
     if (current() == TKN_KEYWORD_elif)
     {
       auto else_body = parse_condition(true); // we recurse
-      return makeCondition(range.getRange(), if_cond, if_body, else_body);
+      return make_condition(range.range(), if_cond, if_body, else_body);
     }
     OptTok<StmtExprToken> else_body = None;
     if (current() == TKN_KEYWORD_else)
@@ -560,15 +560,15 @@ namespace clt::lng
       consume_current(); //consume else
       else_body = parse_scope(); // else body
     }
-    return makeCondition(range.getRange(), if_cond, if_body, else_body);
+    return make_condition(range.range(), if_cond, if_body, else_body);
   }
 
   ExprBase* ASTMaker::parse_statement()
   {
     using enum Lexeme;
     //assert_true("Parse statement can only happen inside a function!", is_parsing_fn);
-    auto depth = addDepth();
-    auto range = startRange();
+    auto depth = add_depth();
+    auto range = start_range();
 
     bool is_valid = true; //modified by continue/break handling
     ExprBase* to_ret;
@@ -584,7 +584,7 @@ namespace clt::lng
     case TKN_KEYWORD_if:
       if (auto cond = parse_condition(); cond.isValue())
         return Expr(cond.getValue()).asBase();
-      return Expr(Expr().addNOP(range.getRange())).asBase();
+      return Expr(Expr().addNOP(range.range())).asBase();
       /*case TKN_KEYWORD_while:
         return parse_while();*/
       /*case TKN_KEYWORD_using:
@@ -593,9 +593,9 @@ namespace clt::lng
         return parse_return();*/
 
     case TKN_SEMICOLON:
-      report<report_as::ERROR>(range.getRange(), nullptr, "Expected a statement!");
+      report<report_as::ERROR>(range.range(), nullptr, "Expected a statement!");
       consume_current(); // ';'
-      return Expr(Expr().addError(range.getRange())).asBase();
+      return Expr(Expr().addError(range.range())).asBase();
 
       /*case TKN_KEYWORD_continue:
       case TKN_KEYWORD_break:
@@ -604,11 +604,11 @@ namespace clt::lng
         // EXPECTS ';'
     break; default:
     {
-      auto panic = scopedSetPanic(&ASTMaker::panic_consume_semicolon);
-      if (to_parse.getTokenBuffer().makeSourceInfo(current()).expr == "pass")
+      auto panic = scoped_set_panic(&ASTMaker::panic_consume_semicolon);
+      if (to_parse.token_buffer().makeSourceInfo(current()).expr == "pass")
       {
         consume_current();
-        to_ret = Expr(Expr().addNOP(range.getRange())).asBase();
+        to_ret = Expr(Expr().addNOP(range.range())).asBase();
       }
       else
         to_ret = Expr(parse_binary()).asBase();
@@ -617,7 +617,7 @@ namespace clt::lng
     //TODO: recheck strategy
     if (check_consume(TKN_SEMICOLON, "Expected a ';'!").is_success())
       return to_ret;
-    return Expr(Expr().addError(range.getRange())).asBase();
+    return Expr(Expr().addError(range.range())).asBase();
   }
 
   TypeToken ASTMaker::parse_typename() noexcept
@@ -625,8 +625,8 @@ namespace clt::lng
     using enum Lexeme;
 
     //Save current expression state
-    auto depth = addDepth();
-    auto range = startRange();
+    auto depth = add_depth();
+    auto range = start_range();
 
     // typeof(10 + 5) -> type of (10 + 5)
     if (current() == TKN_KEYWORD_typeof)
@@ -669,7 +669,7 @@ namespace clt::lng
       }
       return Type().getErrorType();
     }
-    report<report_as::ERROR>(range.getRange(), current_panic,
+    report<report_as::ERROR>(range.range(), current_panic,
       "Expected a typename!");
     return Type().getErrorType();
   }
@@ -701,7 +701,7 @@ namespace clt::lng
       return ErrorFlag::success();
     }
     report_current<report_as::ERROR>(current_panic, "Expected a local variable declaration!");
-    getReporter().message("A local variable declaration begins with 'var' or 'let'.");
+    reporter().message("A local variable declaration begins with 'var' or 'let'.");
     return ErrorFlag::error();
   }
 
@@ -721,7 +721,7 @@ namespace clt::lng
       return ErrorFlag::success();
     }
     report_current<report_as::ERROR>(current_panic, "Expected a global variable declaration!");
-    getReporter().message("A global variable declaration begins with 'global' or 'global mut'.");
+    reporter().message("A global variable declaration begins with 'global' or 'global mut'.");
     return ErrorFlag::error();
   }
 
@@ -733,7 +733,7 @@ namespace clt::lng
     return read.as<ReadExpr>()->getDecl();
   }
 
-  ProdExprToken ASTMaker::makeBinary(TokenRange range, ProdExprToken lhs, BinaryOp op, ProdExprToken rhs) noexcept
+  ProdExprToken ASTMaker::make_binary(TokenRange range, ProdExprToken lhs, BinaryOp op, ProdExprToken rhs) noexcept
   {
     using enum BinarySupport;
 
@@ -753,8 +753,8 @@ namespace clt::lng
         rhs_p != nullptr)
       {
         if (auto lhs_p = Expr(lhs).as<LiteralExpr>(); lhs_p != nullptr)
-          return constantFold(range, *lhs_p, op, *rhs_p);
-        if ((op == BinaryOp::OP_DIV || op == BinaryOp::OP_MOD) && isLiteralZero(rhs))
+          return constant_fold(range, *lhs_p, op, *rhs_p);
+        if ((op == BinaryOp::OP_DIV || op == BinaryOp::OP_MOD) && is_literal_zero(rhs))
         {
           report<report_as::ERROR>(range, nullptr, "Integral division by zero is not allowed!");
           return Expr().addError(range);
@@ -765,18 +765,18 @@ namespace clt::lng
     case INVALID_OP:
       report<report_as::ERROR>(range, nullptr,
         "'{}' does not support operator '{}'!",
-        getTypeName(type), toStr(op));
+        type_name(type), toStr(op));
       return Expr().addError(range);
 
     case INVALID_TYPE:
       report<report_as::ERROR>(range, nullptr,
         "'{}' does not support '{}' as right hand side of operator '{}'!",
-        getTypeName(type), getTypeName(Type(rhs)), toStr(op));
+        type_name(type), type_name(Type(rhs)), toStr(op));
       return Expr().addError(range);
     }
   }
 
-  ProdExprToken ASTMaker::makeUnary(TokenRange range, UnaryOp op, ProdExprToken child) noexcept
+  ProdExprToken ASTMaker::make_unary(TokenRange range, UnaryOp op, ProdExprToken child) noexcept
   {
     using enum UnarySupport;
 
@@ -790,24 +790,24 @@ namespace clt::lng
     {
     case BUILTIN:
       if (auto ptr = Expr(child).as<LiteralExpr>(); ptr != nullptr)
-        return constantFold(range, op, *ptr);
+        return constant_fold(range, op, *ptr);
       return Expr().addUnary(range, op, child);
     case INVALID:
       report<report_as::ERROR>(range, current_panic,
         "'{}' does not support unary operator '{}'!",
-        getTypeName(type), to_str(op));
+        type_name(type), to_str(op));
       return Expr().addError(range);
     }
   }
 
-  bool ASTMaker::isInvalidChain(ComparisonSet old, ComparisonSet new_set) const noexcept
+  bool ASTMaker::is_invalid_comparison_chain(ComparisonSet old, ComparisonSet new_set) const noexcept
   {
     using enum ComparisonSet;
     return old != new_set ||
       (old == NONE && new_set == NONE);
   }
 
-  ProdExprToken ASTMaker::makeCast(TokenRange range, ProdExprToken to_cast, TypeToken to, bool is_bit_cast) noexcept
+  ProdExprToken ASTMaker::make_cast(TokenRange range, ProdExprToken to_cast, TypeToken to, bool is_bit_cast) noexcept
   {
     using enum ConversionSupport;
     PROPAGATE_ERROR(to_cast, to_cast);
@@ -824,12 +824,12 @@ namespace clt::lng
     {
       auto builtin_t = Type(to).as<BuiltinType>();
       if (auto ptr = Expr(to_cast).as<LiteralExpr>(); ptr != nullptr && builtin_t != nullptr)
-        return constantFold(range, *ptr, *builtin_t);
+        return constant_fold(range, *ptr, *builtin_t);
       return Expr().addCast(range, to, to_cast);
     }
     case INVALID:
       report<report_as::ERROR>(range, nullptr, "'{}' cannot be casted to '{}'!",
-        getTypeName(Type(to_cast)), getTypeName(to));
+        type_name(Type(to_cast)), type_name(to));
       return Expr().addError(range);
     }
   }
@@ -849,7 +849,7 @@ namespace clt::lng
     return ID_to_type[(u8)ID];
   }
 
-  ProdExprToken ASTMaker::constantFold(TokenRange range, const LiteralExpr& lhs, BinaryOp op, const LiteralExpr& rhs) noexcept
+  ProdExprToken ASTMaker::constant_fold(TokenRange range, const LiteralExpr& lhs, BinaryOp op, const LiteralExpr& rhs) noexcept
   {
     assert_true("Expected built-in type!", Type(lhs).is<BuiltinType>(), Type(rhs).is<BuiltinType>());
     const auto typeID = Type(lhs).as<BuiltinType>()->typeID();
@@ -863,7 +863,7 @@ namespace clt::lng
         "Integral division by zero is not allowed!");
       return Expr().addError(range);
     }
-    else if (warnFor(err))
+    else if (warn_for(err))
     {
       report<report_as::WARNING>(range, nullptr,
         "{}", run::toExplanation(err));
@@ -878,7 +878,7 @@ namespace clt::lng
     );
   }
 
-  OptTok<StmtExprToken> ASTMaker::makeCondition(TokenRange range, ProdExprToken condition, StmtExprToken if_stmt, OptTok<StmtExprToken> else_stmt) noexcept
+  OptTok<StmtExprToken> ASTMaker::make_condition(TokenRange range, ProdExprToken condition, StmtExprToken if_stmt, OptTok<StmtExprToken> else_stmt) noexcept
   {
     assert_true("Expected boolean type!", Type(condition).isBuiltinAnd(&isBool));
     if (auto literal = Expr(condition).as<LiteralExpr>(); literal != nullptr)
@@ -886,7 +886,7 @@ namespace clt::lng
     return Expr().addCondition(range, condition, if_stmt, else_stmt);
   }
 
-  ProdExprToken ASTMaker::constantFold(TokenRange range, UnaryOp op, const LiteralExpr& lhs) noexcept
+  ProdExprToken ASTMaker::constant_fold(TokenRange range, UnaryOp op, const LiteralExpr& lhs) noexcept
   {
     using enum clt::lng::UnaryOp;
 
@@ -896,7 +896,7 @@ namespace clt::lng
     {
       const auto ID = Type(lhs).as<BuiltinType>()->typeID();
       auto [result, err] = run::neg(lhs.getValue(), BuiltinToTypeOp(ID));
-      if (warnFor(err))
+      if (warn_for(err))
         report<report_as::WARNING>(range, nullptr, "{}", run::toExplanation(err));
       return Expr().addLiteral(range, result, ID);
     }
@@ -916,16 +916,16 @@ namespace clt::lng
     }
   }
 
-  ProdExprToken ASTMaker::constantFold(TokenRange range, const LiteralExpr& to_conv, const BuiltinType& to) noexcept
+  ProdExprToken ASTMaker::constant_fold(TokenRange range, const LiteralExpr& to_conv, const BuiltinType& to) noexcept
   {
     auto [result, err] = run::cnv(to_conv.getValue(),
       BuiltinToTypeOp(Type(to_conv).as<BuiltinType>()->typeID()), BuiltinToTypeOp(to.typeID()));
-    if (warnFor(err))
+    if (warn_for(err))
       report<report_as::WARNING>(range, nullptr, "{}", run::toExplanation(err));
     return Expr().addLiteral(range, result, to.typeID());
   }
 
-  bool ASTMaker::isLiteralZero(ProdExprToken expr) const noexcept
+  bool ASTMaker::is_literal_zero(ProdExprToken expr) const noexcept
   {
     return Type(expr).isBuiltinAnd(&isIntegral)
       && Expr(expr).as<LiteralExpr>()->getValue().is_none_set();
@@ -975,9 +975,9 @@ namespace clt::lng
   void print_expr(const ExprBase* tkn, const ParsedUnit& unit, u64 depth) noexcept
   {
     using enum ExprID;
-    auto& buffer = unit.getExprBuffer();
-    auto& types = unit.getProgram().getTypes();
-    auto& tkn_buffer = unit.getTokenBuffer();
+    auto& buffer = unit.expr_buffer();
+    auto& types = unit.program().type_buffer();
+    auto& tkn_buffer = unit.token_buffer();
     auto& expr = *tkn;
     
     auto info = tkn_buffer.makeSourceInfo(expr.getTokenRange());
@@ -989,7 +989,7 @@ namespace clt::lng
     break; case EXPR_LITERAL:
       io::print("{}{:^{}}({:h}: {}, {} {}){}", io::BrightGreenF, "", depth * 3, expr.classof(),
         info.expr, fmt_TypedQWORD{ static_cast<const LiteralExpr*>(&expr)->getValue(), types.getType(expr.getType()).as<BuiltinType>()->typeID() },
-        types.getTypeName(expr.getType()), io::Reset);
+        types.type_name(expr.getType()), io::Reset);
 
     break; case EXPR_UNARY:
     {
@@ -998,7 +998,7 @@ namespace clt::lng
       io::print("{}{:^{}}({:h}: '{:h}'", io::YellowF, "", depth * 3, expr.classof(),
         ptr->getOp());
       print_expr(ptr->getExpr(), unit, depth + 1);
-      io::print("{}{:^{}}{}){}", io::YellowF, "", depth * 3, types.getTypeName(expr.getType()), io::Reset);
+      io::print("{}{:^{}}{}){}", io::YellowF, "", depth * 3, types.type_name(expr.getType()), io::Reset);
     }
 
     break; case EXPR_BINARY:
@@ -1010,7 +1010,7 @@ namespace clt::lng
       io::print("{}{:^{}} {:h}", io::BrightCyanF, "", depth * 3,
         ptr->getOp());
       print_expr(ptr->getRHS(), unit, depth + 1);
-      io::print("{}{:^{}}{}){}", io::BrightCyanF, "", depth * 3, types.getTypeName(expr.getType()), io::Reset);
+      io::print("{}{:^{}}{}){}", io::BrightCyanF, "", depth * 3, types.type_name(expr.getType()), io::Reset);
     }
 
     break; case EXPR_CAST:
@@ -1018,9 +1018,9 @@ namespace clt::lng
       auto ptr = static_cast<const CastExpr*>(&expr);
 
       io::print("{}{:^{}}({:h}: '{}' -> '{}'", io::BrightMagentaF, "", depth * 3, expr.classof(),
-        types.getTypeName(ptr->getType()), types.getTypeName(ptr->getTypeToCastTo()));
+        types.type_name(ptr->getType()), types.type_name(ptr->getTypeToCastTo()));
       print_expr(ptr->getToCast(), unit, depth + 1);
-      io::print("{}{:^{}}{}){}", io::BrightMagentaF, "", depth * 3, types.getTypeName(ptr->getType()), io::Reset);
+      io::print("{}{:^{}}{}){}", io::BrightMagentaF, "", depth * 3, types.type_name(ptr->getType()), io::Reset);
     }
 
     break; default:
@@ -1032,7 +1032,7 @@ namespace clt::lng
   void print_expr(ProdExprToken tkn, const ParsedUnit& unit, u64 depth) noexcept
   {
     using enum ExprID;
-    auto& buffer = unit.getExprBuffer();
+    auto& buffer = unit.expr_buffer();
     auto& expr = buffer.getExpr(tkn);
     print_expr(expr.asBase(), unit, depth);
   }

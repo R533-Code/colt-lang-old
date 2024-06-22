@@ -43,7 +43,7 @@ namespace clt::lng
     }
   }
 
-  StringView TypeBuffer::getTypeName(const TypeVariant& var) const noexcept
+  StringView TypeBuffer::type_name(const TypeVariant& var) const noexcept
   {
     using enum TypeID;
     switch_no_default (var.classof())
@@ -57,13 +57,13 @@ namespace clt::lng
     case TYPE_PTR:
     {
       type_names.push_back({});
-      fmt::format_to(std::back_inserter(type_names.back()), "ptr.{}", getTypeName(var.as<PtrType>()->getPointingTo()));
+      fmt::format_to(std::back_inserter(type_names.back()), "ptr.{}", type_name(var.as<PtrType>()->getPointingTo()));
       return type_names.back();
     }
     case TYPE_MUT_PTR:
     {
       type_names.push_back({});
-      fmt::format_to(std::back_inserter(type_names.back()), "mutptr.{}", getTypeName(var.as<MutPtrType>()->getPointingTo()));
+      fmt::format_to(std::back_inserter(type_names.back()), "mutptr.{}", type_name(var.as<MutPtrType>()->getPointingTo()));
       return type_names.back();
     }
     case TYPE_OPTR:
@@ -74,8 +74,8 @@ namespace clt::lng
     }
   }
   
-  StringView TypeBuffer::getTypeName(TypeToken variant) const noexcept
+  StringView TypeBuffer::type_name(TypeToken variant) const noexcept
   {
-    return getTypeName(getType(variant));
+    return type_name(getType(variant));
   }
 }

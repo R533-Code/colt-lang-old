@@ -24,7 +24,7 @@ namespace clt::lng
   class ParsedProgram
   {
     /// @brief Contains all the types of the program
-    TypeBuffer type_buffer{};
+    TypeBuffer _type_buffer{};
     /// @brief Contains all the modules of the program
     ModuleBuffer module_buffer{};
     /// @brief Contains all the parsed units
@@ -32,13 +32,13 @@ namespace clt::lng
     /// @brief The set of all literal strings in the program
     StableSet<String> literal_str{};
     /// @brief The reporter used to generate warnings and errors
-    ErrorReporter& reporter;
+    ErrorReporter& _reporter;
     /// @brief The starting file to parse
     const std::filesystem::path& start_file;
     /// @brief Represents the include paths of the program
     const Vector<std::filesystem::path>& includes;
     /// @brief Dictates which warnings to generate
-    WarnFor warn_for;
+    WarnFor _warn_for;
 
   public:
     /// @brief Represents an empty path (used when the StringView constructor overload is used)
@@ -62,35 +62,35 @@ namespace clt::lng
 
     /// @brief Returns the reporter used for errors and warnings
     /// @return The reporter
-    ErrorReporter& getReporter() noexcept { return reporter; }
+    ErrorReporter& reporter() noexcept { return _reporter; }
     /// @brief Returns the reporter used for errors and warnings
     /// @return The reporter
-    const ErrorReporter& getReporter() const noexcept { return reporter; }
+    const ErrorReporter& reporter() const noexcept { return _reporter; }
     
     /// @brief Returns the type buffer used for errors and warnings
     /// @return The type buffer
-    TypeBuffer& getTypes() noexcept { return type_buffer; }
+    TypeBuffer& type_buffer() noexcept { return _type_buffer; }
     /// @brief Returns the type buffer used for errors and warnings
     /// @return The type buffer
-    const TypeBuffer& getTypes() const noexcept { return type_buffer; }
+    const TypeBuffer& type_buffer() const noexcept { return _type_buffer; }
 
     /// @brief Returns the set of literal strings in the program
     /// @return Set of literal strings in the program
-    StableSet<String>& getStrLiterals() noexcept { return literal_str; }    
+    StableSet<String>& str_literals() noexcept { return literal_str; }    
     /// @brief Returns the set of literal strings in the program
     /// @return Set of literal strings in the program
-    const StableSet<String>& getStrLiterals() const noexcept { return literal_str; }
+    const StableSet<String>& str_literals() const noexcept { return literal_str; }
 
     /// @brief Returns what to warn for
     /// @return What to warn for
-    WarnFor& getWarnFor() noexcept { return warn_for; }
+    WarnFor& warn_for() noexcept { return _warn_for; }
     /// @brief Returns what to warn for
     /// @return What to warn for
-    const WarnFor& getWarnFor() const noexcept { return warn_for; }
+    const WarnFor& warn_for() const noexcept { return _warn_for; }
 
     /// @brief Adds an import
     /// @return True if the import was successful, false on failure
-    bool importUnit(StringView import_path) noexcept;
+    bool import_unit(StringView import_path) noexcept;
   };
 }
 

@@ -17,7 +17,7 @@ namespace clt::lng
 {
   /// @brief Generates the AST and stores the result in 'unit'
   /// @param unit The unit whose AST to generate
-  /// @pre !unit.isParsed()
+  /// @pre !unit.is_parsed()
   void make_ast(ParsedUnit& unit) noexcept;
 
   /// @brief Prints an expression (for debugging purposes)
@@ -219,7 +219,7 @@ namespace clt::lng
     ASTMaker(ParsedUnit& unit) noexcept
       : to_parse(unit)
     {
-      auto s = scopedSetPanic(&ASTMaker::panic_consume_semicolon);
+      auto s = scoped_set_panic(&ASTMaker::panic_consume_semicolon);
       while (current() != Lexeme::TKN_EOF)
         print_expr(parse_statement(), to_parse);
     }
@@ -230,73 +230,73 @@ namespace clt::lng
 
     /// @brief Returns the current reporter
     /// @return The error reporter
-    const ErrorReporter& getReporter() const noexcept { return to_parse.getReporter(); }
+    const ErrorReporter& reporter() const noexcept { return to_parse.reporter(); }
     /// @brief Returns the current reporter
     /// @return The error reporter
-    ErrorReporter& getReporter() noexcept { return to_parse.getReporter(); }
+    ErrorReporter& reporter() noexcept { return to_parse.reporter(); }
 
     /// @brief Returns the set of string literals
     /// @return Set of string literals
-    StableSet<String>& getStrLiterals() noexcept { return to_parse.getProgram().getStrLiterals(); }
+    StableSet<String>& str_literals() noexcept { return to_parse.program().str_literals(); }
     /// @brief Returns the set of string literals
     /// @return Set of string literals
-    const StableSet<String>& getStrLiterals() const noexcept { return to_parse.getProgram().getStrLiterals(); }
+    const StableSet<String>& str_literals() const noexcept { return to_parse.program().str_literals(); }
 
     /// @brief Returns the token buffer representing the parsed file
     /// @return The token buffer representing the parsed file
-    const TokenBuffer& getTokenBuffer() const noexcept { return to_parse.getTokenBuffer(); }
+    const TokenBuffer& token_buffer() const noexcept { return to_parse.token_buffer(); }
     /// @brief Returns the token buffer representing the parsed file
     /// @return The token buffer representing the parsed file
-    TokenBuffer& getTokenBuffer() noexcept { return to_parse.getTokenBuffer(); }
+    TokenBuffer& token_buffer() noexcept { return to_parse.token_buffer(); }
 
     /// @brief Returns the expression buffer representing the parsed file
     /// @return The expression buffer representing the parsed file
-    const ExprBuffer& Expr() const noexcept { return to_parse.getExprBuffer(); }
+    const ExprBuffer& Expr() const noexcept { return to_parse.expr_buffer(); }
     /// @brief Returns the expression buffer representing the parsed file
     /// @return The expression buffer representing the parsed file
-    ExprBuffer& Expr() noexcept { return to_parse.getExprBuffer(); }
+    ExprBuffer& Expr() noexcept { return to_parse.expr_buffer(); }
     
     /// @brief Shorthand for Expr().getExpr()
     /// @param expr The expression to get
     /// @return ProdExprVariant
-    ProdExprVariant& Expr(ProdExprToken expr) noexcept { return to_parse.getExprBuffer().getExpr(expr); }
+    ProdExprVariant& Expr(ProdExprToken expr) noexcept { return to_parse.expr_buffer().getExpr(expr); }
     /// @brief Shorthand for Expr().getExpr()
     /// @param expr The expression to get
     /// @return ProdExprVariant
-    const ProdExprVariant& Expr(ProdExprToken expr) const noexcept { return to_parse.getExprBuffer().getExpr(expr); }
+    const ProdExprVariant& Expr(ProdExprToken expr) const noexcept { return to_parse.expr_buffer().getExpr(expr); }
     /// @brief Shorthand for Expr().getExpr()
     /// @param expr The expression to get
     /// @return StmtExprVariant
-    StmtExprVariant& Expr(StmtExprToken expr) noexcept { return to_parse.getExprBuffer().getExpr(expr); }
+    StmtExprVariant& Expr(StmtExprToken expr) noexcept { return to_parse.expr_buffer().getExpr(expr); }
     /// @brief Shorthand for Expr().getExpr()
     /// @param expr The expression to get
     /// @return StmtExprVariant
-    const StmtExprVariant& Expr(StmtExprToken expr) const noexcept { return to_parse.getExprBuffer().getExpr(expr); }
+    const StmtExprVariant& Expr(StmtExprToken expr) const noexcept { return to_parse.expr_buffer().getExpr(expr); }
     /// @brief Shorthand for Expr().getType()
     /// @param expr The expression whose type to get
     /// @return The type
-    const TypeVariant& Type(ProdExprToken expr) const noexcept { return to_parse.getExprBuffer().getType(expr); }
+    const TypeVariant& Type(ProdExprToken expr) const noexcept { return to_parse.expr_buffer().getType(expr); }
     /// @brief Shorthand for Expr().getType()
     /// @param expr The expression whose type to get
     /// @return The type
-    const TypeVariant& Type(TypeToken expr) const noexcept { return to_parse.getExprBuffer().getType(expr); }
+    const TypeVariant& Type(TypeToken expr) const noexcept { return to_parse.expr_buffer().getType(expr); }
     /// @brief Shorthand for Expr().getType()
     /// @param expr The expression whose type to get
     /// @return The type
     const TypeVariant& Type(const ExprBase& expr) const noexcept { return Type(expr.getType()); }
-    /// @brief Shorthand for getProgram().getTypes()
+    /// @brief Shorthand for program().type_buffer()
     /// @return The type buffer
-    TypeBuffer& Type() noexcept { return to_parse.getProgram().getTypes(); }
+    TypeBuffer& Type() noexcept { return to_parse.program().type_buffer(); }
 
   private:
     /// @brief Gets a string representing the typename of 'var'
     /// @param var The type whose typename to return
     /// @return StringVoew representing the typename of 'var'
-    StringView getTypeName(const TypeVariant& var) noexcept { return to_parse.getProgram().getTypes().getTypeName(var); }
+    StringView type_name(const TypeVariant& var) noexcept { return to_parse.program().type_buffer().type_name(var); }
     /// @brief Gets a string representing the typename of 'var'
     /// @param var The type whose typename to return
     /// @return StringVoew representing the typename of 'var'
-    StringView getTypeName(TypeToken var) noexcept { return to_parse.getProgram().getTypes().getTypeName(var); }
+    StringView type_name(TypeToken var) noexcept { return to_parse.program().type_buffer().type_name(var); }
 
     /*---------------------
      | LEXEMES AND TOKENS |
@@ -304,7 +304,7 @@ namespace clt::lng
 
     /// @brief Returns the current token
     /// @return The current token
-    Token current() const noexcept { return to_parse.getTokenBuffer().getTokens()[current_tkn]; }
+    Token current() const noexcept { return to_parse.token_buffer().getTokens()[current_tkn]; }
     /// @brief Advances to the next token    
     void consume_current() noexcept
     {
@@ -333,23 +333,23 @@ namespace clt::lng
       /// TokenRangeGenerator is constructed to the current token
       /// in the ASTMaker (non-inclusive)
       /// @return The TokenRange
-      TokenRange getRange() const noexcept
+      TokenRange range() const noexcept
       {
         //assert_true("Missing call to consume_current()!", current != ast.current());
-        return ast.getTokenBuffer().getRangeFrom(current, ast.current());
+        return ast.token_buffer().getRangeFrom(current, ast.current());
       }
     };
 
     /// @brief Starts a range of tokens.
-    /// Call getRange() on the result to generate the TokenRange
+    /// Call range() on the result to generate the TokenRange
     /// @return The range generator.
-    TokenRangeGenerator startRange() const noexcept { return { *this }; }
+    TokenRangeGenerator start_range() const noexcept { return { *this }; }
 
     /// @brief Registers 'new_value' as the current panic function
     /// for the current scope.
     /// @param new_value The new panic function
     /// @return RAII helper
-    ScopedAssignment<panic_consume_t> scopedSetPanic(panic_consume_t new_value) noexcept
+    ScopedAssignment<panic_consume_t> scoped_set_panic(panic_consume_t new_value) noexcept
     {
       return { current_panic, new_value };
     }
@@ -372,7 +372,7 @@ namespace clt::lng
         if (ast.recurse_depth == ASTMaker::MAX_RECURSION_DEPTH)
         {
           ast.recurse_depth = 0;
-          ast.getReporter().error("Exceeded recursion depth!");
+          ast.reporter().error("Exceeded recursion depth!");
           throw ExitRecursionExcept();
         }
       }
@@ -391,23 +391,23 @@ namespace clt::lng
     /// is thrown.
     /// Care must be taken: the function calling this method must not be noexcept.   
     /// @return RecursionDepthChecker
-    RecursionDepthChecker addDepth() { return { *this }; }
+    RecursionDepthChecker add_depth() { return { *this }; }
 
     /*------------------
      | ERROR REPORTING |
      ------------------*/
 
-    /// @brief Shorthand for getProgram().getWarnFor()
+    /// @brief Shorthand for program().warn_for()
     /// @return WarnFor
-    const WarnFor& getWarnFor() const noexcept { return to_parse.getProgram().getWarnFor(); }
+    const WarnFor& warn_for() const noexcept { return to_parse.program().warn_for(); }
 
     /// @brief Check if the AST needs to generate a warning for 'err'.
     /// This method does not accept a DIV_BY_ZERO as this is always
     /// an error, and not a warning.
     /// @param err The error
-    /// @return True if using getWarnFor, the warning must be printed
+    /// @return True if using warn_for, the warning must be printed
     /// @pre err != DIV_BY_ZERO
-    bool warnFor(run::OpError err) const noexcept;
+    bool warn_for(run::OpError err) const noexcept;
 
     /// @brief Enum used to specify output type (for 'generate')
     enum report_as
@@ -626,14 +626,14 @@ namespace clt::lng
     /// @param op The operator
     /// @param rhs The right hand side
     /// @return ErrorExpr or BinaryExpr
-    ProdExprToken makeBinary(TokenRange range, ProdExprToken lhs, BinaryOp op, ProdExprToken rhs) noexcept;
+    ProdExprToken make_binary(TokenRange range, ProdExprToken lhs, BinaryOp op, ProdExprToken rhs) noexcept;
     /// @brief Verify that a type supports an operator and creates a UnaryExpr.
     /// This method is also responsible of constant folding
     /// @param range The range of tokens representing the expression
     /// @param op The operator
     /// @param child The expression on which the operator is applied
     /// @return ErrorExpr or UnaryExpr
-    ProdExprToken makeUnary(TokenRange range, UnaryOp op, ProdExprToken child) noexcept;
+    ProdExprToken make_unary(TokenRange range, UnaryOp op, ProdExprToken child) noexcept;
     
     /// @brief Verify that a type supports a conversion and creates a CastExpr
     /// @param range The range of tokens representing the expression
@@ -641,7 +641,7 @@ namespace clt::lng
     /// @param to The type to cast to
     /// @param is_bit_cast True if bit cast
     /// @return CastExpr or ErrorExpr
-    ProdExprToken makeCast(TokenRange range, ProdExprToken to_cast, TypeToken to, bool is_bit_cast) noexcept;
+    ProdExprToken make_cast(TokenRange range, ProdExprToken to_cast, TypeToken to, bool is_bit_cast) noexcept;
 
     /// @brief Creates a condition expression.
     /// This method is also responsible of constant folding, which
@@ -651,7 +651,7 @@ namespace clt::lng
     /// @param if_stmt The if statement
     /// @param else_stmt The else statement or None for no else
     /// @return None if the whole condition was optimized away or ConditionExpr
-    OptTok<StmtExprToken> makeCondition(TokenRange range, ProdExprToken condition,
+    OptTok<StmtExprToken> make_condition(TokenRange range, ProdExprToken condition,
       StmtExprToken if_stmt, OptTok<StmtExprToken> else_stmt) noexcept;
 
     /// @brief Constant folds two literals using 'op' as the binary operator.
@@ -661,14 +661,14 @@ namespace clt::lng
     /// @param op The operator
     /// @param rhs The right hand side of the expression
     /// @return LiteralExpr or ErrorExpr
-    ProdExprToken constantFold(TokenRange range, const LiteralExpr& lhs, BinaryOp op, const LiteralExpr& rhs) noexcept;
+    ProdExprToken constant_fold(TokenRange range, const LiteralExpr& lhs, BinaryOp op, const LiteralExpr& rhs) noexcept;
     /// @brief Constant folds a literal using 'op' as the unary operator.
     /// This method will print warnings following 'WarnAll'
     /// @param range The range of tokens representing the expression
     /// @param op The operator
     /// @param lhs The expression on which the operator is applied
     /// @return LiteralExpr
-    ProdExprToken constantFold(TokenRange range, UnaryOp op, const LiteralExpr& lhs) noexcept;
+    ProdExprToken constant_fold(TokenRange range, UnaryOp op, const LiteralExpr& lhs) noexcept;
 
     /// @brief Constant folds a cast
     /// This method will print warnings following 'WarnAll'
@@ -676,32 +676,32 @@ namespace clt::lng
     /// @param to_conv The literal to convert
     /// @param to The type to convert to
     /// @return LiteralExpr
-    ProdExprToken constantFold(TokenRange range, const LiteralExpr& to_conv, const BuiltinType& to) noexcept;    
+    ProdExprToken constant_fold(TokenRange range, const LiteralExpr& to_conv, const BuiltinType& to) noexcept;    
 
     /// @brief Check if 'expr' represents a LiteralExpr with value 0
     /// @param expr The expression whose value to check
     /// @return True if the expr is a LiteralExpr with value 0
-    bool isLiteralZero(ProdExprToken expr) const noexcept;
+    bool is_literal_zero(ProdExprToken expr) const noexcept;
 
-    bool isInvalidChain(ComparisonSet old, ComparisonSet new_set) const noexcept;
+    bool is_invalid_comparison_chain(ComparisonSet old, ComparisonSet new_set) const noexcept;
   };
   
   template<ASTMaker::report_as AS, typename ...Args>
   void ASTMaker::report(TokenRange range, panic_consume_t consume, io::fmt_str<Args...> fmt, Args&&... args) noexcept
   {
-    auto source_info = getTokenBuffer().makeSourceInfo(range);
+    auto source_info = token_buffer().makeSourceInfo(range);
     StringView str;
     if constexpr (sizeof...(Args) == 0)
       str = StringView{ fmt.get().data(), fmt.get().size() };
     else
-      str = getReporter().fmt(fmt, std::forward<Args>(args)...);
+      str = reporter().fmt(fmt, std::forward<Args>(args)...);
 
     if constexpr (AS == ERROR)
-      getReporter().error(str, source_info);
+      reporter().error(str, source_info);
     if constexpr (AS == WARNING)
-      getReporter().warn(str, source_info);
+      reporter().warn(str, source_info);
     if constexpr (AS == MESSAGE)
-      getReporter().message(str, source_info);
+      reporter().message(str, source_info);
     if (consume != nullptr)
       (*this.*consume)();
   }
@@ -709,19 +709,19 @@ namespace clt::lng
   template<ASTMaker::report_as AS, typename ...Args>
   void ASTMaker::report(Token tkn, panic_consume_t consume, io::fmt_str<Args...> fmt, Args && ...args) noexcept
   {
-    auto source_info = getTokenBuffer().makeSourceInfo(tkn);
+    auto source_info = token_buffer().makeSourceInfo(tkn);
     StringView str;
     if constexpr (sizeof...(Args) == 0)
       str = StringView{ fmt.get().data(), fmt.get().size() };
     else
-      str = getReporter().fmt(fmt, std::forward<Args>(args)...);
+      str = reporter().fmt(fmt, std::forward<Args>(args)...);
 
     if constexpr (AS == ERROR)
-      getReporter().error(str, source_info);
+      reporter().error(str, source_info);
     if constexpr (AS == WARNING)
-      getReporter().warn(str, source_info);
+      reporter().warn(str, source_info);
     if constexpr (AS == MESSAGE)
-      getReporter().message(str, source_info);
+      reporter().message(str, source_info);
     if (consume != nullptr)
       (*this.*consume)();
   }
@@ -785,7 +785,7 @@ namespace clt::lng
   RetT ASTMaker::parse_parenthesis(RetT(ASTMaker::* method_ptr)(Args...), Args&&... args) noexcept
   {
     using enum Lexeme;
-    auto panic = scopedSetPanic(&ASTMaker::panic_consume_lparen);
+    auto panic = scoped_set_panic(&ASTMaker::panic_consume_lparen);
     return parse_enclosed<TKN_LEFT_PAREN, TKN_RIGHT_PAREN>("Expected a '(!", "Expected a ')!", nullptr, method_ptr, std::forward<Args>(args)...);
   }
   
@@ -793,7 +793,7 @@ namespace clt::lng
   RetT ASTMaker::parse_parenthesis(panic_consume_t consume, RetT(ASTMaker::* method_ptr)(Args...), Args&&... args) noexcept
   {
     using enum Lexeme;
-    auto panic = scopedSetPanic(&ASTMaker::panic_consume_lparen);
+    auto panic = scoped_set_panic(&ASTMaker::panic_consume_lparen);
     return parse_enclosed<TKN_LEFT_PAREN, TKN_RIGHT_PAREN>("Expected a '(!", "Expected a ')!", consume, method_ptr, std::forward<Args>(args)...);
   }
 
