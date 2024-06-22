@@ -1,7 +1,9 @@
 {
   "cmake.debugConfig": {
+      // Add debugging arguments here:
       "args": [
-          "-run-tests -test-ffi"
+          "-run-tests",
+          "-test-ffi"
       ]
   }
 }
