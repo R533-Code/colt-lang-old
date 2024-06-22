@@ -85,7 +85,7 @@ namespace clt::lng
       static_assert(producer_group_requirements_t<T>::size != 0, "Group must be inherited from!");
       if (!is_classof_any_of(producer_group_requirements_t<T>{}))
         return nullptr;
-      return (const T*)&_buffer;
+      return ptr_to<const T*>(&_buffer);
     }
     
     template<typename T>
@@ -96,21 +96,21 @@ namespace clt::lng
       static_assert(producer_group_requirements_t<T>::size != 0, "Group must be inherited from!");
       if (!is_classof_any_of(producer_group_requirements_t<T>{}))
         return nullptr;
-      return (T*)&_buffer;
+      return ptr_to<T*>(&_buffer);
     }
 
     /// @brief Returns the expression as an ExprBase pointer
     /// @return ExprBase* (never null)
     constexpr ExprBase* as_base() noexcept
     {
-      return (ExprBase*)&_buffer;
+      return ptr_to<ExprBase*>(&_buffer);
     }
     
     /// @brief Returns the expression as an ExprBase pointer
     /// @return ExprBase* (never null)
     constexpr const ExprBase* as_base() const noexcept
     {
-      return (const ExprBase*)&_buffer;
+      return ptr_to<const ExprBase*>(&_buffer);
     }
     
     template<ProducerExpr Ty>
@@ -149,7 +149,7 @@ namespace clt::lng
     constexpr TypeToken type() const noexcept
     {
       // UB...
-      return ((const ExprBase*)&_buffer)->type();
+      return (ptr_to<const ExprBase*>(&_buffer))->type();
     }
 
     /// @brief Returns the range of tokens representing the current expression
@@ -157,7 +157,7 @@ namespace clt::lng
     constexpr TokenRange token_range() const noexcept
     {
       // UB...
-      return ((const ExprBase*)&_buffer)->token_range();
+      return (ptr_to<const ExprBase*>(&_buffer))->token_range();
     }
 
     /// @brief Returns the expression ID
@@ -165,7 +165,7 @@ namespace clt::lng
     constexpr ExprID classof() const noexcept
     {
       // UB...
-      return ((const ExprBase*)&_buffer)->classof();
+      return (ptr_to<const ExprBase*>(&_buffer))->classof();
     }
 
     template<StatementExpr T>
@@ -210,14 +210,14 @@ namespace clt::lng
     /// @return ExprBase* (never null)
     constexpr ExprBase* as_base() noexcept
     {
-      return (ExprBase*)&_buffer;
+      return ptr_to<ExprBase*>(&_buffer);
     }
 
     /// @brief Returns the expression as an ExprBase pointer
     /// @return ExprBase* (never null)
     constexpr const ExprBase* as_base() const noexcept
     {
-      return (const ExprBase*)&_buffer;
+      return ptr_to<const ExprBase*>(&_buffer);
     }
 
     /// @brief Destructor
