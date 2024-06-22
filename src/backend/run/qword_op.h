@@ -12,6 +12,7 @@
 
 #include <utility>
 #include "common/macros.h"
+#include "common/types.h"
 #include "meta/meta_enum.h"
 
 #define COLT_TypeOp_PACK TypeOp::i8_t, TypeOp::i16_t, TypeOp::i32_t, TypeOp::i64_t, TypeOp::u8_t, TypeOp::u16_t, TypeOp::u32_t, TypeOp::u64_t, TypeOp::f32_t, TypeOp::f64_t
@@ -25,39 +26,38 @@ consteval auto COLT_CONCAT(generate_table_, FnPtr)() \
 }
 
 #define COLT_TypeOpTable(Name) clt::run::details::COLT_CONCAT(generate_table_, Name)<clt::run::TypeOp, COLT_TypeOp_PACK>()
-#define COLT_SizeTable(Name)   clt::run::details::COLT_CONCAT(generate_table_, Name)<clt::run::Size, COLT_Size_PACK>()
 
-#define COLT_TypeOpFn(Name)  inline ResultQWORD COLT_CONCAT(NT_, Name)(QWORD_t a, QWORD_t b, TypeOp type) noexcept\
+#define COLT_TypeOpFnBinary(Name, fnname)  inline ResultQWORD fnname (QWORD_t a, QWORD_t b, TypeOp type) noexcept\
 { \
   static constexpr std::array table = COLT_TypeOpTable(Name); \
   return table[static_cast<u8>(type)](a, b); \
 }
 
-#define COLT_SizeFn(Name)  inline ResultQWORD COLT_CONCAT(NT_, Name)(QWORD_t a, QWORD_t b, TypeOp type) noexcept\
+#define COLT_TypeOpFnUnary(Name, fnname)  inline ResultQWORD fnname (QWORD_t a, TypeOp type) noexcept\
 { \
-  static constexpr std::array table = COLT_SizeTable(Name); \
-  return table[static_cast<u8>(TypeOp_to_Size(type))](a, b); \
+  static constexpr std::array table = COLT_TypeOpTable(Name); \
+  return table[static_cast<u8>(type)](a); \
 }
-
-#define COLT_NotTemplateFn(Name) inline  ResultQWORD COLT_CONCAT(NT_, Name)(QWORD_t a, QWORD_t b, TypeOp) noexcept\
-{ \
-  return Name(a, b); \
-}
-
-DECLARE_ENUM_WITH_TYPE(u8, clt::run, TypeOp,
-  i8_t, i16_t, i32_t, i64_t,
-  u8_t, u16_t, u32_t, u64_t,
-  f32_t, f64_t
-);
 
 /// @brief Helpers for interpreting code
 namespace clt::run
 {
+  enum class TypeOp
+    : u8
+  {
+    i8_t, i16_t, i32_t, i64_t,
+    u8_t, u16_t, u32_t, u64_t,
+    f32_t, f64_t
+  };
+
   /// @brief Represents the outcome of an operation
   enum OpError
+    : u8
   {
     /// @brief No error
     NO_ERROR,
+    /// @brief Invalid operand
+    INVALID_OP,
     /// @brief Division or modulo by 0
     DIV_BY_ZERO,
     /// @brief Shift by a size greater than bits size
@@ -78,6 +78,7 @@ namespace clt::run
 
   namespace details
   {
+    /// @brief The result of an integer operation
     enum IntOpResult
     {
       OP_VALID,
@@ -197,8 +198,25 @@ namespace clt::run
       }
     }
 
+    template<typename T> requires std::is_integral_v<T>
+    IntOpResult mod_int(T a, T x, T& result) noexcept
+    {
+      if constexpr (std::is_signed_v<T>)
+      {
+        if (x == -1 && a == std::numeric_limits<T>::min())
+          return OP_OVERFLOW;
+        result = a % x;
+        return OP_VALID;
+      }
+      else
+      {
+        result = a % x;
+        return OP_VALID;
+      }
+    }
+
     template<typename T>
-    constexpr OpError IntOpToOpError(IntOpResult res) noexcept
+    constexpr OpError int_op_to_op_error(IntOpResult res) noexcept
     {
       switch_no_default (res)
       {
@@ -212,30 +230,7 @@ namespace clt::run
     }
   }
 
-  enum class Size
-    : u8
-  {
-    _8bits, _16bits, _32bits, _64bits
-  };
-
-  using enum Size;
-
-  constexpr size_t Size_to_size_t(Size sz) noexcept
-  {
-    switch_no_default (sz)
-    {
-    case _8bits:
-      return 8;
-    case _16bits:
-      return 16;
-    case _32bits:
-      return 32;
-    case _64bits:
-      return 64;
-    }
-  }
-
-  constexpr Size TypeOp_to_Size(TypeOp op) noexcept
+  constexpr u8 to_sizeof(TypeOp op) noexcept
   {
     using enum clt::run::TypeOp;
 
@@ -243,37 +238,20 @@ namespace clt::run
     {
     case i8_t:
     case u8_t:
-      return _8bits;
+      return 8;
     case i16_t:
     case u16_t:
-      return _16bits;
+      return 16;
     case i32_t:
     case u32_t:
     case f32_t:
-      return _32bits;
+      return 32;
     case i64_t:
     case u64_t:
     case f64_t:
-      return _64bits;
+      return 64;
     }
   }
-
-  template<Size BitSize> struct size_to_uint {};
-  template<> struct size_to_uint<_8bits> { using type = u8; };
-  template<> struct size_to_uint<_16bits> { using type = u16; };
-  template<> struct size_to_uint<_32bits> { using type = u32; };
-  template<> struct size_to_uint<_64bits> { using type = u64; };
-
-  template<Size BitSize>
-  struct size_to_int { using type = std::make_signed_t<typename size_to_uint<BitSize>::type>; };
-
-  template<Size BitSize> struct size_to_float {};
-  template<> struct size_to_float<_32bits> { using type = f32; };
-  template<> struct size_to_float<_64bits> { using type = f64; };
-
-  template<Size BitSize> using size_to_uint_t = typename size_to_uint<BitSize>::type;
-  template<Size BitSize> using size_to_int_t = typename size_to_int<BitSize>::type;
-  template<Size BitSize> requires (BitSize == _32bits) || (BitSize == _64bits) using size_to_float_t = typename size_to_float<BitSize>::type;
 
   template<TypeOp Type> struct TypeOp_to_type {};
   template<> struct TypeOp_to_type<TypeOp::u8_t> { using type = u8; };
@@ -297,6 +275,8 @@ namespace clt::run
     {
     case NO_ERROR:
       return "No errors detected!";
+    case INVALID_OP:
+      return "Invalid operand type for operation!";
     case DIV_BY_ZERO:
       return "Integral division by zero!";
     case SHIFT_BY_GRE_SIZEOF:
@@ -322,7 +302,7 @@ namespace clt::run
   /***************** BINARY *****************/
 
   template<TypeOp Op>
-  ResultQWORD add(QWORD_t a, QWORD_t b) noexcept
+  ResultQWORD templated_add(QWORD_t a, QWORD_t b) noexcept
   {
     using Ty = TypeOp_to_type_t<Op>;
     if constexpr (std::is_floating_point_v<Ty>)
@@ -337,7 +317,7 @@ namespace clt::run
     else
     {
       Ty ret = 0;
-      auto error = details::IntOpToOpError<Ty>(details::add_int(a.as<Ty>(), b.as<Ty>(), ret));
+      auto error = details::int_op_to_op_error<Ty>(details::add_int(a.as<Ty>(), b.as<Ty>(), ret));
       a.bit_assign(ret);
       return { a, error };
     }
@@ -345,7 +325,7 @@ namespace clt::run
 
 
   template<TypeOp Op>
-  ResultQWORD sub(QWORD_t a, QWORD_t b) noexcept
+  ResultQWORD templated_sub(QWORD_t a, QWORD_t b) noexcept
   {
     using Ty = TypeOp_to_type_t<Op>;
     if constexpr (std::is_floating_point_v<Ty>)
@@ -360,7 +340,7 @@ namespace clt::run
     else
     {
       Ty ret = 0;
-      auto error = details::IntOpToOpError<Ty>(details::sub_int(a.as<Ty>(), b.as<Ty>(), ret));
+      auto error = details::int_op_to_op_error<Ty>(details::sub_int(a.as<Ty>(), b.as<Ty>(), ret));
       a.bit_assign(ret);
       return { a, error };
     }
@@ -368,7 +348,7 @@ namespace clt::run
 
 
   template<TypeOp Op>
-  ResultQWORD mul(QWORD_t a, QWORD_t b) noexcept
+  ResultQWORD templated_mul(QWORD_t a, QWORD_t b) noexcept
   {
     using Ty = TypeOp_to_type_t<Op>;
     if constexpr (std::is_floating_point_v<Ty>)
@@ -383,7 +363,7 @@ namespace clt::run
     else
     {
       Ty ret = 0;
-      auto error = details::IntOpToOpError<Ty>(details::mul_int(a.as<Ty>(), b.as<Ty>(), ret));
+      auto error = details::int_op_to_op_error<Ty>(details::mul_int(a.as<Ty>(), b.as<Ty>(), ret));
       a.bit_assign(ret);
       return { a, error };
     }
@@ -391,7 +371,7 @@ namespace clt::run
 
 
   template<TypeOp Op>
-  ResultQWORD div(QWORD_t a, QWORD_t b) noexcept
+  ResultQWORD templated_div(QWORD_t a, QWORD_t b) noexcept
   {
     using Ty = TypeOp_to_type_t<Op>;
     if constexpr (std::is_floating_point_v<Ty>)
@@ -408,75 +388,56 @@ namespace clt::run
       if (b.as<Ty>() == 0)
         return { a, DIV_BY_ZERO };
       Ty ret = 0;
-      auto error = details::IntOpToOpError<Ty>(details::div_int(a.as<Ty>(), b.as<Ty>(), ret));
+      auto error = details::int_op_to_op_error<Ty>(details::div_int(a.as<Ty>(), b.as<Ty>(), ret));
       a.bit_assign(ret);
       return { a, error };
     }
   }
 
 
-  template<Size BitSize>
-  ResultQWORD  mod(QWORD_t a, QWORD_t b) noexcept
+  template<TypeOp Op>
+  ResultQWORD  templated_mod(QWORD_t a, QWORD_t b) noexcept
   {
-    using int_t = size_to_uint_t<BitSize>;
-    if (b.as<int_t>() == 0)
-      return { a, DIV_BY_ZERO };
-    a.bit_assign(a.as<int_t>() % b.as<int_t>());
-    return { a, NO_ERROR };
+    using Ty = TypeOp_to_type_t<Op>;
+    if constexpr (std::is_floating_point_v<Ty>)
+      return { a, INVALID_OP };
+    else
+    {
+      if (b.as<Ty>() == 0)
+        return { a, DIV_BY_ZERO };
+      Ty ret = 0;
+      OpError error = details::int_op_to_op_error<Ty>(details::mod_int(a.as<Ty>(), b.as<Ty>(), ret));
+      a.bit_assign(ret);
+      return { a, error };
+    }    
   }
 
-
-  template<Size BitSize>
-  ResultQWORD imod(QWORD_t a, QWORD_t b) noexcept
+  template<TypeOp Op>
+  ResultQWORD  templated_neg(QWORD_t a) noexcept
   {
-    using int_t = size_to_int_t<BitSize>;
-    if (b.as<int_t>() == 0)
-      return { a, DIV_BY_ZERO };
-    a.bit_assign(a.as<int_t>() % b.as<int_t>());
-    return { a, NO_ERROR };
+    using Ty = TypeOp_to_type_t<Op>;
+    if constexpr (std::is_floating_point_v<Ty>)
+    {
+      if (std::isnan(a.as<Ty>()))
+        return { a, WAS_NAN };
+      a.bit_assign(-a.as<Ty>());
+      return { a, std::isnan(a.as<Ty>()) ? RET_NAN : NO_ERROR };
+    }
+    else if constexpr (std::is_signed_v<Ty>)
+    {
+      if (a.as<Ty>() == std::numeric_limits<Ty>::min())
+        return { a.as<Ty>(), SIGNED_UNDERFLOW };
+      a.bit_assign(-a.as<Ty>());
+      return { a, NO_ERROR };
+    }
+    else
+      return { a, INVALID_OP };
   }
-
-
-  inline ResultQWORD bit_and(QWORD_t a, QWORD_t b) noexcept
-  {
-    return { a & b, NO_ERROR };
-  }
-
-
-  inline ResultQWORD  bit_or(QWORD_t a, QWORD_t b) noexcept
-  {
-    return { a | b, NO_ERROR };
-  }
-
-
-  inline ResultQWORD bit_xor(QWORD_t a, QWORD_t b) noexcept
-  {
-    return { a ^ b, NO_ERROR };
-  }
-
-
-  template<Size BitSize>
-  ResultQWORD shr(QWORD_t a, QWORD_t b) noexcept
-  {
-    QWORD_t result;
-    result.bit_assign(a.as<u64>() >> b.as<u64>());
-    return { result, b.as<u64>() < Size_to_size_t(BitSize) ? NO_ERROR : SHIFT_BY_GRE_SIZEOF };
-  }
-
-
-  template<Size BitSize>
-  ResultQWORD shl(QWORD_t a, QWORD_t b) noexcept
-  {
-    QWORD_t result;
-    result.bit_assign(a.as<u64>() << b.as<u64>());
-    return { result, b.as<u64>() < Size_to_size_t(BitSize) ? NO_ERROR : SHIFT_BY_GRE_SIZEOF };
-  }
-
 
   /*************** COMPARISON ***************/
 
   template<TypeOp Op>
-  ResultQWORD eq(QWORD_t a, QWORD_t b) noexcept
+  ResultQWORD templated_eq(QWORD_t a, QWORD_t b) noexcept
   {
     using Ty = TypeOp_to_type_t<Op>;
     QWORD_t ret;
@@ -491,7 +452,7 @@ namespace clt::run
 
 
   template<TypeOp Op>
-  ResultQWORD neq(QWORD_t a, QWORD_t b) noexcept
+  ResultQWORD templated_neq(QWORD_t a, QWORD_t b) noexcept
   {
     using Ty = TypeOp_to_type_t<Op>;
     QWORD_t ret;
@@ -506,7 +467,7 @@ namespace clt::run
 
 
   template<TypeOp Op>
-  ResultQWORD le(QWORD_t a, QWORD_t b) noexcept
+  ResultQWORD templated_le(QWORD_t a, QWORD_t b) noexcept
   {
     using Ty = TypeOp_to_type_t<Op>;
     QWORD_t ret;
@@ -521,7 +482,7 @@ namespace clt::run
 
 
   template<TypeOp Op>
-  ResultQWORD ge(QWORD_t a, QWORD_t b) noexcept
+  ResultQWORD templated_ge(QWORD_t a, QWORD_t b) noexcept
   {
     using Ty = TypeOp_to_type_t<Op>;
     QWORD_t ret;
@@ -536,7 +497,7 @@ namespace clt::run
 
 
   template<TypeOp Op>
-  ResultQWORD leq(QWORD_t a, QWORD_t b) noexcept
+  ResultQWORD templated_leq(QWORD_t a, QWORD_t b) noexcept
   {
     using Ty = TypeOp_to_type_t<Op>;
     QWORD_t ret;
@@ -551,7 +512,7 @@ namespace clt::run
 
 
   template<TypeOp Op>
-  ResultQWORD geq(QWORD_t a, QWORD_t b) noexcept
+  ResultQWORD templated_geq(QWORD_t a, QWORD_t b) noexcept
   {
     using Ty = TypeOp_to_type_t<Op>;
     QWORD_t ret;
@@ -564,54 +525,74 @@ namespace clt::run
     return { ret, NO_ERROR };
   }
 
+  /***************** BITWISE *****************/
 
-  /***************** UNARY *****************/
-
-  template<Size BitSize>
-  ResultQWORD  neg(QWORD_t a) noexcept
+  namespace details
   {
-    using int_t = size_to_int_t<BitSize>;
-    if (a.as<int_t>() == std::numeric_limits<int_t>::min())
-      return { a.as<int_t>(), SIGNED_UNDERFLOW };
-    a.bit_assign(-a.as<int_t>());
-    return { a, NO_ERROR };
+    constexpr u64 generate_n_bits_1(u8 bits) noexcept
+    {
+      return ((u64)2 << (u64)bits) - 1;
+    }
   }
 
-  template<Size BitSize>
-  ResultQWORD fneg(QWORD_t a) noexcept
+  inline ResultQWORD bit_and(QWORD_t a, QWORD_t b, u8 bits) noexcept
   {
-    using f_t = size_to_float_t<BitSize>;
-    if (std::isnan(a.as<f_t>()))
-      return { a, WAS_NAN };
-    a.bit_assign(-a.as<f_t>());
-    return { a, std::isnan(a.as<f_t>()) ? RET_NAN : NO_ERROR };
+    return { (a & b) & details::generate_n_bits_1(bits), NO_ERROR};
   }
 
-  /// @brief Performs a bitwise not
-  /// @param a The QWORD on which to perform the bitwise operation
-  /// @return Result with no errors
-  template<Size BitSize>
-  ResultQWORD bit_not(QWORD_t a) noexcept
+
+  inline ResultQWORD  bit_or(QWORD_t a, QWORD_t b, u8 bits) noexcept
+  {
+    return { (a | b) & details::generate_n_bits_1(bits), NO_ERROR };
+  }
+
+
+  inline ResultQWORD bit_xor(QWORD_t a, QWORD_t b, u8 bits) noexcept
+  {
+    return { (a ^ b) & details::generate_n_bits_1(bits), NO_ERROR };
+  }
+
+  inline ResultQWORD lsr(QWORD_t a, QWORD_t b, u8 bits) noexcept
+  {
+    QWORD_t result;
+    result.bit_assign((a.as<u64>() >> b.as<u64>()) & details::generate_n_bits_1(bits));
+    return { result, b.as<u64>() < bits ? NO_ERROR : SHIFT_BY_GRE_SIZEOF };
+  }
+
+  inline ResultQWORD lsl(QWORD_t a, QWORD_t b, u8 bits) noexcept
+  {
+    QWORD_t result;
+    result.bit_assign((a.as<u64>() << b.as<u64>()) & details::generate_n_bits_1(bits));
+    return { result, b.as<u64>() < bits ? NO_ERROR : SHIFT_BY_GRE_SIZEOF };
+  }
+
+  inline ResultQWORD asr(QWORD_t a, QWORD_t b, u8 bits) noexcept
+  {
+    QWORD_t result = 0;
+    const u64 bitmask = details::generate_n_bits_1(bits);
+    a &= bitmask;
+    if (a.is_set(bits))
+    {
+      result = ~result;
+      result &= a.as<u64>() >> (b.as<u64>() | (bitmask << b.as<u64>()));
+    }
+    else
+      result.bit_assign(a.as<u64>() >> b.as<u64>());
+    return { result & bitmask, b.as<u64>() < bits ? NO_ERROR : SHIFT_BY_GRE_SIZEOF };
+  }
+
+  inline ResultQWORD bit_not(QWORD_t a, u8 bits) noexcept
   {
     a = ~a;
     // We turn off the bits that shouldn't be on
-    a &= std::numeric_limits<size_to_uint_t<BitSize>>::max();
-    return { a, NO_ERROR };
-  }
-
-  /// @brief Performs a bool not
-  /// @param a The QWORD on which to perform the bitwise operation
-  /// @return Result with no errors
-  inline ResultQWORD bool_not(QWORD_t a) noexcept
-  {
-    a.bit_assign(!a.as<bool>());
+    a &= details::generate_n_bits_1(bits);
     return { a, NO_ERROR };
   }
 
   /***************** CONVERSIONS *****************/
 
   template<TypeOp From, TypeOp To>
-  ResultQWORD cnv(QWORD_t a) noexcept
+  ResultQWORD templated_cnv(QWORD_t a) noexcept
   {
     using From_t = TypeOp_to_type_t<From>;
     using To_t = TypeOp_to_type_t<To>;
@@ -653,161 +634,166 @@ namespace clt::run
   /***************** UTILITIES *****************/
 
   /// @brief QWORD_t binary instruction function type
-  using BinaryInst_t = ResultQWORD(*)(QWORD_t, QWORD_t) noexcept;
+  using BinaryInst_t = ResultQWORD(*)(QWORD_t, QWORD_t, TypeOp) noexcept;
 
   /// @brief Helper to avoid casting nullptr to BinaryInst_t type
   inline constexpr BinaryInst_t nullbinary = nullptr;
 
   /// @brief QWORD_t unary instruction function type
-  using UnaryInst_t = ResultQWORD(*)(QWORD_t) noexcept;
+  using UnaryInst_t = ResultQWORD(*)(QWORD_t, TypeOp) noexcept;
 
   /// @brief Helper to avoid casting nullptr to UnaryInst_t type
   inline constexpr UnaryInst_t nullunary = nullptr;
 
+  /// @brief Check if a TypeOp is a signed integer
+  /// @param op The type
+  /// @return True if signed integer
   constexpr bool isSInt(TypeOp op) noexcept
   {
     return TypeOp::i8_t <= op && op <= TypeOp::i64_t;
   }
 
+  /// @brief Check if a TypeOp is an unsigned integer
+  /// @param op The type
+  /// @return True if unsigned integer
   constexpr bool isUInt(TypeOp op) noexcept
   {
     return TypeOp::u8_t <= op && op <= TypeOp::u64_t;
   }
 
+  /// @brief Check if a TypeOp is an integer
+  /// @param op The type
+  /// @return True if signed or unsigned integer
   constexpr bool isInt(TypeOp op) noexcept
   {
     return TypeOp::i8_t <= op && op <= TypeOp::u64_t;
   }
 
+  /// @brief Check if a TypeOp is a floating point
+  /// @param op The type
+  /// @return True if TypeOp is f32_t or f64_t
   constexpr bool isFP(TypeOp op) noexcept
   {
     return TypeOp::f32_t == op || TypeOp::f64_t == op;
   }
 
-  constexpr Size sizeofType(TypeOp op) noexcept
-  {
-    using enum TypeOp;
-
-    switch_no_default (op)
-    {
-    case i8_t:
-    case u8_t:
-      return _8bits;
-    case i16_t:
-    case u16_t:
-      return _16bits;
-    case i32_t:
-    case u32_t:
-    case f32_t:
-      return _32bits;
-    case i64_t:
-    case u64_t:
-    case f64_t:
-      return _64bits;
-    }
-  }
-
   namespace details
   {
-    COLT_GENERATE_TABLE_FOR(add);
-    COLT_GENERATE_TABLE_FOR(sub);
-    COLT_GENERATE_TABLE_FOR(mul);
-    COLT_GENERATE_TABLE_FOR(div);
+    /***********************************************
+    * The code below generates tables that converts
+    * the templated functions to non-templated
+    * functions with a runtime parameter choosing
+    * the right templated function.
+    ***********************************************/
 
-    COLT_GENERATE_TABLE_FOR(neg);
-    COLT_GENERATE_TABLE_FOR(bit_not);
+    COLT_GENERATE_TABLE_FOR(templated_add);
+    COLT_GENERATE_TABLE_FOR(templated_sub);
+    COLT_GENERATE_TABLE_FOR(templated_mul);
+    COLT_GENERATE_TABLE_FOR(templated_div);
+    COLT_GENERATE_TABLE_FOR(templated_mod);
+    COLT_GENERATE_TABLE_FOR(templated_neg);
 
-    COLT_GENERATE_TABLE_FOR(shr);
-    COLT_GENERATE_TABLE_FOR(shl);
-    COLT_GENERATE_TABLE_FOR(mod);
-    COLT_GENERATE_TABLE_FOR(imod);
-
-    COLT_GENERATE_TABLE_FOR(eq);
-    COLT_GENERATE_TABLE_FOR(neq);
-    COLT_GENERATE_TABLE_FOR(le);
-    COLT_GENERATE_TABLE_FOR(ge);
-    COLT_GENERATE_TABLE_FOR(leq);
-    COLT_GENERATE_TABLE_FOR(geq);
+    COLT_GENERATE_TABLE_FOR(templated_eq);
+    COLT_GENERATE_TABLE_FOR(templated_neq);
+    COLT_GENERATE_TABLE_FOR(templated_le);
+    COLT_GENERATE_TABLE_FOR(templated_ge);
+    COLT_GENERATE_TABLE_FOR(templated_leq);
+    COLT_GENERATE_TABLE_FOR(templated_geq);
 
     template<TypeOp Op, TypeOp... Ty>
     consteval auto generate_cnv_row()
     {
-      return std::array{ &cnv<Op, Ty>... };
+      return std::array{ &templated_cnv<Op, Ty>... };
     }
 
     template<TypeOp... Ty>
     consteval auto generate_cnv()
     {
+      // We need to generate a matrix of all possible conversions
       return std::array{
         generate_cnv_row<Ty, Ty...>()...
       };
     }
   }
 
-  COLT_TypeOpFn(add);
-  COLT_TypeOpFn(sub);
-  COLT_TypeOpFn(mul);
-  COLT_TypeOpFn(div);
+  /// @brief Adds two QWORDs
+  /// @param a The first operand
+  /// @param b The second operand
+  /// @param type The type of both QWORDs
+  /// @return The result of the operation
+  COLT_TypeOpFnBinary(templated_add, add);
+  /// @brief Subtracts two QWORDs
+  /// @param a The first operand
+  /// @param b The second operand
+  /// @param type The type of both QWORDs
+  /// @return The result of the operation
+  COLT_TypeOpFnBinary(templated_sub, sub);
+  /// @brief Multiplies two QWORDs
+  /// @param a The first operand
+  /// @param b The second operand
+  /// @param type The type of both QWORDs
+  /// @return The result of the operation
+  COLT_TypeOpFnBinary(templated_mul, mul);
+  /// @brief Divides two QWORDs
+  /// @param a The first operand
+  /// @param b The second operand
+  /// @param type The type of both QWORDs
+  /// @return The result of the operation
+  COLT_TypeOpFnBinary(templated_div, div);
+  /// @brief Returns the remainder of the division of two QWORDs
+  /// @param a The first operand
+  /// @param b The second operand
+  /// @param type The type of both QWORDs
+  /// @return The result of the operation
+  COLT_TypeOpFnBinary(templated_mod, mod);
+  /// @brief Compares two QWORDs for equality
+  /// @param a The first operand
+  /// @param b The second operand
+  /// @param type The type of both QWORDs
+  /// @return The result of the operation
+  COLT_TypeOpFnBinary(templated_eq, eq);
+  /// @brief Compares two QWORDs for inequality
+  /// @param a The first operand
+  /// @param b The second operand
+  /// @param type The type of both QWORDs
+  /// @return The result of the operation
+  COLT_TypeOpFnBinary(templated_neq, neq);
+  /// @brief Compares two QWORDs for less-than
+  /// @param a The first operand
+  /// @param b The second operand
+  /// @param type The type of both QWORDs
+  /// @return The result of the operation
+  COLT_TypeOpFnBinary(templated_le, le);
+  /// @brief Compares two QWORDs for greater-than
+  /// @param a The first operand
+  /// @param b The second operand
+  /// @param type The type of both QWORDs
+  /// @return The result of the operation
+  COLT_TypeOpFnBinary(templated_ge, ge);
+  /// @brief Compares two QWORDs for less-than-equal
+  /// @param a The first operand
+  /// @param b The second operand
+  /// @param type The type of both QWORDs
+  /// @return The result of the operation
+  COLT_TypeOpFnBinary(templated_leq, leq);
+  /// @brief Compares two QWORDs for greater-than-equal
+  /// @param a The first operand
+  /// @param b The second operand
+  /// @param type The type of both QWORDs
+  /// @return The result of the operation
+  COLT_TypeOpFnBinary(templated_geq, geq);
+  /// @brief Negates a QWORDs
+  /// @param a The first operand
+  /// @param type The type of the QWORDs
+  /// @return The result of the operation
+  COLT_TypeOpFnUnary(templated_neg, neg);
 
-  COLT_SizeFn(mod);
-  COLT_SizeFn(imod);
-  COLT_NotTemplateFn(bit_and);
-  COLT_NotTemplateFn(bit_or);
-  COLT_NotTemplateFn(bit_xor);
-
-  COLT_SizeFn(shr);
-  COLT_SizeFn(shl);
-
-  COLT_TypeOpFn(eq);
-  COLT_TypeOpFn(neq);
-  COLT_TypeOpFn(le);
-  COLT_TypeOpFn(ge);
-  COLT_TypeOpFn(leq);
-  COLT_TypeOpFn(geq);
-
-  inline ResultQWORD NT_neg(QWORD_t value, TypeOp type) noexcept
-  {
-    using enum TypeOp;
-
-    switch_no_default (type)
-    {
-    case i8_t:
-      return neg<_8bits>(value);
-    case i16_t:
-      return neg<_16bits>(value);
-    case i32_t:
-      return neg<_32bits>(value);
-    case i64_t:
-      return neg<_64bits>(value);
-    case f32_t:
-      return fneg<_32bits>(value);
-    case f64_t:
-      return fneg<_64bits>(value);
-    }
-  }
-
-  inline ResultQWORD NT_bit_not(QWORD_t value, TypeOp type) noexcept
-  {
-    using enum TypeOp;
-
-    switch_no_default(type)
-    {
-    case i8_t:
-    case u8_t:
-      return bit_not<_8bits>(value);
-    case i16_t:
-    case u16_t:
-      return bit_not<_16bits>(value);
-    case i32_t:
-    case u32_t:
-      return bit_not<_32bits>(value);
-    case i64_t:
-    case u64_t:
-      return bit_not<_64bits>(value);
-    }
-  }
-
-  inline ResultQWORD NT_cnv(QWORD_t value, TypeOp from, TypeOp to) noexcept
+  /// @brief Converts a QWORD from a type to another
+  /// @param value The value to convert
+  /// @param from The type to convert from
+  /// @param to The type to convert to
+  /// @return The conversion result
+  inline ResultQWORD cnv(QWORD_t value, TypeOp from, TypeOp to) noexcept
   {
     static constexpr auto cnv = details::generate_cnv<COLT_TypeOp_PACK>();
     return cnv[(u8)from][(u8)to](value);
