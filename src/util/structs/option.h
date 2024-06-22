@@ -323,7 +323,7 @@ struct scn::scanner<clt::Option<T>>
     ON_SCOPE_EXIT {
       ctx.range() = std::move(r.range());
     };
-    if (r && clt::is_iequal("none", strv))
+    if (r && clt::is_equal_case_insensitive("none", strv))
     {
       val = clt::None;
       return r.error();
