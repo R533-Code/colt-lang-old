@@ -9,37 +9,8 @@
 
  /// @brief Pops the elements added to a vector in the current scope at the end of the scope
 #define SCOPED_SAVE_VECTOR(vec) const auto COLT_CONCAT(SCOPED_SIZE_, COLT_LINE_NUM) = vec.size(); ON_SCOPE_EXIT { vec.pop_back_n(vec.size() - COLT_CONCAT(SCOPED_SIZE_, COLT_LINE_NUM)); }
-
-#define __IMPL_WRAP_IN_IILAMBDA(expr) [&]() { return expr; }()
-#define PROPAGATE_ERROR(expr, to_ret) \
-[&](auto f) {\
-using ___IMPL_type = std::remove_cvref_t<decltype(expr)>; \
-if constexpr (std::same_as<___IMPL_type, clt::ErrorFlag>) { \
-  if (__IMPL_WRAP_IN_IILAMBDA(expr.is_error())) \
-    return to_ret; }\
-else if constexpr (std::same_as<___IMPL_type, clt::lng::StmtExprToken>) { \
-  if (__IMPL_WRAP_IN_IILAMBDA(Expr(expr).is_error())) \
-    return to_ret; } \
-else if constexpr (std::same_as<___IMPL_type, clt::lng::StmtExprVariant>) { \
-  if (__IMPL_WRAP_IN_IILAMBDA(expr.is_error())) \
-    return to_ret; }\
-else if constexpr (std::same_as<___IMPL_type, clt::lng::ProdExprToken>) {\
-  if (__IMPL_WRAP_IN_IILAMBDA(Expr(expr).is_error())) \
-    return to_ret; } \
-else if constexpr (std::same_as<___IMPL_type, clt::lng::ProdExprVariant>) {\
-  if (__IMPL_WRAP_IN_IILAMBDA(expr.is_error())) \
-    return to_ret; }\
-else if constexpr (std::same_as<___IMPL_type, clt::lng::TypeToken>) { \
-  if (__IMPL_WRAP_IN_IILAMBDA(Type(expr).is_error())) \
-    return to_ret; }\
-else if constexpr (std::same_as<___IMPL_type, clt::lng::TypeVariant>) {\
-  if (__IMPL_WRAP_IN_IILAMBDA(expr.is_error())) \
-    return to_ret; } \
-else \
-  assert_true("Invalid type!", false);\
-clt::unreachable("Invalid type!"); \
-}([&]() -> decltype(auto) { return expr; })
-
+/// @brief Propagates an error by returning from the current function
+#define PROPAGATE_ERROR(expr, to_ret) if (is_error((expr))) return to_ret
 
 namespace clt::lng
 {
@@ -182,7 +153,7 @@ namespace clt::lng
     //Parse the child expression, without handling conversions:
     // '-5 as i32' is equivalent to '(-5) as i32'
     ProdExprToken child = parse_primary(false);
-    PROPAGATE_ERROR(child, range.range());
+    PROPAGATE_ERROR(child, child);
 
     switch (op)
     {
@@ -230,7 +201,7 @@ namespace clt::lng
 
     const u8 precedence = 0;
     //The current operator's precedence
-    u8 op_precedence = op_precedence(binary_op);
+    u8 op_precedence = lng::op_precedence(binary_op);
     while (op_precedence > precedence)
     {
       //Consume the operator
@@ -252,7 +223,7 @@ namespace clt::lng
       //Update the Token
       binary_op = current();
       //Update precedence
-      op_precedence = op_precedence(binary_op);
+      op_precedence = lng::op_precedence(binary_op);
     }
 
     return lhs;
@@ -294,8 +265,8 @@ namespace clt::lng
     // The binary operators
     Token binary_op = current();
     //The current operator's precedence
-    u8 op_precedence = op_precedence(binary_op);
-    while (op_precedence > op_precedence(previous))
+    u8 op_precedence = lng::op_precedence(binary_op);
+    while (op_precedence > lng::op_precedence(previous))
     {
       //Consume the operator
       consume_current();
@@ -316,7 +287,7 @@ namespace clt::lng
       //Update the Token
       binary_op = current();
       //Update precedence
-      op_precedence = op_precedence(binary_op);
+      op_precedence = lng::op_precedence(binary_op);
     }
 
     return lhs;
@@ -464,7 +435,7 @@ namespace clt::lng
     
     auto identifier = current();
     PROPAGATE_ERROR(
-      check_consume(TKN_IDENTIFIER, current_panic, "Expected an identifier!").is_error(),
+      check_consume(TKN_IDENTIFIER, current_panic, "Expected an identifier!"),
       Expr().add_error_stmt(token_buffer().range_from(identifier))
     );
 

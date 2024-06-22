@@ -687,6 +687,9 @@ namespace clt::lng
     bool is_literal_zero(ProdExprToken expr) const noexcept;
 
     bool is_invalid_comparison_chain(ComparisonSet old, ComparisonSet new_set) const noexcept;
+
+    template<typename T> requires meta::is_any_of<T, ErrorFlag, StmtExprToken, StmtExprVariant, ProdExprToken, ProdExprVariant, TypeToken, TypeVariant>
+    bool is_error(const T& value) const noexcept;
   };
   
   template<ASTMaker::report_as AS, typename ...Args>
@@ -798,6 +801,25 @@ namespace clt::lng
     using enum Lexeme;
     auto panic = scoped_set_panic(&ASTMaker::panic_consume_lparen);
     return parse_enclosed<TKN_LEFT_PAREN, TKN_RIGHT_PAREN>("Expected a '(!", "Expected a ')!", consume, method_ptr, std::forward<Args>(args)...);
+  }
+
+  template<typename T> requires meta::is_any_of<T, ErrorFlag, StmtExprToken, StmtExprVariant, ProdExprToken, ProdExprVariant, TypeToken, TypeVariant>
+  inline bool ASTMaker::is_error(const T& value) const noexcept
+  {
+    if constexpr (std::same_as<T, ErrorFlag>)
+      return value.is_error();
+    else if constexpr (std::same_as<T, StmtExprToken>)
+      return Expr(value).is_error();
+    else if constexpr (std::same_as<T, StmtExprVariant>)
+      return value.is_error();
+    else if constexpr (std::same_as<T, ProdExprToken>)
+      return Expr(value).is_error();
+    else if constexpr (std::same_as<T, ProdExprVariant>)
+      return value.is_error();
+    else if constexpr (std::same_as<T, TypeToken>)
+      return Type(value).is_error();
+    else if constexpr (std::same_as<T, TypeVariant>)
+      return value.is_error();
   }
 
   template<Lexeme TILL>
