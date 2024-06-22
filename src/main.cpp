@@ -40,12 +40,15 @@ int main(int argc, const char** argv)
   cl::parse_command_line_options<CMDs>(argc, argv);
   
   // On debug configuration, runs tests
-  clt::run_tests();
-
-  if (InputFile.empty())
-    REPL();
+  if (RunTests)
+    clt::run_tests();
   else
-    io::print_warn("Transpilation is not implemented...");  
+  {
+    if (InputFile.empty())
+      REPL();
+    else
+      io::print_warn("Transpilation is not implemented...");
+  }  
 
   if (WaitForUserInput)
     io::press_to_continue();
