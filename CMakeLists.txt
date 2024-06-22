@@ -237,6 +237,10 @@ foreach(testPath ${ColtLexerTestsPath})
   set_property(TEST ${testName} PROPERTY TIMEOUT 10) # 10s
 endforeach()
 
+add_test(NAME "TEST_FFI" COMMAND ${COLT_EXECUTABLE_NAME} ${COLT_ADDITIONAL_ARGS} -run-tests "-test-ffi")
+set_property(TEST "TEST_FFI" PROPERTY PASS_REGULAR_EXPRESSION "Tested [0-9]+ features with 0")
+set_property(TEST "TEST_FFI" PROPERTY TIMEOUT 10) # 10s
+
 if (NOT ${testCountAST} EQUAL 0 AND ${ENUM_TESTS})
   message(STATUS "Finished enumerating tests!")
 endif()
