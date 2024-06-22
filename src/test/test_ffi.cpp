@@ -26,7 +26,7 @@ namespace clt::test
     using namespace run;
     
     io::print_message("Testing FFI...");
-    DynamicBinder binder;   
+    DynamicBinder binder;
     TEST_IDENTITY(char, 'a');
     TEST_IDENTITY(bool, true);
     TEST_IDENTITY(bool, false);

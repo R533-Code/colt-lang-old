@@ -37,14 +37,14 @@ namespace clt
 {
   [[noreturn]]
   /// @brief Aborts the program (or call the debugger if possible)
-  inline void debugBreak() noexcept
+  inline void debug_break() noexcept
   {
     __DETAILS__COLT_DBREAK();
   }
 }
 
 /// @brief Colt intrinsic debug break
-#define colt_intrinsic_dbreak() clt::debugBreak()
+#define colt_intrinsic_dbreak() clt::debug_break()
 
 #if defined(_MSC_VER)
   /// @brief Current function name

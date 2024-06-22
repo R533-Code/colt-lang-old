@@ -115,7 +115,7 @@ namespace clt
       io::print_fatal("Unreachable branch hit in function '{}' (line {}) in file:\n'{}'\n{}",
         src.function_name(), src.line(), src.file_name(), error);
     }
-    debugBreak();
+    debug_break();
   }
 }
 
