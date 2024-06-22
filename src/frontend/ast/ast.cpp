@@ -14,29 +14,31 @@
 #define PROPAGATE_ERROR(expr, to_ret) \
 [&](auto f) {\
 using ___IMPL_type = std::remove_cvref_t<decltype(expr)>; \
-if constexpr (std::same_as<___IMPL_type, clt::ErrorFlag>) \
+if constexpr (std::same_as<___IMPL_type, clt::ErrorFlag>) { \
   if (__IMPL_WRAP_IN_IILAMBDA(expr.is_error())) \
-    return to_ret; \
-if constexpr (std::same_as<___IMPL_type, clt::lng::StmtExprToken>) \
+    return to_ret; }\
+else if constexpr (std::same_as<___IMPL_type, clt::lng::StmtExprToken>) { \
   if (__IMPL_WRAP_IN_IILAMBDA(Expr(expr).is_error())) \
-    return to_ret; \
-if constexpr (std::same_as<___IMPL_type, clt::lng::StmtExprVariant>) \
+    return to_ret; } \
+else if constexpr (std::same_as<___IMPL_type, clt::lng::StmtExprVariant>) { \
   if (__IMPL_WRAP_IN_IILAMBDA(expr.is_error())) \
-    return to_ret; \
-if constexpr (std::same_as<___IMPL_type, clt::lng::ProdExprToken>) \
+    return to_ret; }\
+else if constexpr (std::same_as<___IMPL_type, clt::lng::ProdExprToken>) {\
   if (__IMPL_WRAP_IN_IILAMBDA(Expr(expr).is_error())) \
-    return to_ret; \
-if constexpr (std::same_as<___IMPL_type, clt::lng::ProdExprVariant>) \
+    return to_ret; } \
+else if constexpr (std::same_as<___IMPL_type, clt::lng::ProdExprVariant>) {\
   if (__IMPL_WRAP_IN_IILAMBDA(expr.is_error())) \
-    return to_ret; \
-if constexpr (std::same_as<___IMPL_type, clt::lng::TypeToken>) \
+    return to_ret; }\
+else if constexpr (std::same_as<___IMPL_type, clt::lng::TypeToken>) { \
   if (__IMPL_WRAP_IN_IILAMBDA(Type(expr).is_error())) \
-    return to_ret; \
-if constexpr (std::same_as<___IMPL_type, clt::lng::TypeVariant>) \
+    return to_ret; }\
+else if constexpr (std::same_as<___IMPL_type, clt::lng::TypeVariant>) {\
   if (__IMPL_WRAP_IN_IILAMBDA(expr.is_error())) \
-    return to_ret; \
+    return to_ret; } \
+else \
+  assert_true("Invalid type!", false);\
 clt::unreachable("Invalid type!"); \
-}([&]() -> decltype(auto) {})
+}([&]() -> decltype(auto) { return expr; })
 
 
 namespace clt::lng
