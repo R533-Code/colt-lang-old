@@ -14,8 +14,8 @@
 
 namespace clt
 {
-  /// @brief Run all unit tests on Debug configuration,
-  /// or prints a warning on Release.
+  /// @brief Run all unit tests on Debug configuration or prints a warning
+  ///        on Release configuration.
   void run_tests() noexcept;
 }
 
