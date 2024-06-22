@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.4)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-project(Colt-Lang VERSION 0.0.1.8 LANGUAGES CXX)
+project(Colt-Lang VERSION 0.0.2.0 LANGUAGES CXX)
 
 # Save all the files to compile
 file(GLOB_RECURSE ColtHeaders "src/*.h")
