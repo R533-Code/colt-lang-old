@@ -41,7 +41,7 @@ clt::unreachable("Invalid type!"); \
 
 namespace clt::lng
 {
-  void MakeAST(ParsedUnit& unit) noexcept
+  void make_ast(ParsedUnit& unit) noexcept
   {
     assert_true("Unit already parsed!", !unit.isParsed());
     // The constructor generates the AST directly
@@ -102,12 +102,12 @@ namespace clt::lng
   {
     using enum ComparisonSet;
     
-    if (getComparisonSet(comparison) == NONE)
+    if (token_to_comparison_set(comparison) == NONE)
       report<report_as::ERROR>(comparison, nullptr,
         "'{}' cannot be chained with any other comparison operators!", toStr(TokenToBinary(comparison)));
     else
       report<report_as::ERROR>(comparison, nullptr,
-        "'{}' cannot be chained with {}!", toStr(TokenToBinary(comparison)), toStr(comparison_set));
+        "'{}' cannot be chained with {}!", toStr(TokenToBinary(comparison)), to_str(comparison_set));
   }
 
   ProdExprToken ASTMaker::parse_primary(bool accepts_conv)
@@ -333,13 +333,13 @@ namespace clt::lng
 
   ProdExprToken ASTMaker::parse_comparison(Token comparison, ProdExprToken lhs, ProdExprToken rhs, const TokenRangeGenerator& range)
   {
-    ComparisonSet comparison_set = getComparisonSet(comparison);
+    ComparisonSet comparison_set = token_to_comparison_set(comparison);
     auto ret = makeBinary(range.getRange(), lhs, TokenToBinary(comparison), rhs);
 
     while (isComparisonToken(current()))
     {
       comparison = current();
-      if (isInvalidChain(comparison_set, getComparisonSet(comparison)))
+      if (isInvalidChain(comparison_set, token_to_comparison_set(comparison)))
         handle_comparison_chain_error(comparison, comparison_set);
 
       consume_current();
@@ -644,7 +644,7 @@ namespace clt::lng
     {
       auto type = current();
       consume_current();
-      return Type().addBuiltin(KeywordToBuiltinID(type));
+      return Type().addBuiltin(keyword_to_builtin_id(type));
     }
     if (current() == TKN_KEYWORD_opaque)
     {
@@ -795,7 +795,7 @@ namespace clt::lng
     case INVALID:
       report<report_as::ERROR>(range, current_panic,
         "'{}' does not support unary operator '{}'!",
-        getTypeName(type), toStr(op));
+        getTypeName(type), to_str(op));
       return Expr().addError(range);
     }
   }
@@ -851,20 +851,10 @@ namespace clt::lng
 
   ProdExprToken ASTMaker::constantFold(TokenRange range, const LiteralExpr& lhs, BinaryOp op, const LiteralExpr& rhs) noexcept
   {
-
-    static constexpr std::array table =
-    {
-      &run::NT_add, &run::NT_sub, &run::NT_mul, &run::NT_div, &run::NT_mod,
-      &run::NT_bit_and, &run::NT_bit_or, &run::NT_bit_xor, &run::NT_shl, &run::NT_shr,
-      &run::NT_bit_and, &run::NT_bit_or,
-      &run::NT_le, &run::NT_leq, &run::NT_ge, &run::NT_geq, &run::NT_neq, &run::NT_eq
-    };
-
     assert_true("Expected built-in type!", Type(lhs).is<BuiltinType>(), Type(rhs).is<BuiltinType>());
     const auto typeID = Type(lhs).as<BuiltinType>()->typeID();
 
-    auto fn = table[static_cast<u8>(op)];
-    auto [res, err] = fn(lhs.getValue(), rhs.getValue(),
+    auto [res, err] = constant_fold(op, lhs.getValue(), rhs.getValue(),
       BuiltinToTypeOp(typeID));
 
     if (err == run::DIV_BY_ZERO)
@@ -905,7 +895,7 @@ namespace clt::lng
     case OP_NEGATE:
     {
       const auto ID = Type(lhs).as<BuiltinType>()->typeID();
-      auto [result, err] = run::NT_neg(lhs.getValue(), BuiltinToTypeOp(ID));
+      auto [result, err] = run::neg(lhs.getValue(), BuiltinToTypeOp(ID));
       if (warnFor(err))
         report<report_as::WARNING>(range, nullptr, "{}", run::toExplanation(err));
       return Expr().addLiteral(range, result, ID);
@@ -913,14 +903,14 @@ namespace clt::lng
     case OP_BOOL_NOT:
     {
       // No errors are possible
-      auto [result, err] = run::bool_not(lhs.getValue());
+      auto [result, err] = run::bit_not(lhs.getValue(), 0);
       return Expr().addLiteral(range, result, BuiltinID::BOOL);
     }
     case OP_BIT_NOT:
     {
       // No errors are possible
       const auto ID = Type(lhs).as<BuiltinType>()->typeID();
-      auto [result, err] = run::NT_bit_not(lhs.getValue(), BuiltinToTypeOp(ID));
+      auto [result, err] = run::bit_not(lhs.getValue(), run::to_sizeof(BuiltinToTypeOp(ID)));
       return Expr().addLiteral(range, result, ID);
     }
     }
@@ -928,7 +918,7 @@ namespace clt::lng
 
   ProdExprToken ASTMaker::constantFold(TokenRange range, const LiteralExpr& to_conv, const BuiltinType& to) noexcept
   {
-    auto [result, err] = run::NT_cnv(to_conv.getValue(),
+    auto [result, err] = run::cnv(to_conv.getValue(),
       BuiltinToTypeOp(Type(to_conv).as<BuiltinType>()->typeID()), BuiltinToTypeOp(to.typeID()));
     if (warnFor(err))
       report<report_as::WARNING>(range, nullptr, "{}", run::toExplanation(err));
@@ -941,7 +931,48 @@ namespace clt::lng
       && Expr(expr).as<LiteralExpr>()->getValue().is_none_set();
   }
   
-  void PrintExpr(const ExprBase* tkn, const ParsedUnit& unit, u64 depth) noexcept
+  run::ResultQWORD constant_fold(BinaryOp op, QWORD_t a, QWORD_t b, run::TypeOp type) noexcept
+  {
+    using namespace run;
+    // Arithmetic dispatch table
+    static constexpr std::array ARITHMETIC =
+    {
+      &add, &sub, &mul, &div, &mod
+    };
+    // Bitwise dispatch table
+    static constexpr std::array BITWISE =
+    {
+      &bit_and, &bit_or, &bit_xor, &lsl, &lsr, &asr
+    };
+    // Comparison dispatch table
+    static constexpr std::array COMPARISON =
+    {
+      &le, &leq, &ge, &geq, &neq, &eq
+    };
+
+    if (op <= BinaryOp::OP_MOD)
+      return ARITHMETIC[(u8)op](a, b, type);
+    // The branchless calculation is used to make use of 'asr' rather than
+    // 'lsr' for signed integers.
+    if (op <= BinaryOp::OP_BIT_RSHIFT)
+    {
+      const u8 INDEX = (u8)op - (u8)BinaryOp::OP_BIT_AND;
+      return BITWISE[INDEX + isSInt(type) * (u8)(op == BinaryOp::OP_BIT_RSHIFT)](a, b, to_sizeof(type));
+    }
+    if (op <= BinaryOp::OP_BOOL_OR)
+    {
+      const u8 INDEX = (u8)op - (u8)BinaryOp::OP_BOOL_AND;
+      return BITWISE[INDEX](a, b, 0);
+    }
+    if (op <= BinaryOp::OP_EQUAL)
+    {
+      const u8 INDEX = (u8)op - (u8)BinaryOp::OP_LESS;
+      return COMPARISON[INDEX](a, b, type);
+    }
+    unreachable("Invalid operator!");
+  }
+
+  void print_expr(const ExprBase* tkn, const ParsedUnit& unit, u64 depth) noexcept
   {
     using enum ExprID;
     auto& buffer = unit.getExprBuffer();
@@ -966,7 +997,7 @@ namespace clt::lng
       
       io::print("{}{:^{}}({:h}: '{:h}'", io::YellowF, "", depth * 3, expr.classof(),
         ptr->getOp());
-      PrintExpr(ptr->getExpr(), unit, depth + 1);
+      print_expr(ptr->getExpr(), unit, depth + 1);
       io::print("{}{:^{}}{}){}", io::YellowF, "", depth * 3, types.getTypeName(expr.getType()), io::Reset);
     }
 
@@ -975,10 +1006,10 @@ namespace clt::lng
       auto ptr = static_cast<const BinaryExpr*>(&expr);
       
       io::print("{}{:^{}}({:h}:", io::BrightCyanF, "", depth * 3, expr.classof());
-      PrintExpr(ptr->getLHS(), unit, depth + 1);
+      print_expr(ptr->getLHS(), unit, depth + 1);
       io::print("{}{:^{}} {:h}", io::BrightCyanF, "", depth * 3,
         ptr->getOp());
-      PrintExpr(ptr->getRHS(), unit, depth + 1);
+      print_expr(ptr->getRHS(), unit, depth + 1);
       io::print("{}{:^{}}{}){}", io::BrightCyanF, "", depth * 3, types.getTypeName(expr.getType()), io::Reset);
     }
 
@@ -988,7 +1019,7 @@ namespace clt::lng
 
       io::print("{}{:^{}}({:h}: '{}' -> '{}'", io::BrightMagentaF, "", depth * 3, expr.classof(),
         types.getTypeName(ptr->getType()), types.getTypeName(ptr->getTypeToCastTo()));
-      PrintExpr(ptr->getToCast(), unit, depth + 1);
+      print_expr(ptr->getToCast(), unit, depth + 1);
       io::print("{}{:^{}}{}){}", io::BrightMagentaF, "", depth * 3, types.getTypeName(ptr->getType()), io::Reset);
     }
 
@@ -996,14 +1027,14 @@ namespace clt::lng
       io::print("{:^{}}{:h}", "", depth * 3, expr.classof());
       break;
     }
-  }
+  }  
 
-  void PrintExpr(ProdExprToken tkn, const ParsedUnit& unit, u64 depth) noexcept
+  void print_expr(ProdExprToken tkn, const ParsedUnit& unit, u64 depth) noexcept
   {
     using enum ExprID;
     auto& buffer = unit.getExprBuffer();
     auto& expr = buffer.getExpr(tkn);
-    PrintExpr(expr.asBase(), unit, depth);
+    print_expr(expr.asBase(), unit, depth);
   }
 }
 

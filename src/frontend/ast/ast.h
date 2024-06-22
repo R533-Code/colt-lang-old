@@ -18,28 +18,36 @@ namespace clt::lng
   /// @brief Generates the AST and stores the result in 'unit'
   /// @param unit The unit whose AST to generate
   /// @pre !unit.isParsed()
-  void MakeAST(ParsedUnit& unit) noexcept;
+  void make_ast(ParsedUnit& unit) noexcept;
 
   /// @brief Prints an expression (for debugging purposes)
   /// @param tkn The token to print
   /// @param unit The unit owning the expression
   /// @param depth The depth (for spacing)
-  void PrintExpr(ProdExprToken tkn, const ParsedUnit& unit, u64 depth = 0) noexcept;
+  void print_expr(ProdExprToken tkn, const ParsedUnit& unit, u64 depth = 0) noexcept;
   /// @brief Prints an expression (for debugging purposes)
   /// @param tkn The expression to print
   /// @param unit The unit owning the expression
   /// @param depth The depth (for spacing)
-  void PrintExpr(const ExprBase* tkn, const ParsedUnit& unit, u64 depth = 0) noexcept;
+  void print_expr(const ExprBase* tkn, const ParsedUnit& unit, u64 depth = 0) noexcept;
 
   /// @brief Transforms a literal token to a built-in ID
   /// @param tkn The token
   /// @return BuiltinID equivalent of the literal token
-  constexpr BuiltinID KeywordToBuiltinID(Lexeme tkn) noexcept
+  constexpr BuiltinID keyword_to_builtin_id(Lexeme tkn) noexcept
   {
     using enum Lexeme;
     assert_true("Token must be TKN_.*_L", isBuiltinToken(tkn));
     return static_cast<BuiltinID>(static_cast<u8>(tkn) - static_cast<u8>(TKN_KEYWORD_bool));
   }
+
+  /// @brief Folds a binary operation
+  /// @param op The operator to apply
+  /// @param a The first operand
+  /// @param b The second operand
+  /// @param type The type of the operands
+  /// @return Result of the operation
+  run::ResultQWORD constant_fold(BinaryOp op, QWORD_t a, QWORD_t b, run::TypeOp type) noexcept;
 
   enum class ComparisonSet
   {
@@ -56,7 +64,7 @@ namespace clt::lng
   /// @brief Returns the comparison set to which a comparison operator belongs to
   /// @param comparison The comparison operator
   /// @return The comparison set representing 'comparison'
-  constexpr ComparisonSet getComparisonSet(Token comparison) noexcept
+  constexpr ComparisonSet token_to_comparison_set(Token comparison) noexcept
   {
     using enum Lexeme;
     using enum ComparisonSet;
@@ -70,7 +78,7 @@ namespace clt::lng
     return NONE;
   }
 
-  constexpr StringView toStr(ComparisonSet set) noexcept
+  constexpr StringView to_str(ComparisonSet set) noexcept
   {
     using enum ComparisonSet;
     switch_no_default (set)
@@ -108,7 +116,7 @@ namespace clt::lng
   /// @param a The first state
   /// @param b The second state
   /// @return Merge of both states
-  constexpr VarStateFlag MergeStateFlag(VarStateFlag a, VarStateFlag b) noexcept
+  constexpr VarStateFlag merge_state_flag(VarStateFlag a, VarStateFlag b) noexcept
   {
     auto res = static_cast<VarStateFlag>((u8)a | (u8)b);
     assert_true("Invalid result! Wrong use of VarStateFlag!", std::popcount((u8)res) < 3);
@@ -213,7 +221,7 @@ namespace clt::lng
     {
       auto s = scopedSetPanic(&ASTMaker::panic_consume_semicolon);
       while (current() != Lexeme::TKN_EOF)
-        PrintExpr(parse_statement(), to_parse);
+        print_expr(parse_statement(), to_parse);
     }
 
     /*------------------
@@ -555,8 +563,6 @@ namespace clt::lng
 
     OptTok<StmtExprToken> parse_condition(bool is_elif = false);
 
-    /// @brief 
-    /// @return  
     ExprBase* parse_statement();
 
     TypeToken parse_typename() noexcept;
@@ -663,14 +669,14 @@ namespace clt::lng
     /// @param lhs The expression on which the operator is applied
     /// @return LiteralExpr
     ProdExprToken constantFold(TokenRange range, UnaryOp op, const LiteralExpr& lhs) noexcept;
-    
+
     /// @brief Constant folds a cast
     /// This method will print warnings following 'WarnAll'
     /// @param range The range of tokens representing the expression
     /// @param to_conv The literal to convert
     /// @param to The type to convert to
     /// @return LiteralExpr
-    ProdExprToken constantFold(TokenRange range, const LiteralExpr& to_conv, const BuiltinType& to) noexcept;
+    ProdExprToken constantFold(TokenRange range, const LiteralExpr& to_conv, const BuiltinType& to) noexcept;    
 
     /// @brief Check if 'expr' represents a LiteralExpr with value 0
     /// @param expr The expression whose value to check
