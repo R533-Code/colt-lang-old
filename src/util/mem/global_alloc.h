@@ -27,7 +27,7 @@ namespace clt::mem
   /// @brief Allocate a block of memory through the global allocator
   /// @param sz The size of the block
   /// @return A MemBlock that is NEVER null
-  static MemBlock global_alloc(ByteSize<Byte> sz) noexcept
+  inline MemBlock global_alloc(ByteSize<Byte> sz) noexcept
   {
     return GlobalAllocator.alloc(sz);
   }
@@ -35,7 +35,7 @@ namespace clt::mem
   /// @brief Deallocate a block of memory through the global allocator.
   /// This function can accept a 'nullblk' even though 'alloc' never returns a 'nullblk'.
   /// @param blk The block to deallocate
-  static void global_dealloc(MemBlock blk) noexcept
+  inline void global_dealloc(MemBlock blk) noexcept
   {
     if (!blk.is_null())
       GlobalAllocator.dealloc(blk);
