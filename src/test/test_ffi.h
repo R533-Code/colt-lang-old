@@ -9,6 +9,7 @@
 #define HG_COLT_TEST_FFI
 
 #include "run/clt_dyncall.h"
+#include "run/clt_dynload.h"
 
 namespace clt::test
 {
