@@ -212,7 +212,7 @@ namespace clt::lng
 	/// @brief Converts a unary operator to its string equivalent
 	/// @param op The unary operator
 	/// @return The string representing the operator
-	constexpr const char* toStr(lng::UnaryOp op) noexcept
+	constexpr const char* to_str(lng::UnaryOp op) noexcept
 	{
 		using enum lng::UnaryOp;
 
