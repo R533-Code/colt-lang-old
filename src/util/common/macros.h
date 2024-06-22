@@ -33,6 +33,19 @@
   #endif
 #endif
 
+#if defined(COLT_MSVC)
+  #define CLT_EXPORT __declspec(dllexport)
+  #define CLT_IMPORT __declspec(dllimport)
+#elif defined(COLT_GNU) || defined(COLT_CLANG)
+  #define CLT_EXPORT __attribute__((visibility("default")))
+  #define CLT_IMPORT
+#else
+  #define CLT_EXPORT
+  #define CLT_IMPORT
+  #pragma warning "Unknown dynamic link import/export semantics."
+#endif
+
+
 namespace clt
 {
   [[noreturn]]
