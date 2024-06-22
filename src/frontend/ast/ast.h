@@ -78,6 +78,9 @@ namespace clt::lng
     return NONE;
   }
 
+  /// @brief Converts a ComparisonSet to a readable string
+  /// @param set The comparison set
+  /// @return String representing the comparison set
   constexpr StringView to_str(ComparisonSet set) noexcept
   {
     using enum ComparisonSet;

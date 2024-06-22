@@ -106,10 +106,10 @@ namespace clt::lng
     
     if (token_to_comparison_set(comparison) == NONE)
       report<report_as::ERROR>(comparison, nullptr,
-        "'{}' cannot be chained with any other comparison operators!", toStr(TokenToBinary(comparison)));
+        "'{}' cannot be chained with any other comparison operators!", to_str(token_to_binary(comparison)));
     else
       report<report_as::ERROR>(comparison, nullptr,
-        "'{}' cannot be chained with {}!", toStr(TokenToBinary(comparison)), to_str(comparison_set));
+        "'{}' cannot be chained with {}!", to_str(token_to_binary(comparison)), to_str(comparison_set));
   }
 
   ProdExprToken ASTMaker::parse_primary(bool accepts_conv)
@@ -204,7 +204,7 @@ namespace clt::lng
 
       // Handles the rest of the unary tokens (make_unary checks for supports())
     break; default:
-      to_ret = make_unary(range.range(), TokenToUnary(op), child);
+      to_ret = make_unary(range.range(), token_to_unary(op), child);
     }
     return to_ret;
   }
@@ -230,7 +230,7 @@ namespace clt::lng
 
     const u8 precedence = 0;
     //The current operator's precedence
-    u8 op_precedence = OpPrecedence(binary_op);
+    u8 op_precedence = op_precedence(binary_op);
     while (op_precedence > precedence)
     {
       //Consume the operator
@@ -245,14 +245,14 @@ namespace clt::lng
         return Expr().add_error(range.range());
       }
       //Pratt's parsing, which allows operators priority
-      lhs = make_binary(range.range(), lhs, TokenToBinary(binary_op), rhs);
+      lhs = make_binary(range.range(), lhs, token_to_binary(binary_op), rhs);
       if (is_comparison(current()))
         lhs = parse_comparison(current(), lhs, range);
 
       //Update the Token
       binary_op = current();
       //Update precedence
-      op_precedence = OpPrecedence(binary_op);
+      op_precedence = op_precedence(binary_op);
     }
 
     return lhs;
@@ -294,8 +294,8 @@ namespace clt::lng
     // The binary operators
     Token binary_op = current();
     //The current operator's precedence
-    u8 op_precedence = OpPrecedence(binary_op);
-    while (op_precedence > OpPrecedence(previous))
+    u8 op_precedence = op_precedence(binary_op);
+    while (op_precedence > op_precedence(previous))
     {
       //Consume the operator
       consume_current();
@@ -311,12 +311,12 @@ namespace clt::lng
       else if (is_comparison(binary_op))
         lhs = parse_comparison(binary_op, lhs, rhs, range);
       else //Pratt's parsing, which allows operators priority
-        lhs = make_binary(range.range(), lhs, TokenToBinary(binary_op), rhs);
+        lhs = make_binary(range.range(), lhs, token_to_binary(binary_op), rhs);
 
       //Update the Token
       binary_op = current();
       //Update precedence
-      op_precedence = OpPrecedence(binary_op);
+      op_precedence = op_precedence(binary_op);
     }
 
     return lhs;
@@ -336,7 +336,7 @@ namespace clt::lng
   ProdExprToken ASTMaker::parse_comparison(Token comparison, ProdExprToken lhs, ProdExprToken rhs, const TokenRangeGenerator& range)
   {
     ComparisonSet comparison_set = token_to_comparison_set(comparison);
-    auto ret = make_binary(range.range(), lhs, TokenToBinary(comparison), rhs);
+    auto ret = make_binary(range.range(), lhs, token_to_binary(comparison), rhs);
 
     while (is_comparison(current()))
     {
@@ -348,7 +348,7 @@ namespace clt::lng
       auto nrhs = parse_binary_internal(comparison);
       ret = make_binary(range.range(),
         ret, BinaryOp::OP_BOOL_AND,
-        make_binary(range.range(), rhs, TokenToBinary(comparison), nrhs));
+        make_binary(range.range(), rhs, token_to_binary(comparison), nrhs));
       rhs = nrhs;
     }
     return ret;
@@ -767,13 +767,13 @@ namespace clt::lng
     case INVALID_OP:
       report<report_as::ERROR>(range, nullptr,
         "'{}' does not support operator '{}'!",
-        type_name(type), toStr(op));
+        type_name(type), to_str(op));
       return Expr().add_error(range);
 
     case INVALID_TYPE:
       report<report_as::ERROR>(range, nullptr,
         "'{}' does not support '{}' as right hand side of operator '{}'!",
-        type_name(type), type_name(Type(rhs)), toStr(op));
+        type_name(type), type_name(Type(rhs)), to_str(op));
       return Expr().add_error(range);
     }
   }
@@ -871,7 +871,7 @@ namespace clt::lng
         "{}", run::toExplanation(err));
     }
 
-    const auto family = FamilyOf(op);
+    const auto family = family_of(op);
     // If this is true then the resulting expression is a boolean
     const bool is_ret_bool = family == OpFamily::BOOL_LOGIC || family == OpFamily::COMPARISON;
 

@@ -378,7 +378,7 @@ namespace clt::lng
     {
       assert_true("Both expression must be of the same type!", type_token(lhs) == type_token(rhs));
       return add_new_prod<BinaryExpr>(range,
-        FamilyOf(op) == OpFamily::COMPARISON ? types.add_builtin(BuiltinID::BOOL) : type_token(lhs),
+        family_of(op) == OpFamily::COMPARISON ? types.add_builtin(BuiltinID::BOOL) : type_token(lhs),
         lhs, op, rhs);
     }
 

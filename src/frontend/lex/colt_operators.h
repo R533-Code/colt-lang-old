@@ -95,7 +95,7 @@ namespace clt::lng
 	/// @brief Returns the precedence of a Lexeme
 	/// @param tkn The token whose precedence to return
 	/// @return The precedence of the token
-	constexpr u8 OpPrecedence(BinaryOp op) noexcept
+	constexpr u8 op_precedence(BinaryOp op) noexcept
 	{
 		return op <= BinaryOp::OP_EQUAL ?
 			details::OPERATOR_PRECEDENCE_TABLE[static_cast<u8>(op)] : 0;
@@ -104,7 +104,7 @@ namespace clt::lng
 	/// @brief Returns the precedence of a Lexeme
 	/// @param tkn The token whose precedence to return
 	/// @return The precedence of the token
-	constexpr u8 OpPrecedence(Lexeme tkn) noexcept
+	constexpr u8 op_precedence(Lexeme tkn) noexcept
 	{
 		// break Pratt's parsing
 		return tkn <= Lexeme::TKN_EQUAL_EQUAL ?
@@ -114,7 +114,7 @@ namespace clt::lng
 	/// @brief Returns the family of a binary operator
 	/// @param op The operator whose family to return
 	/// @return The family of 'op'
-	constexpr OpFamily FamilyOf(BinaryOp op) noexcept
+	constexpr OpFamily family_of(BinaryOp op) noexcept
 	{
 		using enum OpFamily;
 		using enum BinaryOp;
@@ -133,7 +133,7 @@ namespace clt::lng
 	/// @brief Converts a valid unary token to a UnaryOp
 	/// @param tkn The Lexeme to convert
 	/// @return Assertion failure or a valid UnaryOp
-	constexpr UnaryOp TokenToUnary(Lexeme tkn) noexcept
+	constexpr UnaryOp token_to_unary(Lexeme tkn) noexcept
 	{
 		using enum Lexeme;
 
@@ -155,7 +155,7 @@ namespace clt::lng
 	/// @brief Converts a valid binary token to a BinaryOp
 	/// @param tkn The Lexeme to convert
 	/// @return Assertion failure or a valid BinaryOp
-	constexpr BinaryOp TokenToBinary(Lexeme tkn) noexcept
+	constexpr BinaryOp token_to_binary(Lexeme tkn) noexcept
 	{
 		assert_true("Expected a valid binary token!", is_binary(tkn));
 		return static_cast<BinaryOp>(tkn);
@@ -164,7 +164,7 @@ namespace clt::lng
 	/// @brief Converts a binary operator to its string equivalent
 	/// @param op The operator
 	/// @return The string representing the operator
-	constexpr const char* toStr(lng::BinaryOp op) noexcept
+	constexpr const char* to_str(lng::BinaryOp op) noexcept
 	{
 		using enum lng::BinaryOp;
 
