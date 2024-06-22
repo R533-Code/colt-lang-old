@@ -26,7 +26,7 @@ namespace clt::lng
   /// @brief Check if an ID represents a bool
   /// @param id The ID to check for
   /// @return True if BOOL
-  constexpr bool isBool(BuiltinID id) noexcept
+  constexpr bool is_bool(BuiltinID id) noexcept
   {
     return id == BuiltinID::BOOL;
   }
@@ -34,7 +34,7 @@ namespace clt::lng
   /// @brief Check if an ID represents a char
   /// @param id The ID to check for
   /// @return True if CHAR
-  constexpr bool isChar(BuiltinID id) noexcept
+  constexpr bool is_char(BuiltinID id) noexcept
   {
     return id == BuiltinID::CHAR;
   }
@@ -42,7 +42,7 @@ namespace clt::lng
   /// @brief Check if an ID represents a unsigned integer
   /// @param id The ID to check for 
   /// @return True if u(8|16|32|64)
-  constexpr bool isUInt(BuiltinID id) noexcept
+  constexpr bool is_uint(BuiltinID id) noexcept
   {
     return BuiltinID::U8 <= id && id <= BuiltinID::U64;
   }
@@ -50,7 +50,7 @@ namespace clt::lng
   /// @brief Check if an ID represents a signed integer
   /// @param id The ID to check for 
   /// @return True if i(8|16|32|64)
-  constexpr bool isSInt(BuiltinID id) noexcept
+  constexpr bool is_sint(BuiltinID id) noexcept
   {
     return BuiltinID::I8 <= id && id <= BuiltinID::I64;
   }
@@ -58,7 +58,7 @@ namespace clt::lng
   /// @brief Check if an ID represents an integer (signed or unsigned)
   /// @param id The ID to check for
   /// @return True if [iu](8|16|32|64)
-  constexpr bool isIntegral(BuiltinID id) noexcept
+  constexpr bool is_integral(BuiltinID id) noexcept
   {
     return BuiltinID::U8 <= id && id <= BuiltinID::I64;
   }
@@ -66,7 +66,7 @@ namespace clt::lng
   /// @brief Check if an ID represents a byte type
   /// @param id The ID to check for
   /// @return True if BYTE or [DQ]?WORD
-  constexpr bool isBytes(BuiltinID id) noexcept
+  constexpr bool is_bytes(BuiltinID id) noexcept
   {
     return BuiltinID::BYTE <= id && id <= BuiltinID::QWORD;
   }
@@ -74,7 +74,7 @@ namespace clt::lng
   /// @brief Check if an ID represents a floating point type
   /// @param id The ID to check for
   /// @return True if F32 or F64
-  constexpr bool isFP(BuiltinID id) noexcept
+  constexpr bool is_fp(BuiltinID id) noexcept
   {
     return BuiltinID::F32 == id || id == BuiltinID::F64;
   }
@@ -83,7 +83,7 @@ namespace clt::lng
   using BuilinTypeCheck_t = bool (*)(BuiltinID) noexcept;
 
   /// @brief Struct with custom formatting
-  struct fmt_TypedQWORD
+  struct TypedQWORD
   {
     /// @brief The value of the literal
     QWORD_t value;
@@ -93,11 +93,11 @@ namespace clt::lng
 }
 
 template<>
-struct fmt::formatter<clt::lng::fmt_TypedQWORD>
+struct fmt::formatter<clt::lng::TypedQWORD>
   : clt::meta::DefaultParserFMT
 {
   template<typename context>
-  auto format(const clt::lng::fmt_TypedQWORD& c, context& ctx) const
+  auto format(const clt::lng::TypedQWORD& c, context& ctx) const
   {
     using enum clt::lng::BuiltinID;
     

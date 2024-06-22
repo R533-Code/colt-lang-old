@@ -79,7 +79,7 @@ namespace clt::details
         constexpr_assert_true_failed();
       }
     }
-    else if constexpr (isDebugBuild())
+    else if constexpr (is_debug_build())
     {
       Assertion* array[sizeof...(BoolTs)] = { &bools... };
 
@@ -110,7 +110,7 @@ namespace clt
   /// @param src The source code information
   inline void unreachable(const char* error, std::source_location src = std::source_location::current())
   {
-    if constexpr (isDebugBuild())
+    if constexpr (is_debug_build())
     {
       io::print_fatal("Unreachable branch hit in function '{}' (line {}) in file:\n'{}'\n{}",
         src.function_name(), src.line(), src.file_name(), error);

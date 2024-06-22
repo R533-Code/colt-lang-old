@@ -22,7 +22,7 @@ namespace clt::lng
   class ExprBase
   {
     /// @brief Represents the type of the expression
-    TypeToken type;
+    TypeToken _type;
     /// @brief Represents the range of Token forming the expression
     TokenRange range;
     /// @brief The ID of the expression
@@ -45,20 +45,20 @@ namespace clt::lng
     /// @param padding1 Byte that can be used by the child class
     /// @param padding2 Byte that can be used by the child class
     constexpr ExprBase(ExprID id, TypeToken type, TokenRange range, u8 padding0 = 0, u8 padding1 = 0, u8 padding2 = 0) noexcept
-      : type(type), range(range), expr_id(id), padding0(padding0), padding1(padding1), padding2(padding2) {}
+      : _type(type), range(range), expr_id(id), padding0(padding0), padding1(padding1), padding2(padding2) {}
 
     ExprBase() = delete;
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(ExprBase);
 
     /// @brief Returns the range of tokens representing the expression
     /// @return Range of tokens representing the expression
-    constexpr TokenRange getTokenRange() const noexcept { return range; }
+    constexpr TokenRange token_range() const noexcept { return range; }
     /// @brief Sets the range of tokens representing the expression to 'nrange'
     /// @param nrange The new range
-    constexpr void setTokenRange(TokenRange nrange) noexcept { range = nrange; }
+    constexpr void token_range(TokenRange nrange) noexcept { range = nrange; }
     /// @brief Returns the type of the expression.
     /// @return The type of the expression
-    constexpr TypeToken getType() const noexcept { return type; }
+    constexpr TypeToken type() const noexcept { return _type; }
 
     /// @brief Returns the expression ID
     /// @return The expression ID
@@ -66,7 +66,7 @@ namespace clt::lng
 
     /// @brief Check if the current expression represents an ErrorExpr
     /// @return True if ErrorExpr
-    constexpr bool isError() const noexcept { return classof() == ExprID::EXPR_ERROR; }
+    constexpr bool is_error() const noexcept { return classof() == ExprID::EXPR_ERROR; }
   };
 
   /// @brief Represents an error expression.
@@ -105,7 +105,7 @@ namespace clt::lng
     final : public ExprBase
   {
     /// @brief The value of the literal
-    QWORD_t value;
+    QWORD_t _value;
 
   public:
     /// @brief Constructor
@@ -113,13 +113,13 @@ namespace clt::lng
     /// @param type The type of the literal
     /// @param value The literal value
     constexpr LiteralExpr(TokenRange range, TypeToken type, QWORD_t value) noexcept
-      : ExprBase(TypeToExprID<LiteralExpr>(), type, range), value(value) {}
+      : ExprBase(TypeToExprID<LiteralExpr>(), type, range), _value(value) {}
 
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(LiteralExpr);
 
     /// @brief Return the value of the literal
     /// @return The value of the literal
-    constexpr QWORD_t getValue() const noexcept { return value; }
+    constexpr QWORD_t value() const noexcept { return _value; }
   };
 
   /// @brief Represents a unary expression
@@ -127,7 +127,7 @@ namespace clt::lng
     final : public ExprBase
   {
     /// @brief The expression on which the operation is applied
-    ProdExprToken expr;
+    ProdExprToken _expr;
 
     // The operator is stored in the padding bits of ExprBase.
 
@@ -138,17 +138,17 @@ namespace clt::lng
     /// @param op The operation
     /// @param expr The expression on which the unary operation is applied
     constexpr UnaryExpr(TokenRange range, TypeToken type, UnaryOp op, ProdExprToken expr) noexcept
-      : ExprBase(TypeToExprID<UnaryExpr>(), type, range, static_cast<u8>(op)), expr(expr) {}
+      : ExprBase(TypeToExprID<UnaryExpr>(), type, range, static_cast<u8>(op)), _expr(expr) {}
 
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(UnaryExpr);
 
     /// @brief Returns the expression on which the unary operation is applied.
     /// @return The expression on which the unary operation is applied
-    constexpr ProdExprToken getExpr() const noexcept { return expr; }
+    constexpr ProdExprToken expr() const noexcept { return _expr; }
 
     /// @brief Returns the operation applied on the expression
     /// @return Any unary op
-    constexpr UnaryOp getOp() const noexcept { return static_cast<UnaryOp>(ExprBase::padding0); }
+    constexpr UnaryOp op() const noexcept { return static_cast<UnaryOp>(ExprBase::padding0); }
   };
 
   /// @brief Reprents a binary operation
@@ -156,9 +156,9 @@ namespace clt::lng
     final : public ExprBase
   {
     /// @brief The left hand side of the expression
-    ProdExprToken lhs;
+    ProdExprToken _lhs;
     /// @brief The right hand side of the expression
-    ProdExprToken rhs;
+    ProdExprToken _rhs;
 
     // The operator is stored in the padding bits of ExprBase.
 
@@ -170,20 +170,20 @@ namespace clt::lng
     /// @param op The operation applied on the expression
     /// @param rhs The right hand side of the expression
     constexpr BinaryExpr(TokenRange range, TypeToken type, ProdExprToken lhs, BinaryOp op, ProdExprToken rhs) noexcept
-      : ExprBase(TypeToExprID<BinaryExpr>(), type, range, static_cast<u8>(op)), lhs(lhs), rhs(rhs) {}
+      : ExprBase(TypeToExprID<BinaryExpr>(), type, range, static_cast<u8>(op)), _lhs(lhs), _rhs(rhs) {}
 
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(BinaryExpr);
 
     /// @brief Returns the left hand side of the expression
     /// @return The left hand side
-    constexpr ProdExprToken getLHS() const noexcept { return lhs; }
+    constexpr ProdExprToken lhs() const noexcept { return _lhs; }
     /// @brief Returns the right hand side of the expression
     /// @return The right hand side
-    constexpr ProdExprToken getRHS() const noexcept { return rhs; }
+    constexpr ProdExprToken rhs() const noexcept { return _rhs; }
 
     /// @brief Returns the operation applied on the expression
     /// @return Any binary op that is not an assignment operator
-    constexpr BinaryOp getOp() const noexcept { return static_cast<BinaryOp>(ExprBase::padding0); }
+    constexpr BinaryOp op() const noexcept { return static_cast<BinaryOp>(ExprBase::padding0); }
   };
 
   /// @brief Cast from built-in type to built-in type
@@ -206,15 +206,15 @@ namespace clt::lng
 
     /// @brief Returns the expression to cast
     /// @return The expression to cast
-    constexpr ProdExprToken getToCast() const noexcept { return to_cast; }
+    constexpr ProdExprToken to_cast() const noexcept { return to_cast; }
 
     /// @brief Returns the type to cast
     /// @return The type to cast to
-    constexpr TypeToken getTypeToCastTo() const noexcept { return getType(); }
+    constexpr TypeToken type_to_cast_to() const noexcept { return type(); }
 
     /// @brief Check if the cast is a bit cast
     /// @return True if bit cast
-    constexpr bool isBitCast() const noexcept { return ExprBase::padding0; }
+    constexpr bool is_bit_cast() const noexcept { return ExprBase::padding0; }
   };
 
   /// @brief Returns the address of a variable
@@ -222,7 +222,7 @@ namespace clt::lng
     final : public ExprBase
   {
     /// @brief The variable declaration whose address to return
-    StmtExprToken name;
+    StmtExprToken _name;
 
   public:
     /// @brief Constructor
@@ -230,13 +230,13 @@ namespace clt::lng
     /// @param type The type of the expression
     /// @param name The declaration of the variable whose address to return
     constexpr AddressOfExpr(TokenRange range, TypeToken type, StmtExprToken name) noexcept
-      : ExprBase(TypeToExprID<AddressOfExpr>(), type, range), name(name) {}
+      : ExprBase(TypeToExprID<AddressOfExpr>(), type, range), _name(name) {}
 
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(AddressOfExpr);
 
     /// @brief Returns the declaration of the variable whose address to return
     /// @return The declaration of the variable whose address to return
-    constexpr StmtExprToken getName() const noexcept { return name; }
+    constexpr StmtExprToken name() const noexcept { return _name; }
   };
 
   /// @brief Represents a load from a pointer
@@ -244,7 +244,7 @@ namespace clt::lng
     final : public ExprBase
   {
     /// @brief The expression whose result to load from
-    ProdExprToken to_load;
+    ProdExprToken _to_load;
 
   public:
     /// @brief Constructor
@@ -252,20 +252,20 @@ namespace clt::lng
     /// @param type The resulting type (must be the type pointed by 'load_from')
     /// @param load_from The expression whose result to load from
     constexpr PtrLoadExpr(TokenRange range, TypeToken type, ProdExprToken load_from) noexcept
-      : ExprBase(TypeToExprID<PtrLoadExpr>(), type, range), to_load(load_from) {}
+      : ExprBase(TypeToExprID<PtrLoadExpr>(), type, range), _to_load(load_from) {}
 
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(PtrLoadExpr);
 
     /// @brief Returns the expression pointer from which to load
     /// @return The expression whose result to load from
-    constexpr ProdExprToken getToLoad() const noexcept { return to_load; }
+    constexpr ProdExprToken to_load() const noexcept { return _to_load; }
   };
 
   class ReadExpr
     : public ExprBase
   {
     /// @brief The declaration of the variable from which to read
-    StmtExprToken decl;
+    StmtExprToken _decl;
 
   public:
     /// @brief Constructor
@@ -274,17 +274,14 @@ namespace clt::lng
     /// @param decl The variable declaration from which to read
     /// @param expr The ID of the expression
     constexpr ReadExpr(TokenRange range, TypeToken type, StmtExprToken decl, ExprID expr) noexcept
-      : ExprBase(expr, type, range), decl(decl) {}
+      : ExprBase(expr, type, range), _decl(decl) {}
 
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(ReadExpr);
 
     /// @brief Returns the declaration from which to read.
     /// The returned StmtExprToken always represents a VarDeclExpr.
     /// @return The declaration from which to read
-    constexpr StmtExprToken getDecl() const noexcept { return decl; }
-
-    /// @brief The class that inherited from this class
-    static constexpr auto VALID_DOWNCAST = std::array{ TypeToExprID<VarReadExpr>(), TypeToExprID<GlobalReadExpr>() };
+    constexpr StmtExprToken decl() const noexcept { return _decl; }    
   };
 
   /// @brief Represents a local variable read
@@ -360,11 +357,11 @@ namespace clt::lng
 
     /// @brief Returns the declaration of the variable from which to write
     /// @return The declaration of the variable from which to write
-    constexpr StmtExprToken getDecl() const noexcept { return decl; }
+    constexpr StmtExprToken decl() const noexcept { return decl; }
 
     /// @brief Returns the value to write to the variable
     /// @return The value to write to the variable
-    constexpr ProdExprToken getToWrite() const noexcept { return value; }
+    constexpr ProdExprToken to_write() const noexcept { return value; }
   };
 
   /// @brief Represents a write to a global variable
@@ -372,7 +369,7 @@ namespace clt::lng
     final : public ExprBase
   {
     /// @brief The declaration of the variable to which to write
-    StmtExprToken decl;
+    StmtExprToken _decl;
     /// @brief The value to write to the variable
     ProdExprToken value;
 
@@ -383,17 +380,17 @@ namespace clt::lng
     /// @param decl The declaration of the variable from which to write
     /// @param value The value to write to the variable
     constexpr GlobalWriteExpr(TokenRange range, TypeToken type, StmtExprToken decl, ProdExprToken value) noexcept
-      : ExprBase(TypeToExprID<GlobalWriteExpr>(), type, range), decl(decl), value(value) {}
+      : ExprBase(TypeToExprID<GlobalWriteExpr>(), type, range), _decl(decl), value(value) {}
 
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(GlobalWriteExpr);
 
     /// @brief Returns the declaration of the variable from which to write
     /// @return The declaration of the variable from which to write
-    constexpr StmtExprToken getDecl() const noexcept { return decl; }
+    constexpr StmtExprToken decl() const noexcept { return _decl; }
 
     /// @brief Returns the value to write to the variable
     /// @return The value to write to the variable
-    constexpr ProdExprToken getToWrite() const noexcept { return value; }
+    constexpr ProdExprToken to_write() const noexcept { return value; }
   };
 
   /// @brief Represents a store through a pointer
@@ -401,9 +398,9 @@ namespace clt::lng
     final : public ExprBase
   {
     /// @brief The pointer in which to write
-    ProdExprToken where;
+    ProdExprToken _where;
     /// @brief The value to write to store
-    ProdExprToken value;
+    ProdExprToken _value;
 
   public:
     /// @brief Constructor
@@ -412,17 +409,17 @@ namespace clt::lng
     /// @param where The pointer to which to write
     /// @param value The value to store to the pointer
     constexpr PtrStoreExpr(TokenRange range, TypeToken type, ProdExprToken where, ProdExprToken value) noexcept
-      : ExprBase(TypeToExprID<PtrStoreExpr>(), type, range), where(where), value(value) {}
+      : ExprBase(TypeToExprID<PtrStoreExpr>(), type, range), _where(where), _value(value) {}
 
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(PtrStoreExpr);
 
     /// @brief Returns the pointer to which to store
     /// @return The pointer to which to store
-    constexpr ProdExprToken getWhere() const noexcept { return where; }
+    constexpr ProdExprToken where() const noexcept { return _where; }
 
     /// @brief Returns the value to store
     /// @return The value to store
-    constexpr ProdExprToken getToStore() const noexcept { return value; }
+    constexpr ProdExprToken to_store() const noexcept { return _value; }
   };
 
   /// @brief Represents a move
@@ -446,10 +443,10 @@ namespace clt::lng
 
     /// @brief Returns the declaration of the variable from which to move
     /// @return The declaration of the variable from which to move
-    constexpr StmtExprToken getToMove() const noexcept { return decl; }
+    constexpr StmtExprToken to_move() const noexcept { return decl; }
     /// @brief Returns the declaration of the variable to which to move
     /// @return The declaration of the variable to which to move
-    constexpr StmtExprToken getMoveTo() const noexcept { return to; }
+    constexpr StmtExprToken move_to() const noexcept { return to; }
   };
   
   /// @brief Represents a copy
@@ -473,10 +470,10 @@ namespace clt::lng
 
     /// @brief Returns the declaration of the variable from which to copy
     /// @return The declaration of the variable from which to copy
-    constexpr StmtExprToken getToCopy() const noexcept { return decl; }
+    constexpr StmtExprToken to_copy() const noexcept { return decl; }
     /// @brief Returns the declaration of the variable to which to copy
     /// @return The declaration of the variable to which to copy
-    constexpr StmtExprToken getCopyTo() const noexcept { return to; }
+    constexpr StmtExprToken copy_to() const noexcept { return to; }
   };
   
   /// @brief Represents a conditional move
@@ -500,10 +497,10 @@ namespace clt::lng
 
     /// @brief Returns the declaration of the variable from which to conditional move
     /// @return The declaration of the variable from which to conditional move
-    constexpr StmtExprToken getToCMove() const noexcept { return decl; }
+    constexpr StmtExprToken to_cmove() const noexcept { return decl; }
     /// @brief Returns the declaration of the variable to which to conditional move
     /// @return The declaration of the variable to which to conditional move
-    constexpr StmtExprToken getCMoveTo() const noexcept { return to; }
+    constexpr StmtExprToken cmove_to() const noexcept { return to; }
   };
 
   /// @brief Represents a local variable declaration
@@ -515,7 +512,7 @@ namespace clt::lng
     /// @brief The assigned value
     OptTok<ProdExprToken> value;
     /// @brief The local ID of the variable
-    u32 local_id;
+    u32 _local_id;
 
   public:
     /// @brief Constructor, for initialized variables
@@ -526,17 +523,17 @@ namespace clt::lng
     /// @param init The initial value of the variable
     /// @param is_mut True if the variable is mutable
     constexpr VarDeclExpr(TokenRange range, TypeToken type, u32 local_id, StringView name, OptTok<ProdExprToken> init, bool is_mut) noexcept
-      : ExprBase(TypeToExprID<VarDeclExpr>(), type, range, true, is_mut), name(name), value(init), local_id(local_id) {}
+      : ExprBase(TypeToExprID<VarDeclExpr>(), type, range, is_mut), name(name), value(init), _local_id(local_id) {}
 
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(VarDeclExpr);
 
     /// @brief Check if the variable was declared with an initial value.
     /// @return True if the variable was declared with an initial value
-    constexpr bool isInit() const noexcept { return padding0; }
+    constexpr bool is_init() const noexcept { return value.isValue(); }
 
     /// @brief Returns the initial value of the declared variable
     /// @return The initial value of the variable
-    constexpr OptTok<ProdExprToken> getInit() const noexcept
+    constexpr OptTok<ProdExprToken> init() const noexcept
     {
       return value;
     }
@@ -544,14 +541,14 @@ namespace clt::lng
     /// @brief Returns the local ID of the variable.
     /// This is the "depth" in the spaghetti stack of variable declaration.
     /// @return The local ID of the variable
-    constexpr u32 getLocalID() const noexcept { return local_id; }
+    constexpr u32 local_id() const noexcept { return _local_id; }
 
     /// @brief Check if the variable is mutable
     /// @return True if mutable
-    constexpr bool isMut() const noexcept { return padding1; }
+    constexpr bool is_mut() const noexcept { return padding0; }
     /// @brief Check if the variable is const
     /// @return True if not mutable
-    constexpr bool isConst() const noexcept { return !isMut(); }
+    constexpr bool is_const() const noexcept { return !is_mut(); }
   };
   
   /// @brief Represents a global variable
@@ -576,16 +573,16 @@ namespace clt::lng
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(GlobalDeclExpr);
 
     /// @brief Returns the initial value of the declared variable
-    /// @pre isInit()
+    /// @pre is_init()
     /// @return The initial value of the variable
-    constexpr ProdExprToken getInit() const noexcept { return value; }
+    constexpr ProdExprToken init() const noexcept { return value; }
 
     /// @brief Check if the variable is mutable
     /// @return True if mutable
-    constexpr bool isMut() const noexcept { return padding0; }
+    constexpr bool is_mut() const noexcept { return padding0; }
     /// @brief Check if the variable is const
     /// @return True if not mutable
-    constexpr bool isConst() const noexcept { return !isMut(); }
+    constexpr bool is_const() const noexcept { return !is_mut(); }
   };
 
   /// @brief Represents a scope
@@ -615,27 +612,27 @@ namespace clt::lng
 
     /// @brief Check if the current scope has a parent
     /// @return True if the scope has a parent
-    constexpr bool hasParent() const noexcept { return parent_expr.isValue(); }
+    constexpr bool has_parent() const noexcept { return parent_expr.isValue(); }
 
     /// @brief Returns the parent of the current scope.
     /// @return The parent of the current scope
-    constexpr OptTok<StmtExprToken> getParent() const noexcept
+    constexpr OptTok<StmtExprToken> parent() const noexcept
     {
       return parent_expr;
     }
 
     /// @brief Returns the local variable declarations of the current scope
     /// @return The declarations
-    constexpr Vector<const VarDeclExpr*>& getDecls() noexcept { return decl; }
+    constexpr Vector<const VarDeclExpr*>& decls() noexcept { return decl; }
     /// @brief Returns the local variable declarations of the current scope
     /// @return The declarations
-    constexpr const Vector<const VarDeclExpr*>& getDecls() const noexcept { return decl; }
+    constexpr const Vector<const VarDeclExpr*>& decls() const noexcept { return decl; }
     /// @brief Returns the expressions contained in the scope
     /// @return The expressions
-    constexpr Vector<ExprBase*>& getExprs() noexcept { return expressions; }
+    constexpr Vector<ExprBase*>& exprs() noexcept { return expressions; }
     /// @brief Returns the expressions contained in the scope
     /// @return The expressions
-    constexpr const Vector<ExprBase*>& getExprs() const noexcept { return expressions; }
+    constexpr const Vector<ExprBase*>& exprs() const noexcept { return expressions; }
   };
 
   /// @brief Represents a conditional expression
@@ -661,22 +658,22 @@ namespace clt::lng
     
     /// @brief Check if this condition has an else branch
     /// @return True if this condition has an else branch
-    constexpr bool hasElse() const noexcept { return else_stmt.isValue(); }
+    constexpr bool has_else() const noexcept { return else_stmt.isValue(); }
 
     /// @brief Returns the else statement of the condition.
     /// @return The else statement
-    constexpr OptTok<StmtExprToken> getElseStmt() const noexcept
+    constexpr OptTok<StmtExprToken> else_statement() const noexcept
     {
       return else_stmt;
     }
     
     /// @brief Returns the if statement of the condition
     /// @return The if statement
-    constexpr StmtExprToken getIfStmt() const noexcept { return if_stmt; }
+    constexpr StmtExprToken if_statement() const noexcept { return if_stmt; }
 
     /// @brief Returns the if condition of the condition
     /// @return The if condition
-    constexpr ProdExprToken getIfCondition() const noexcept { return if_cond; }
+    constexpr ProdExprToken if_condition() const noexcept { return if_cond; }
   };
 
   template<typename T>

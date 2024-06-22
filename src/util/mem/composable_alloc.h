@@ -608,7 +608,7 @@ namespace clt::mem
       if (auto blk = Allocator::alloc(size))
       {
         Allocator::create_prefix(blk, size.to_bytes());
-        if constexpr (isDebugBuild())
+        if constexpr (is_debug_build())
           Allocator::create_suffix(blk, size.to_bytes());
         return blk.ptr();
       }
@@ -622,7 +622,7 @@ namespace clt::mem
       if constexpr (is_mallocator)
         Allocator::dealloc(to_free);
       
-      if constexpr (isDebugBuild())
+      if constexpr (is_debug_build())
         assert_true("Size information was corrupted!", !is_corrupted());
       if (to_free != nullptr)
         Allocator::dealloc({ to_free, Allocator::get_prefix(MemBlock{ to_free }) });

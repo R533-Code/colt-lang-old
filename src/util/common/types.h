@@ -397,18 +397,18 @@ namespace clt
   }
 
   /// @brief Boolean that represents a success/failure state that must be checked.
-  using ErrorFlag = std::conditional_t<isDebugBuild(), details::ErrorDebug, details::ErrorRelease>;
+  using ErrorFlag = std::conditional_t<is_debug_build(), details::ErrorDebug, details::ErrorRelease>;
 
   template<typename T> requires (!std::is_reference_v<T>) && (!std::is_const_v<T>)
   /// @brief An 'out' parameter, which is a uninitialized reference that must be
   /// initialized inside the function. 'out' parameters are taken as is (without const or references).
   /// @tparam T The type of the out parameter
-  using out = std::add_const_t<std::conditional_t<isDebugBuild(), details::OutDebug<T>, details::OutRelease<T>>>&;
+  using out = std::add_const_t<std::conditional_t<is_debug_build(), details::OutDebug<T>, details::OutRelease<T>>>&;
 
   template<typename T> requires (!std::is_reference_v<T>) && (!std::is_const_v<T>)
   /// @brief An uninitialized variable.
   /// @tparam T The type of the uninitialized variable
-  using uninit = std::conditional_t<isDebugBuild(), details::UninitDebug<T>, details::UninitRelease<T>>;  
+  using uninit = std::conditional_t<is_debug_build(), details::UninitDebug<T>, details::UninitRelease<T>>;  
 
   namespace meta
   {
@@ -442,7 +442,7 @@ namespace clt
       template<typename ParseContext>
       constexpr auto parse(ParseContext& ctx)
       {
-        if constexpr (isDebugBuild())
+        if constexpr (is_debug_build())
         {
           assert_true("Only accepted format is {}!",
             ctx.begin() == ctx.end() || *ctx.begin() == '}');

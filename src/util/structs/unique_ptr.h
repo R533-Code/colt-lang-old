@@ -59,7 +59,7 @@ namespace clt
     constexpr UniquePtr(meta::for_debug_for_release_t<mem::MemBlock&, mem::MemBlock> blk) noexcept requires is_global
       : blk(blk)
     {
-      if constexpr (isDebugBuild())
+      if constexpr (is_debug_build())
         blk = mem::nullblk;
     }
 
@@ -71,7 +71,7 @@ namespace clt
     constexpr UniquePtr(AllocT& alloc, meta::for_debug_for_release_t<mem::MemBlock&, mem::MemBlock> blk) noexcept
       : allocator(alloc), blk(blk)
     {
-      if constexpr (isDebugBuild())
+      if constexpr (is_debug_build())
         blk = mem::nullblk;
     }
     

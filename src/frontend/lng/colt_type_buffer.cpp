@@ -76,6 +76,6 @@ namespace clt::lng
   
   StringView TypeBuffer::type_name(TypeToken variant) const noexcept
   {
-    return type_name(getType(variant));
+    return type_name(type(variant));
   }
 }

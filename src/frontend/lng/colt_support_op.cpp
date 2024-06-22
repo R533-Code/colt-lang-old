@@ -149,7 +149,7 @@ namespace clt::lng
     {
     case OP_SUM:
     case OP_SUB:
-      if (!rhs.isBuiltinAnd(&isIntegral))
+      if (!rhs.isBuiltinAnd(&is_integral))
         return BinarySupport::INVALID_TYPE;
       return BinarySupport::BUILTIN;
     case OP_LESS:
@@ -179,7 +179,7 @@ namespace clt::lng
     case OP_BOOL_OR:
     case OP_NOT_EQUAL:
     case OP_EQUAL:
-      return var.isBuiltinAnd(&isBool) ? BUILTIN : INVALID_TYPE;
+      return var.isBuiltinAnd(&is_bool) ? BUILTIN : INVALID_TYPE;
     default:
       return INVALID_OP;
     }

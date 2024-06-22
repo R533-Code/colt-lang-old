@@ -648,7 +648,7 @@ namespace clt::run
   /// @brief Check if a TypeOp is a signed integer
   /// @param op The type
   /// @return True if signed integer
-  constexpr bool isSInt(TypeOp op) noexcept
+  constexpr bool is_sint(TypeOp op) noexcept
   {
     return TypeOp::i8_t <= op && op <= TypeOp::i64_t;
   }
@@ -656,7 +656,7 @@ namespace clt::run
   /// @brief Check if a TypeOp is an unsigned integer
   /// @param op The type
   /// @return True if unsigned integer
-  constexpr bool isUInt(TypeOp op) noexcept
+  constexpr bool is_uint(TypeOp op) noexcept
   {
     return TypeOp::u8_t <= op && op <= TypeOp::u64_t;
   }
@@ -672,7 +672,7 @@ namespace clt::run
   /// @brief Check if a TypeOp is a floating point
   /// @param op The type
   /// @return True if TypeOp is f32_t or f64_t
-  constexpr bool isFP(TypeOp op) noexcept
+  constexpr bool is_fp(TypeOp op) noexcept
   {
     return TypeOp::f32_t == op || TypeOp::f64_t == op;
   }

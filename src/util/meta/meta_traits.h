@@ -101,7 +101,7 @@ namespace clt::meta
   /// @tparam Release The type on Release configuration
   struct for_debug_for_release
   {
-    using type = std::conditional_t<clt::isDebugBuild(), Debug, Release>;
+    using type = std::conditional_t<clt::is_debug_build(), Debug, Release>;
   };
 
   template<typename Debug, typename Release>

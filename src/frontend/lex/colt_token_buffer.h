@@ -162,7 +162,7 @@ namespace clt::lng
     constexpr void owns(Token tkn) const noexcept
     {
 #ifdef COLT_DEBUG
-      if constexpr (isDebugBuild())
+      if constexpr (is_debug_build())
         assert_true("Token is not owned by this TokenBuffer!", tkn.buffer_id == buffer_id);
 #endif // COLT_DEBUG
     }
@@ -171,7 +171,7 @@ namespace clt::lng
     constexpr void owns(TokenRange tkn) const noexcept
     {
 #ifdef COLT_DEBUG
-      if constexpr (isDebugBuild())
+      if constexpr (is_debug_build())
         assert_true("Token is not owned by this TokenBuffer!", tkn.buffer_id == buffer_id);
 #endif // COLT_DEBUG
     }
@@ -184,7 +184,7 @@ namespace clt::lng
     TokenBuffer() noexcept
     {
 #ifdef COLT_DEBUG
-      if constexpr (isDebugBuild())
+      if constexpr (is_debug_build())
         buffer_id = ID_GENERATOR.fetch_add(1, std::memory_order_acq_rel);
 #endif // COLT_DEBUG
     }
@@ -267,7 +267,7 @@ namespace clt::lng
 #endif // COLT_DEBUG
     }
     
-    void addLiteral(QWORD_t value, Lexeme lexeme, u32 line, u32 column, u32 size) noexcept
+    void add_literal(QWORD_t value, Lexeme lexeme, u32 line, u32 column, u32 size) noexcept
     {
       u64 ret = nb_literals.size();
       nb_literals.push_back(value);

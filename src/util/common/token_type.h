@@ -93,7 +93,7 @@ namespace clt::lng
 
     /// @brief Returns the value, isValue must be true.
     /// @return The value
-    constexpr T getValue() const noexcept
+    constexpr T value() const noexcept
     {
       assert_true("OptTok was empty!", isValue());
       return T{ index };

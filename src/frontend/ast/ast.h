@@ -256,34 +256,34 @@ namespace clt::lng
     /// @return The expression buffer representing the parsed file
     ExprBuffer& Expr() noexcept { return to_parse.expr_buffer(); }
     
-    /// @brief Shorthand for Expr().getExpr()
+    /// @brief Shorthand for Expr().expr()
     /// @param expr The expression to get
     /// @return ProdExprVariant
-    ProdExprVariant& Expr(ProdExprToken expr) noexcept { return to_parse.expr_buffer().getExpr(expr); }
-    /// @brief Shorthand for Expr().getExpr()
+    ProdExprVariant& Expr(ProdExprToken expr) noexcept { return to_parse.expr_buffer().expr(expr); }
+    /// @brief Shorthand for Expr().expr()
     /// @param expr The expression to get
     /// @return ProdExprVariant
-    const ProdExprVariant& Expr(ProdExprToken expr) const noexcept { return to_parse.expr_buffer().getExpr(expr); }
-    /// @brief Shorthand for Expr().getExpr()
+    const ProdExprVariant& Expr(ProdExprToken expr) const noexcept { return to_parse.expr_buffer().expr(expr); }
+    /// @brief Shorthand for Expr().expr()
     /// @param expr The expression to get
     /// @return StmtExprVariant
-    StmtExprVariant& Expr(StmtExprToken expr) noexcept { return to_parse.expr_buffer().getExpr(expr); }
-    /// @brief Shorthand for Expr().getExpr()
+    StmtExprVariant& Expr(StmtExprToken expr) noexcept { return to_parse.expr_buffer().expr(expr); }
+    /// @brief Shorthand for Expr().expr()
     /// @param expr The expression to get
     /// @return StmtExprVariant
-    const StmtExprVariant& Expr(StmtExprToken expr) const noexcept { return to_parse.expr_buffer().getExpr(expr); }
-    /// @brief Shorthand for Expr().getType()
+    const StmtExprVariant& Expr(StmtExprToken expr) const noexcept { return to_parse.expr_buffer().expr(expr); }
+    /// @brief Shorthand for Expr().type()
     /// @param expr The expression whose type to get
     /// @return The type
-    const TypeVariant& Type(ProdExprToken expr) const noexcept { return to_parse.expr_buffer().getType(expr); }
-    /// @brief Shorthand for Expr().getType()
+    const TypeVariant& Type(ProdExprToken expr) const noexcept { return to_parse.expr_buffer().type(expr); }
+    /// @brief Shorthand for Expr().type()
     /// @param expr The expression whose type to get
     /// @return The type
-    const TypeVariant& Type(TypeToken expr) const noexcept { return to_parse.expr_buffer().getType(expr); }
-    /// @brief Shorthand for Expr().getType()
+    const TypeVariant& Type(TypeToken expr) const noexcept { return to_parse.expr_buffer().type(expr); }
+    /// @brief Shorthand for Expr().type()
     /// @param expr The expression whose type to get
     /// @return The type
-    const TypeVariant& Type(const ExprBase& expr) const noexcept { return Type(expr.getType()); }
+    const TypeVariant& Type(const ExprBase& expr) const noexcept { return Type(expr.type()); }
     /// @brief Shorthand for program().type_buffer()
     /// @return The type buffer
     TypeBuffer& Type() noexcept { return to_parse.program().type_buffer(); }

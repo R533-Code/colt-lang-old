@@ -120,7 +120,7 @@ namespace clt::lng
     /// The reference is valid as long as addType was not called!
     /// @param tkn The token whose type to return
     /// @return The type represented by 'tkn'
-    const TypeVariant& getType(TypeToken tkn) const noexcept
+    const TypeVariant& type(TypeToken tkn) const noexcept
     {
       return type_map.internal_list()[tkn.getID()];
     }

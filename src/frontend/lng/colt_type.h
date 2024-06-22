@@ -161,7 +161,7 @@ namespace clt::lng
 
     /// @brief Check if the pointer type is mutable or not
     /// @return True if classof() == TYPE_MUT_PTR
-    constexpr bool isMut() const noexcept { return classof() == TypeID::TYPE_MUT_PTR; }
+    constexpr bool is_mut() const noexcept { return classof() == TypeID::TYPE_MUT_PTR; }
 
     /// @brief Returns the type pointed to
     /// @return The type pointed to
@@ -471,7 +471,7 @@ namespace clt::lng
     /// @brief Check if the current type is void
     constexpr bool isVoid()    const noexcept { return getTypeID() == TypeID::TYPE_VOID; }
     /// @brief Check if the current type is an error
-    constexpr bool isError()   const noexcept { return getTypeID() == TypeID::TYPE_ERROR; }
+    constexpr bool is_error()   const noexcept { return getTypeID() == TypeID::TYPE_ERROR; }
     /// @brief Check if the current type is a built-in type
     constexpr bool isBuiltin() const noexcept { return getTypeID() == TypeID::TYPE_BUILTIN; }
 
@@ -492,7 +492,7 @@ namespace clt::lng
     /// @return True if any of the types are errors or if the types are the same
     constexpr bool isSameAs(const TypeVariant& type) const noexcept
     {
-      if (this->isError() || type.isError())
+      if (this->is_error() || type.is_error())
         return true;
       return *this == type;
     }

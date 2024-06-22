@@ -351,12 +351,12 @@ namespace clt::lng
 		}
 
 		template<typename T>
-		void addLiteral(Lexeme lexeme, T value, const Snapshot& snap) const noexcept
+		void add_literal(Lexeme lexeme, T value, const Snapshot& snap) const noexcept
 		{
 			assert_true("Verify lexeme and literal type!", LiteralFromType<T>() == lexeme);
 			QWORD_t literal{};
 			literal.bit_assign(value);
-			buffer.addLiteral(literal, lexeme, snap.line_nb, snap.column, size_lexeme);
+			buffer.add_literal(literal, lexeme, snap.line_nb, snap.column, size_lexeme);
 		}
 	};
 
@@ -410,7 +410,7 @@ namespace clt::lng
 		T value;
 		auto result = clt::parse(lexer.temp, value);
 		if (result.code() == ParsingCode::GOOD)
-			return lexer.addLiteral(LiteralFromType<T>(), value, snap);
+			return lexer.add_literal(LiteralFromType<T>(), value, snap);
 
 		lexer.addToken(Lexeme::TKN_ERROR, snap);
 		lexer.reporter.error(
@@ -425,7 +425,7 @@ namespace clt::lng
 		T value = 0;
 		auto [ptr, err] = std::from_chars(lexer.temp.begin(), lexer.temp.end(), value, base);
 		if (ptr == lexer.temp.end() && err == std::errc{})
-			return lexer.addLiteral(LiteralFromType<T>(), value, snap);
+			return lexer.add_literal(LiteralFromType<T>(), value, snap);
 
 		lexer.addToken(Lexeme::TKN_ERROR, snap);
 		lexer.reporter.error(

@@ -114,7 +114,7 @@ namespace clt::lng
 
     /// @brief Returns the ModuleToken representing the parent of this module
     /// @return The ModuleToken representing the parent of this module
-    ModuleToken getParent() const noexcept
+    ModuleToken parent() const noexcept
     {
       assert_true("Global module does not have a parent!", isGlobal());
       return parent;
@@ -186,19 +186,19 @@ namespace clt::lng
     /// @brief Returns the parent of the module represented by 'tkn'
     /// @param tkn The module whose parent to return
     /// @return The parent of the module
-    const Module& getParent(ModuleToken tkn) const noexcept
+    const Module& parent(ModuleToken tkn) const noexcept
     {
       assert_true("Global module does not have a parent!", !tkn.isGlobalModule());
-      return modules[getModule(tkn).getParent().module_nb];
+      return modules[getModule(tkn).parent().module_nb];
     }
 
     /// @brief Returns the parent of the module represented by 'tkn'
     /// @param tkn The module whose parent to return
     /// @return The parent of the module
-    Module& getParent(ModuleToken tkn) noexcept
+    Module& parent(ModuleToken tkn) noexcept
     {
       assert_true("Global module does not have a parent!", !tkn.isGlobalModule());
-      return modules[getModule(tkn).getParent().module_nb];
+      return modules[getModule(tkn).parent().module_nb];
     }
   };
 
@@ -214,7 +214,7 @@ namespace clt::lng
         break;
     }
     // Verify the name format
-    if constexpr (isDebugBuild())
+    if constexpr (is_debug_build())
     {
       bool hit_empty = false;
       for (size_t i = 0; i < MAX_NESTING_LEVEL; i++)
