@@ -2,6 +2,7 @@
 build/
 # VISUAL STUDIO / VSCODE
 .vs/
+*tasks.json
 # CMAKE CONFIGURED FILE
 colt_config.h
 # DOXYGEN OUTPUT
