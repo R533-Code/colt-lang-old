@@ -27,20 +27,13 @@ namespace clt::run
     DynamicLibrary& operator=(DynamicLibrary&&) noexcept = default;
 
     /// @brief Loads library at path 'path'
-    /// @param path The path (or null for current executable)
+    /// @param path The path (not null)
     /// @return None on errors or handle to the library
-    static Option<DynamicLibrary> load(const char* path) noexcept
-    {
-      auto lib  = dlLoadLibrary(path);
-      auto syms = dlSymsInit(path);
-      if (lib == nullptr || syms == nullptr)
-        return None;
-      return DynamicLibrary(lib, syms);
-    }
+    static Option<DynamicLibrary> load(const char* path) noexcept;    
 
     /// @brief Loads the current executable as a library
     /// @return None on errors or handle to the current library
-    static Option<DynamicLibrary> load_current() noexcept { return load(nullptr); }
+    static Option<DynamicLibrary> load_current() noexcept;    
 
     /// @brief Searches for symbol of name 'name'
     /// @param name The name of the symbol (must be mangled for C++ symbols)
