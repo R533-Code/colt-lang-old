@@ -64,8 +64,9 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   set(CMAKE_EXE_LINKER_FLAGS "-Wl,-export-dynamic")
   target_compile_options(
     ${COLT_EXECUTABLE_NAME} PUBLIC
-      "-rdynamic" "-fvisibility=hidden"
-      "-export-dynamic"
+      "-fvisibility=hidden"
+  #    "-rdynamic" 
+  #    "-export-dynamic"
       )
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   set(CMAKE_EXE_LINKER_FLAGS "-Wl,-export-dynamic")
