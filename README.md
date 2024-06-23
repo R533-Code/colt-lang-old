@@ -12,6 +12,6 @@ approach, as seen in [Chandler Carruth's talk](https://www.youtube.com/watch?v=Z
 
 ## CI:
 | |g++12|clang-16|MSVC|
-|---:|:---:|:---:|:---:|
-|**COMPILATION:** | ![g++12 build](https://github.com/R533-Code/colt-lang/actions/workflows/g++12_build.yml/badge.svg)| ![clang16 build](https://github.com/R533-Code/colt-lang/actions/workflows/clang16_build.yml/badge.svg) |![MSVC build](https://github.com/R533-Code/colt-lang/actions/workflows/msvc_build.yml/badge.svg)|
-|**TESTING:**|![g++12 build](https://github.com/R533-Code/colt-lang/actions/workflows/g++12_test.yml/badge.svg)| ![clang16 build](https://github.com/R533-Code/colt-lang/actions/workflows/clang16_test.yml/badge.svg) |![MSVC build](https://github.com/R533-Code/colt-lang/actions/workflows/msvc_test.yml/badge.svg)|
+|:---:|:---:|:---:|:---:|
+|**COMPILATION** | ![g++12 build](https://github.com/R533-Code/colt-lang/actions/workflows/g++12_build.yml/badge.svg)| ![clang16 build](https://github.com/R533-Code/colt-lang/actions/workflows/clang16_build.yml/badge.svg) |![MSVC build](https://github.com/R533-Code/colt-lang/actions/workflows/msvc_build.yml/badge.svg)|
+|**TESTING**|![g++12 build](https://github.com/R533-Code/colt-lang/actions/workflows/g++12_test.yml/badge.svg)| ![clang16 build](https://github.com/R533-Code/colt-lang/actions/workflows/clang16_test.yml/badge.svg) |![MSVC build](https://github.com/R533-Code/colt-lang/actions/workflows/msvc_test.yml/badge.svg)|
