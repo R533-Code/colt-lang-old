@@ -1,8 +1,6 @@
 #include "clt_dynload.h"
 
-#ifdef _WIN32
-  #include <Windows.h> //GetModuleFileName
-#else
+#ifndef _WIN32
   #include <limits.h>
   #include <unistd.h> //readlink
 #endif
@@ -22,9 +20,13 @@ namespace clt::run
   Option<DynamicLibrary> DynamicLibrary::load_current() noexcept
   {
 #ifdef _WIN32
-    return load(nullptr);
+    auto lib  = dlLoadLibrary(nullptr);
+    auto syms = dlSymsInit(nullptr);
+    if (lib == nullptr || syms == nullptr)
+      return None;
+    return DynamicLibrary(lib, syms);
 #else
-    char result[PATH_MAX * 2] = {0};
+    char result[PATH_MAX] = {0};
     ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
     if (count < 0)
       return None;
