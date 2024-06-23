@@ -1,6 +1,6 @@
 ﻿---
 BasedOnStyle: LLVM
-CommentPragmas: '^\\.+'
+CommentPragmas: '^[^ ]'
 ReflowComments: 'false'
 AccessModifierOffset: '-2'
 AlignAfterOpenBracket: AlwaysBreak
@@ -21,7 +21,8 @@ AllowShortFunctionsOnASingleLine: InlineOnly
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLambdasOnASingleLine: All
 AllowShortLoopsOnASingleLine: 'false'
-AlwaysBreakAfterReturnType: None
+AlwaysBreakAfterReturnType: 'None'
+PenaltyReturnTypeOnItsOwnLine: 1000000
 AlwaysBreakBeforeMultilineStrings: 'false'
 AlwaysBreakTemplateDeclarations: 'Yes'
 BinPackArguments: 'true'
