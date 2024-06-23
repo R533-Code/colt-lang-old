@@ -58,6 +58,16 @@ if (MSVC)
   #target_link_options(${COLT_EXECUTABLE_NAME} PRIVATE "$<$<CONFIG:Release>:/DEBUG>")
   #target_link_options(${COLT_EXECUTABLE_NAME} PRIVATE "$<$<CONFIG:Release>:/OPT:REF>")
   #target_link_options(${COLT_EXECUTABLE_NAME} PRIVATE "$<$<CONFIG:Release>:/OPT:ICF>")
+else()
+  target_compile_options(
+    ${COLT_EXECUTABLE_NAME} PUBLIC
+      "-rdynamic" "-fvisibility=hidden"
+      "-export-dynamic"
+      )
+  target_link_options(
+    ${COLT_EXECUTABLE_NAME} PUBLIC
+    "-export-dynamic"
+  )
 endif()
 
 #########################################
