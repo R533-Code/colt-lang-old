@@ -27,7 +27,7 @@ jobs:
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
     
     - name: Run
-      run: cd build/${{env.BUILD_TYPE}} && ./colt
+      run: cd build && ./colt
     
     - name: Test
       working-directory: ${{github.workspace}}/build
