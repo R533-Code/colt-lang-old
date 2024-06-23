@@ -548,6 +548,11 @@ namespace clt::lng
       lexer._next = lexer.next();
 
     StringView identifier = lexer.current_identifier(snap);
+    if (identifier == "true")
+      return lexer.add_literal(Lexeme::TKN_BOOL_L, true, snap);
+    if (identifier == "false")
+      return lexer.add_literal(Lexeme::TKN_BOOL_L, false, snap);
+    
     // This is a keyword
     if (auto keyword_opt = KeywordMap.find(identifier); keyword_opt.is_value())
       return lexer.add_token(*keyword_opt, snap);
