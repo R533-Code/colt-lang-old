@@ -21,7 +21,8 @@
 // FUNCTIONS IF NO FUNCTIONS ARE EXPORTED.
 // DO NOT REMOVE CLT_EXPORT
 
-extern "C" CLT_EXPORT void __CLT_NOP(){
+extern "C" CLT_EXPORT void __CLT_NOP()
+{
     // This method doesn't do anything except provide an address for 'test_ffi'.
 };
 
@@ -61,12 +62,6 @@ namespace clt::test
       return io::print_error("Could not load the executable as a library!");
     }
     auto& lib = *current;
-    io::print("{}", lib.count());
-    for (auto i : lib)
-    {
-      io::print("{}", i);
-    }
-
     if (lib.lookup("__CLT_NOP") != &__CLT_NOP)
     {
       ++error_count;
