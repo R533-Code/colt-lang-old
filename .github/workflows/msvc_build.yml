@@ -1,9 +1,14 @@
 name: MSVC build
 
-on: [workflow_call]
+on:
+  workflow_call:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
 
 env:
-  BUILD_TYPE: Debug
+  BUILD_TYPE: Release
 
 jobs:
   build:
