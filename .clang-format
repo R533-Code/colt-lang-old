@@ -22,7 +22,7 @@ AllowShortIfStatementsOnASingleLine: Never
 AllowShortLambdasOnASingleLine: All
 AllowShortLoopsOnASingleLine: 'false'
 AlwaysBreakAfterReturnType: 'None'
-PenaltyReturnTypeOnItsOwnLine: 1000000
+PenaltyReturnTypeOnItsOwnLine: 1000000000
 AlwaysBreakBeforeMultilineStrings: 'false'
 AlwaysBreakTemplateDeclarations: 'Yes'
 BinPackArguments: 'true'
