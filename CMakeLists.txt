@@ -60,16 +60,12 @@ if (MSVC)
   #target_link_options(${COLT_EXECUTABLE_NAME} PRIVATE "$<$<CONFIG:Release>:/DEBUG>")
   #target_link_options(${COLT_EXECUTABLE_NAME} PRIVATE "$<$<CONFIG:Release>:/OPT:REF>")
   #target_link_options(${COLT_EXECUTABLE_NAME} PRIVATE "$<$<CONFIG:Release>:/OPT:ICF>")
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+else()
   set(CMAKE_EXE_LINKER_FLAGS "-Wl,-export-dynamic")
   target_compile_options(
     ${COLT_EXECUTABLE_NAME} PUBLIC
       "-fvisibility=hidden"
-  #    "-rdynamic" 
-  #    "-export-dynamic"
-      )
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set(CMAKE_EXE_LINKER_FLAGS "-Wl,-export-dynamic")
+    )
 endif()
 
 #########################################
