@@ -23,13 +23,14 @@ namespace clt::run
   {
 #ifdef _WIN32
     char path[MAX_PATH * 2] = {0};
-    GetModuleFileNameA(nullptr, path, MAX_PATH);
+    if (GetModuleFileNameA(nullptr, path, MAX_PATH) == 0)
+      return None;
     return load(path);
 #else
     char result[PATH_MAX * 2] = {0};
     ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
     if (count < 0)
-      return nullptr;
+      return None;
     return load(result);
 #endif
   }
