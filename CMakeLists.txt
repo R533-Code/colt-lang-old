@@ -144,8 +144,8 @@ list(LENGTH ColtLexerTestsPath testCountLexer)
 message(STATUS "Found " ${testCountAST} " AST tests and " ${testCountLexer} " Lexer tests.")
 
 # For VS, group tests
-source_group("Colt AST Tests" FILES ${ColtASTTestsPath})
-source_group("Colt Lexer Tests" FILES ${ColtLexerTestsPath})
+source_group("Tests AST" FILES ${ColtASTTestsPath})
+source_group("Tests Lexer" FILES ${ColtLexerTestsPath})
 source_group("Github Actions" FILES ${ColtGithubActions})
 source_group("Colt Design" FILES ${ColtDesignFiles})
 
