@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   args_parsing.h
  * @brief  A command line argument parser.
- * 
+ *
  * @author RPC
  * @date   January 2024
  *********************************************************************/
@@ -132,15 +132,18 @@ namespace clt::cl
 
     template<typename T, typename... Ts>
     /// @brief Finds a Description type in the parameter pack, or returns Description<"">
-    using find_description_t = meta::find_first_match_t<is_description, Description<"">, T, Ts...>;
+    using find_description_t =
+        meta::find_first_match_t<is_description, Description<"">, T, Ts...>;
 
     template<typename T, typename... Ts>
     /// @brief Finds a Description type in the parameter pack, or returns ValueDescription<"">
-    using find_value_description_t = meta::find_first_match_t<is_value_description, ValueDescription<"">, T, Ts...>;
+    using find_value_description_t = meta::find_first_match_t<
+        is_value_description, ValueDescription<"">, T, Ts...>;
 
     template<typename T, typename... Ts>
     /// @brief Finds a Description type in the parameter pack, or returns Location<nullptr>
-    using find_location_t = meta::find_first_match_t<is_location, Location<nullptr>, T, Ts...>;
+    using find_location_t =
+        meta::find_first_match_t<is_location, Location<nullptr>, T, Ts...>;
 
     template<typename T, typename... Ts>
     /// @brief Finds a Description type in the parameter pack, or returns Alias<"">
@@ -148,8 +151,9 @@ namespace clt::cl
 
     template<typename T, typename... Ts>
     /// @brief Finds a Description type in the parameter pack, or returns an empty callback
-    using find_callback_t = meta::find_first_match_t<is_callback, Callback<nullptr>, T, Ts...>;
-  }
+    using find_callback_t =
+        meta::find_first_match_t<is_callback, Callback<nullptr>, T, Ts...>;
+  } // namespace details
 
   template<meta::StringLiteral T>
   /// @brief Adds a description for a Opt
@@ -163,11 +167,14 @@ namespace clt::cl
   /// @brief Adds an alias for an Opt
   using alias = details::Alias<T>;
 
-  template<auto& REF> requires std::is_reference_v<decltype(REF)> && (!std::is_const_v<decltype(REF)>) //&& meta::Parsable<std::remove_reference_t<decltype(REF)>>
+  template<auto& REF>
+    requires std::is_reference_v<decltype(REF)>
+                 && (!std::is_const_v<
+                     decltype(REF)>) //&& meta::Parsable<std::remove_reference_t<decltype(REF)>>
   /// @brief Adds the location in which to store the result for an Opt
   using location = details::Location<&REF>;
 
-  template<void(*CALL)()>
+  template<void (*CALL)()>
   /// @brief Adds the location in which to store the result for an Opt
   using callback = details::Callback<CALL>;
 
@@ -181,9 +188,11 @@ namespace clt::cl
     /// @brief The name of the Opt (required, and not "")
     static constexpr std::string_view name = Name.value;
     /// @brief The description of the Opt (can be empty)
-    static constexpr std::string_view desc = details::find_description_t<T, Ts...>::desc;
+    static constexpr std::string_view desc =
+        details::find_description_t<T, Ts...>::desc;
     /// @brief The description of the value (can be empty)
-    static constexpr std::string_view value_desc = details::find_value_description_t<T, Ts...>::desc;
+    static constexpr std::string_view value_desc =
+        details::find_value_description_t<T, Ts...>::desc;
     /// @brief An alias for the Opt (can be empty)
     static constexpr std::string_view alias = details::find_alias_t<T, Ts...>::name;
     /// @brief The location were the result is written (can be null if callback is not null)
@@ -191,12 +200,12 @@ namespace clt::cl
     /// @brief The callback to call upon detection (can be null if location is not null)
     static constexpr auto callback = details::find_callback_t<T, Ts...>::ptr;
 
-    static_assert(name != "",
-      "Empty name is not allowed!");
-    static_assert(name.find('=') == std::string_view::npos,
-      "'=' not allowed in Opt name!");
-    static_assert(location != nullptr || callback != nullptr,
-      "Either cl::location<...> or cl::callback<> of the Opt must be specified!");
+    static_assert(name != "", "Empty name is not allowed!");
+    static_assert(
+        name.find('=') == std::string_view::npos, "'=' not allowed in Opt name!");
+    static_assert(
+        location != nullptr || callback != nullptr,
+        "Either cl::location<...> or cl::callback<> of the Opt must be specified!");
   };
 
   template<meta::StringLiteral Name, typename T, typename... Ts>
@@ -209,16 +218,17 @@ namespace clt::cl
     /// @brief The name of the Opt (required, and not "")
     static constexpr std::string_view name = Name.value;
     /// @brief The description of the Opt (can be empty)
-    static constexpr std::string_view desc = details::find_description_t<T, Ts...>::desc;
+    static constexpr std::string_view desc =
+        details::find_description_t<T, Ts...>::desc;
     /// @brief The location were the result is written (can be null if callback is not null)
     static constexpr auto location = details::find_location_t<T, Ts...>::ptr;
     /// @brief The callback to call upon detection (can be null if location is not null)
     static constexpr auto callback = details::find_callback_t<T, Ts...>::ptr;
 
-    static_assert(name != "",
-      "Empty name is not allowed!");
-    static_assert(location != nullptr || callback != nullptr,
-      "Either cl::location<...> or cl::callback<> of the Pos must be specified!");
+    static_assert(name != "", "Empty name is not allowed!");
+    static_assert(
+        location != nullptr || callback != nullptr,
+        "Either cl::location<...> or cl::callback<> of the Pos must be specified!");
   };
 
   template<meta::StringLiteral Name, typename T, typename... Ts>
@@ -231,16 +241,18 @@ namespace clt::cl
     /// @brief The name of the Opt (required, and not "")
     static constexpr std::string_view name = Name.value;
     /// @brief The description of the Opt (can be empty)
-    static constexpr std::string_view desc = details::find_description_t<T, Ts...>::desc;
+    static constexpr std::string_view desc =
+        details::find_description_t<T, Ts...>::desc;
     /// @brief The location were the result is written (can be null if callback is not null)
     static constexpr auto location = details::find_location_t<T, Ts...>::ptr;
     /// @brief The callback to call upon detection (can be null if location is not null)
     static constexpr auto callback = details::find_callback_t<T, Ts...>::ptr;
 
-    static_assert(name != "",
-      "Empty name is not allowed!");
-    static_assert(location != nullptr || callback != nullptr,
-      "Either cl::location<...> or cl::callback<> of the OptPos must be specified!");
+    static_assert(name != "", "Empty name is not allowed!");
+    static_assert(
+        location != nullptr || callback != nullptr,
+        "Either cl::location<...> or cl::callback<> of the OptPos must be "
+        "specified!");
   };
 
   namespace details
@@ -310,7 +322,12 @@ namespace clt::cl
       // 4ULL for "help"
       // + 3ULL is for ", -" between name and alias
       // + 1ULL is for "-"
-      return clt::max({ (static_cast<size_t>(Args::name.size()) + static_cast<size_t>((!Args::alias.empty()) * (Args::alias.size() + 3))) ..., static_cast<size_t>(4) }) + 1;
+      return clt::max(
+                 {(static_cast<size_t>(Args::name.size())
+                   + static_cast<size_t>(
+                       (!Args::alias.empty()) * (Args::alias.size() + 3)))...,
+                  static_cast<size_t>(4)})
+             + 1;
     }
 
     template<typename... Args>
@@ -319,34 +336,14 @@ namespace clt::cl
     /// @return Maximum count of chars
     consteval u64 max_desc_size(meta::type_list<Args...> list) noexcept
     {
-      return clt::max({ Args::value_desc.size()..., static_cast<size_t>(2) }) + 2ULL;
+      return clt::max({Args::value_desc.size()..., static_cast<size_t>(2)}) + 2ULL;
     }
-
 
     template<IsOpt opt>
     ParsingResult parse_opt(std::string_view strv) noexcept
     {
-      using ResultType = std::remove_cvref_t<std::remove_pointer_t<decltype(opt::location)>>;
-
-      if constexpr (opt::location != nullptr)
-      {        
-        auto res = clt::parse(strv, *opt::location);
-        if (!res)
-          return res;
-      }
-
-      //Run callback if it exists.
-      //The callback is only run if parsing was successful.
-      if constexpr (opt::callback != nullptr)
-        (*opt::callback)();
-
-      return clt::ParsingResult{};
-    }
-
-    template<typename opt>
-    ParsingResult parse_pos(std::string_view strv) noexcept
-    {
-      using ResultType = std::remove_cvref_t<std::remove_pointer_t<decltype(opt::location)>>;
+      using ResultType =
+          std::remove_cvref_t<std::remove_pointer_t<decltype(opt::location)>>;
 
       if constexpr (opt::location != nullptr)
       {
@@ -363,7 +360,28 @@ namespace clt::cl
       return clt::ParsingResult{};
     }
 
-    using parse_and_write_t = ParsingResult(*)(std::string_view) noexcept;
+    template<typename opt>
+    ParsingResult parse_pos(std::string_view strv) noexcept
+    {
+      using ResultType =
+          std::remove_cvref_t<std::remove_pointer_t<decltype(opt::location)>>;
+
+      if constexpr (opt::location != nullptr)
+      {
+        auto res = clt::parse(strv, *opt::location);
+        if (!res)
+          return res;
+      }
+
+      //Run callback if it exists.
+      //The callback is only run if parsing was successful.
+      if constexpr (opt::callback != nullptr)
+        (*opt::callback)();
+
+      return clt::ParsingResult{};
+    }
+
+    using parse_and_write_t = ParsingResult (*)(std::string_view) noexcept;
 
     template<typename... Args>
     consteval auto generate_opt_table(meta::type_list<Args...> list) noexcept
@@ -379,9 +397,8 @@ namespace clt::cl
       //by the used), we also expand them, but need another array that will
       //only hold pairs of alias that are not empty.
       std::array<pair_t, opt_size * 2> unfiltered_array = {
-        pair_t{ Args::name, { Args::location == nullptr, &parse_opt<Args>} }...,
-        pair_t{ Args::alias, { Args::location == nullptr, &parse_opt<Args>} }...
-      };
+          pair_t{Args::name, {Args::location == nullptr, &parse_opt<Args>}}...,
+          pair_t{Args::alias, {Args::location == nullptr, &parse_opt<Args>}}...};
       //Final array that will hold non-empty Keys
       std::array<pair_t, opt_and_alias_count(list)> array;
 
@@ -406,23 +423,32 @@ namespace clt::cl
     }
 
     template<typename... Args, typename... Args2>
-    consteval auto generate_pos_table(meta::type_list<Args...>, meta::type_list<Args2...>) noexcept
+    consteval auto generate_pos_table(
+        meta::type_list<Args...>, meta::type_list<Args2...>) noexcept
     {
-      return std::array<parse_and_write_t, sizeof...(Args) + sizeof...(Args2)>{ &parse_pos<Args>..., & parse_pos<Args2>... };
+      return std::array<parse_and_write_t, sizeof...(Args) + sizeof...(Args2)>{
+          &parse_pos<Args>..., &parse_pos<Args2>...};
     }
 
     template<typename Arg>
     void print_help_for_arg(u64 max_size, u64 max_desc) noexcept
     {
       if constexpr (Arg::alias.empty())
-        io::print<"">("   -{}{: <{}}{}", io::BrightCyanF, Arg::name.data(), max_size, io::Reset);
+        io::print<"">(
+            "   -{}{: <{}}{}", io::BrightCyanF, Arg::name.data(), max_size,
+            io::Reset);
       else
-        io::print<"">("   -{}{}{}, -{}{}{}{: <{}}", io::BrightCyanF, Arg::name.data(), io::Reset, io::BrightCyanF, Arg::alias.data(), io::Reset, "", max_size - Arg::name.size() - Arg::alias.size() - 3);
+        io::print<"">(
+            "   -{}{}{}, -{}{}{}{: <{}}", io::BrightCyanF, Arg::name.data(),
+            io::Reset, io::BrightCyanF, Arg::alias.data(), io::Reset, "",
+            max_size - Arg::name.size() - Arg::alias.size() - 3);
 
       if constexpr (Arg::value_desc.empty())
         io::print<"">("{: <{}}", "", max_desc);
       else
-        io::print<"">("{}<{}>{}{: <{}}", io::BrightMagentaF, Arg::value_desc.data(), io::Reset, "", max_desc - Arg::value_desc.size() - 2);
+        io::print<"">(
+            "{}<{}>{}{: <{}}", io::BrightMagentaF, Arg::value_desc.data(), io::Reset,
+            "", max_desc - Arg::value_desc.size() - 2);
 
       if constexpr (Arg::desc.empty())
         io::print("");
@@ -443,8 +469,10 @@ namespace clt::cl
     }
 
     template<typename... Args, typename... Args2, typename... Args3>
-    [[noreturn]]
-    void print_help(meta::type_list<Args...> list, meta::type_list<Args2...> pos, meta::type_list<Args3...> optpos, std::string_view name, std::string_view description) noexcept
+    [[noreturn]] void print_help(
+        meta::type_list<Args...> list, meta::type_list<Args2...> pos,
+        meta::type_list<Args3...> optpos, std::string_view name,
+        std::string_view description) noexcept
     {
       constexpr u64 max_size = max_name_size(list);
       constexpr u64 max_desc = max_desc_size(list);
@@ -452,7 +480,8 @@ namespace clt::cl
       if (name.empty())
         io::print<"">("USAGE: {}[OPTIONS] {}", io::BrightCyanF, io::BrightBlueF);
       else
-        io::print<"">("USAGE: {} {}[OPTIONS] {}", name, io::BrightCyanF, io::BrightBlueF);
+        io::print<"">(
+            "USAGE: {} {}[OPTIONS] {}", name, io::BrightCyanF, io::BrightBlueF);
       (print_help_for_pos<Args2>(), ...);
       io::print<"">("{}", io::GreenF);
       (print_help_for_optpos<Args3>(), ...);
@@ -460,16 +489,20 @@ namespace clt::cl
       //Print commands in format -NAME <VALUE_DESC> - DESC aligning all options.
       (print_help_for_arg<Args>(max_size, max_desc), ...);
       //Print help command description
-      io::print("   -{}{: <{}}{}{: <{}}  - {}", io::BrightCyanF, "help", max_size, io::Reset, "", max_desc, "Display available options");
+      io::print(
+          "   -{}{: <{}}{}{: <{}}  - {}", io::BrightCyanF, "help", max_size,
+          io::Reset, "", max_desc, "Display available options");
       std::exit(0);
     }
 
-    void handle_non_positional(std::string_view arg, u64& i, u64 argc, const char** argv, auto& CONST_MAP) noexcept
+    void handle_non_positional(
+        std::string_view arg, u64& i, u64 argc, const char** argv,
+        auto& CONST_MAP) noexcept
     {
       arg.remove_prefix(1); // pop '-'
       std::string_view to_parse = arg;
-      u64 equal_index = to_parse.find('=');
-      to_parse = to_parse.substr(0, equal_index);
+      u64 equal_index           = to_parse.find('=');
+      to_parse                  = to_parse.substr(0, equal_index);
       if (auto opt = CONST_MAP.find(to_parse))
       {
         if ((*opt).first == true)
@@ -490,7 +523,7 @@ namespace clt::cl
           err = (*(*opt).second)(argv[++i]);
         else
           err = (*(*opt).second)(arg.substr(equal_index + 1));
-        
+
         if (err != ParsingCode::GOOD)
         {
           io::print_error("Invalid argument for '{}' option ({:h})!", arg, err);
@@ -499,12 +532,15 @@ namespace clt::cl
       }
       else
       {
-        io::print_error("'{}' is not an option!\nUse '-help' to enumerate possible options.", arg);
+        io::print_error(
+            "'{}' is not an option!\nUse '-help' to enumerate possible options.",
+            arg);
         std::exit(1);
       }
     }
 
-    void handle_positional(std::string_view arg, u64& pos_id, auto& POS_TABLE) noexcept
+    void handle_positional(
+        std::string_view arg, u64& pos_id, auto& POS_TABLE) noexcept
     {
       if (pos_id == POS_TABLE.size())
       {
@@ -520,23 +556,27 @@ namespace clt::cl
         std::exit(1);
       }
     }
-  }
+  } // namespace details
 
   template<meta::TypeList list>
-  void parse_command_line_options(int argc, const char** argv, std::string_view name = {}, std::string_view description = {}) noexcept
+  void parse_command_line_options(
+      int argc, const char** argv, std::string_view name = {},
+      std::string_view description = {}) noexcept
   {
-    using OptList = typename list::template remove_if_not<details::is_opt>;
-    using PosList = typename list::template remove_if_not<details::is_pos>;
+    using OptList    = typename list::template remove_if_not<details::is_opt>;
+    using PosList    = typename list::template remove_if_not<details::is_pos>;
     using OptPosList = typename list::template remove_if_not<details::is_optpos>;
 
     //Positional argument table, contains pointers to the function to call
     //when a non-positional argument is detected.
-    static constexpr meta::ConstexprMap CONST_MAP = details::generate_opt_table(OptList{});
+    static constexpr meta::ConstexprMap CONST_MAP =
+        details::generate_opt_table(OptList{});
     //Positional argument table, contains pointers to the function to call
     //when a positional argument is detected.
-    static constexpr auto POS_TABLE = details::generate_pos_table(PosList{}, OptPosList{});
+    static constexpr auto POS_TABLE =
+        details::generate_pos_table(PosList{}, OptPosList{});
 
-    u64 pos_id = 0;
+    u64 pos_id          = 0;
     bool is_parsing_pos = false;
     for (u64 i = 1; i < static_cast<u64>(argc); i++)
     {
@@ -554,17 +594,17 @@ namespace clt::cl
         if (arg == "-help")
           details::print_help(OptList{}, PosList{}, OptPosList{}, name, description);
         else
-          details::handle_non_positional(arg, i,
-            static_cast<u64>(argc), argv, CONST_MAP);
+          details::handle_non_positional(
+              arg, i, static_cast<u64>(argc), argv, CONST_MAP);
       }
     }
     if (pos_id < PosList::size)
     {
-      io::print_error("Not enough arguments provided! {} missing.",
-        PosList::size - pos_id);
+      io::print_error(
+          "Not enough arguments provided! {} missing.", PosList::size - pos_id);
       std::exit(1);
     }
   }
-}
+} // namespace clt::cl
 
 #endif //!HG_COLT_PARSE_ARGS

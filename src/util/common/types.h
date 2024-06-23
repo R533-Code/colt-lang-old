@@ -1,4 +1,4 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   types.h
  * @brief  Contains useful typedefs.
  * The `out` type can be used to mark parameters as being uninitialized.
@@ -10,11 +10,11 @@
  *   a.init(10);
  * }
  * @endcode
- * 
+ *
  * The `Error` type is a simple boolean flag that represents either a
  * success or a failure state. An `Error` must be checked before its
  * destructor runs.
- * 
+ *
  * @author RPC
  * @date   January 2024
  *********************************************************************/
@@ -29,7 +29,7 @@
 #include "meta/meta_traits.h"
 #include "assertions.h"
 
- /// @brief 8-bit signed integer
+/// @brief 8-bit signed integer
 using u8 = uint8_t;
 /// @brief 16-bit signed integer
 using u16 = uint16_t;
@@ -61,17 +61,16 @@ namespace clt
   /// @param frm The value to convert
   /// @return Converted value
   constexpr To ptr_to(From frm) noexcept
-    requires std::is_pointer_v<To>&& std::is_pointer_v<From>
+    requires std::is_pointer_v<To> && std::is_pointer_v<From>
   {
     return static_cast<To>(
-      static_cast<
-      meta::match_cv_t<std::remove_pointer_t<From>, void>*
-      >(frm));
+        static_cast<meta::match_cv_t<std::remove_pointer_t<From>, void>*>(frm));
   }
 
   namespace details
   {
-    template<typename T> requires (!std::is_reference_v<T>) && (!std::is_const_v<T>)
+    template<typename T>
+      requires(!std::is_reference_v<T>) && (!std::is_const_v<T>)
     /// @brief Represents an out parameter (with runtime checks)
     class OutDebug
     {
@@ -86,30 +85,35 @@ namespace clt
       /// @brief Constructs the out parameter
       /// @param ref The uninitialized object
       /// @param src The source location
-      constexpr OutDebug(T& ref, std::source_location src = std::source_location::current()) noexcept
-        : obj(ref), loc(src) {}
+      constexpr OutDebug(
+          T& ref,
+          std::source_location src = std::source_location::current()) noexcept
+          : obj(ref)
+          , loc(src)
+      {
+      }
 
       template<typename... Args>
-      constexpr T& init(Args&&... args) const noexcept(std::is_nothrow_constructible_v<T, Args...>)
+      constexpr T& init(Args&&... args) const
+          noexcept(std::is_nothrow_constructible_v<T, Args...>)
       {
         if (!is_constructed)
         {
-          new(&obj) T(std::forward<Args>(args)...);
+          new (&obj) T(std::forward<Args>(args)...);
           is_constructed = true;
           return obj;
         }
-        
+
         clt::unreachable("Double initialization of 'out' parameter!", loc);
       }
 
       /// @brief Returns the object (validating that it is constructed)
       /// @return Reference to the object
-      [[nodiscard]]
-      constexpr T& get() const noexcept
+      [[nodiscard]] constexpr T& get() const noexcept
       {
         if (is_constructed)
           return obj;
-        
+
         clt::unreachable("Use of uninitialized 'out' parameter!", loc);
       }
 
@@ -120,7 +124,8 @@ namespace clt
       }
     };
 
-    template<typename T> requires (!std::is_reference_v<T>) && (!std::is_const_v<T>)
+    template<typename T>
+      requires(!std::is_reference_v<T>) && (!std::is_const_v<T>)
     /// @brief Represents an out parameter (but without any runtime checks)
     class OutRelease
     {
@@ -131,25 +136,28 @@ namespace clt
       /// @brief Constructs an out parameter
       /// @param ref The object
       constexpr OutRelease(T& ref) noexcept
-        : obj(ref) {}
+          : obj(ref)
+      {
+      }
 
       template<typename... Args>
-      constexpr T& init(Args&&... args) const noexcept(std::is_nothrow_constructible_v<T, Args...>)
+      constexpr T& init(Args&&... args) const
+          noexcept(std::is_nothrow_constructible_v<T, Args...>)
       {
-        new(&obj) T(std::forward<Args>(args)...);
+        new (&obj) T(std::forward<Args>(args)...);
         return obj;
       }
 
       /// @brief Returns the object (validating that it is constructed)
       /// @return Reference to the object
-      [[nodiscard]]
-      constexpr T& get() const noexcept { return obj; }
+      [[nodiscard]] constexpr T& get() const noexcept { return obj; }
     };
 
-    template<typename T> requires (!std::is_reference_v<T>) && (!std::is_const_v<T>)
-      && std::is_trivially_destructible_v<T>
-      /// @brief Represents an uninitialized variable (with runtime checks)
-      class UninitDebug
+    template<typename T>
+      requires(!std::is_reference_v<T>)
+              && (!std::is_const_v<T>) && std::is_trivially_destructible_v<T>
+    /// @brief Represents an uninitialized variable (with runtime checks)
+    class UninitDebug
     {
       /// @brief The object
       alignas(T) char buffer[sizeof(T)];
@@ -176,11 +184,15 @@ namespace clt
       /// @brief Constructs the out parameter
       /// @param ref The uninitialized object
       /// @param src The source location
-      constexpr UninitDebug(std::source_location src = std::source_location::current()) noexcept
-        : loc(src) {}
+      constexpr UninitDebug(
+          std::source_location src = std::source_location::current()) noexcept
+          : loc(src)
+      {
+      }
 
       template<typename... Args>
-      constexpr T& init(Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Args...>)
+      constexpr T& init(Args&&... args) noexcept(
+          std::is_nothrow_constructible_v<T, Args...>)
       {
         if (!is_constructed)
         {
@@ -195,7 +207,8 @@ namespace clt
       /// @brief Initializes the uninitialized memory
       /// @param construct The value to initialize with
       /// @return Reference to the constructed object
-      constexpr T& operator=(const T& construct) noexcept(std::is_nothrow_copy_constructible_v<T>)
+      constexpr T& operator=(const T& construct) noexcept(
+          std::is_nothrow_copy_constructible_v<T>)
       {
         return init(construct);
       }
@@ -203,23 +216,22 @@ namespace clt
       /// @brief Initializes the uninitialized memory
       /// @param construct The value to initialize with
       /// @return Reference to the constructed object
-      constexpr T& operator=(T&& construct) noexcept(std::is_nothrow_copy_constructible_v<T>)
+      constexpr T& operator=(T&& construct) noexcept(
+          std::is_nothrow_copy_constructible_v<T>)
       {
         return init(std::move(construct));
       }
 
       /// @brief Returns the object (validating that it is constructed)
       /// @return Reference to the object
-      [[nodiscard]]
-      constexpr const T& get() const noexcept { return val(); }
-      
+      [[nodiscard]] constexpr const T& get() const noexcept { return val(); }
+
       /// @brief Returns the object (validating that it is constructed)
       /// @return Reference to the object
-      [[nodiscard]]
-      constexpr T& get() noexcept { return val(); }
+      [[nodiscard]] constexpr T& get() noexcept { return val(); }
 
-      constexpr operator T& () { return val(); }
-      constexpr operator const T& () const { return val(); }
+      constexpr operator T&() { return val(); }
+      constexpr operator const T&() const { return val(); }
 
       ~UninitDebug()
       {
@@ -228,10 +240,11 @@ namespace clt
       }
     };
 
-    template<typename T> requires (!std::is_reference_v<T>) && (!std::is_const_v<T>)
-      && std::is_trivially_destructible_v<T>
-      /// @brief Represents an out parameter (but without any runtime checks)
-      class UninitRelease
+    template<typename T>
+      requires(!std::is_reference_v<T>)
+              && (!std::is_const_v<T>) && std::is_trivially_destructible_v<T>
+    /// @brief Represents an out parameter (but without any runtime checks)
+    class UninitRelease
     {
       /// @brief The object
       alignas(T) char buffer[sizeof(T)];
@@ -242,38 +255,43 @@ namespace clt
       constexpr UninitRelease() noexcept {}
 
       template<typename... Args>
-      constexpr T& init(Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Args...>)
-      {        
-        return *std::construct_at<T>((T*)buffer, std::forward<Args>(args)...);;
+      constexpr T& init(Args&&... args) noexcept(
+          std::is_nothrow_constructible_v<T, Args...>)
+      {
+        return *std::construct_at<T>((T*)buffer, std::forward<Args>(args)...);
+        ;
       }
 
       /// @brief Returns the object (validating that it is constructed)
       /// @return Reference to the object
-      [[nodiscard]]
-      constexpr const T& get() const noexcept { return *ptr_to<const T*>(buffer); }
+      [[nodiscard]] constexpr const T& get() const noexcept
+      {
+        return *ptr_to<const T*>(buffer);
+      }
       /// @brief Returns the object (validating that it is constructed)
       /// @return Reference to the object
-      [[nodiscard]]
-      constexpr T& get() noexcept { return *ptr_to<T*>(buffer); }
+      [[nodiscard]] constexpr T& get() noexcept { return *ptr_to<T*>(buffer); }
 
       /// @brief Initializes the uninitialized memory
       /// @param construct The value to initialize with
       /// @return Reference to the constructed object
-      constexpr T& operator=(const T& construct) noexcept(std::is_nothrow_copy_constructible_v<T>)
+      constexpr T& operator=(const T& construct) noexcept(
+          std::is_nothrow_copy_constructible_v<T>)
       {
-        return *(new(buffer) T(construct));
+        return *(new (buffer) T(construct));
       }
-      
+
       /// @brief Initializes the uninitialized memory
       /// @param construct The value to initialize with
       /// @return Reference to the constructed object
-      constexpr T& operator=(T&& construct) noexcept(std::is_nothrow_copy_constructible_v<T>)
+      constexpr T& operator=(T&& construct) noexcept(
+          std::is_nothrow_copy_constructible_v<T>)
       {
-        return *(new(&buffer) T(std::move(construct)));
+        return *(new (&buffer) T(std::move(construct)));
       }
 
-      constexpr operator T& () { return get(); }
-      constexpr operator const T& () const { return get(); }
+      constexpr operator T&() { return get(); }
+      constexpr operator const T&() const { return get(); }
     };
 
     /// @brief Represents an Error (with runtime checks)
@@ -291,7 +309,10 @@ namespace clt
       /// methods are used.
       /// @param is_error True if an error
       ErrorDebug(bool is_error, const std::source_location& src)
-        : src(src), iserror(is_error) {}
+          : src(src)
+          , iserror(is_error)
+      {
+      }
 
       /// @brief Asserts that the state was read at least once
       void assert_checked() noexcept
@@ -301,52 +322,61 @@ namespace clt
       }
 
     public:
-      ErrorDebug(const ErrorDebug&) = delete;
+      ErrorDebug(const ErrorDebug&)           = delete;
       ErrorDebug operator=(const ErrorDebug&) = delete;
 
       // Move Constructor (steals the state of 'move')
       ErrorDebug(ErrorDebug&& move) noexcept
-        : iserror(move.iserror), is_checked(std::exchange(move.is_checked, true)) {}
+          : iserror(move.iserror)
+          , is_checked(std::exchange(move.is_checked, true))
+      {
+      }
       // Move assignment operator
       ErrorDebug& operator=(ErrorDebug&& move) noexcept
       {
         assert_checked();
-        iserror = move.iserror;
+        iserror    = move.iserror;
         is_checked = std::exchange(move.is_checked, true);
       }
 
       /// @brief Constructs a success
       /// @return State representing a success
-      [[nodiscard]]
-      static auto success(std::source_location src = std::source_location::current()) noexcept { return ErrorDebug(false, src); }
+      [[nodiscard]] static auto success(
+          std::source_location src = std::source_location::current()) noexcept
+      {
+        return ErrorDebug(false, src);
+      }
       /// @brief Constructs an error
       /// @return State representing an error
-      [[nodiscard]]
-      static auto error(std::source_location src = std::source_location::current()) noexcept { return ErrorDebug(true, src); }
+      [[nodiscard]] static auto error(
+          std::source_location src = std::source_location::current()) noexcept
+      {
+        return ErrorDebug(true, src);
+      }
 
       /// @brief Check if the state represents an error
-      [[nodiscard]]
-      constexpr bool is_error() const noexcept
+      [[nodiscard]] constexpr bool is_error() const noexcept
       {
         is_checked = true;
         return iserror;
-      }      
+      }
       /// @brief Check if the state represents a success
-      [[nodiscard]]
-      constexpr bool is_success() const noexcept { return !is_error(); }
+      [[nodiscard]] constexpr bool is_success() const noexcept
+      {
+        return !is_error();
+      }
 
       /// @brief Check if the state represents a success
-      [[nodiscard]]
-      explicit constexpr operator bool() const noexcept { return is_success(); }
+      [[nodiscard]] explicit constexpr operator bool() const noexcept
+      {
+        return is_success();
+      }
 
       /// @brief Discards the value
       constexpr void discard() const noexcept { is_checked = true; }
 
       /// @brief Ensures the state was at least read once
-      ~ErrorDebug()
-      {
-        assert_checked();
-      }
+      ~ErrorDebug() { assert_checked(); }
     };
 
     /// @brief Represents an Error (without any runtime checks)
@@ -360,12 +390,14 @@ namespace clt
       /// methods are used.
       /// @param is_error True if an error
       constexpr ErrorRelease(bool is_error)
-        : iserror(is_error) {}
+          : iserror(is_error)
+      {
+      }
 
     public:
-      ErrorRelease(const ErrorRelease&) = delete;
+      ErrorRelease(const ErrorRelease&)            = delete;
       ErrorRelease& operator=(const ErrorRelease&) = delete;
-      
+
       // Default move constructor
       constexpr ErrorRelease(ErrorRelease&&) noexcept = default;
       // Default move assignment operator
@@ -373,58 +405,67 @@ namespace clt
 
       /// @brief Constructs a success
       /// @return State representing a success
-      [[nodiscard]]
-      constexpr static auto success() noexcept { return ErrorRelease(false); }
+      [[nodiscard]] constexpr static auto success() noexcept
+      {
+        return ErrorRelease(false);
+      }
       /// @brief Constructs an error
       /// @return State representing an error
-      [[nodiscard]]
-      constexpr static auto error() noexcept { return ErrorRelease(true); }
+      [[nodiscard]] constexpr static auto error() noexcept
+      {
+        return ErrorRelease(true);
+      }
 
       /// @brief Check if the state represents an error
-      [[nodiscard]]
-      constexpr bool is_error() const noexcept { return iserror; }
+      [[nodiscard]] constexpr bool is_error() const noexcept { return iserror; }
       /// @brief Check if the state represents a success
-      [[nodiscard]]
-      constexpr bool is_success() const noexcept { return !iserror; }
+      [[nodiscard]] constexpr bool is_success() const noexcept { return !iserror; }
 
       /// @brief Does nothing on Release config
       constexpr void discard() const noexcept {}
 
       /// @brief Check if the state represents a success
-      [[nodiscard]]
-      explicit constexpr operator bool() const noexcept { return is_success(); }
-    };    
-  }
+      [[nodiscard]] explicit constexpr operator bool() const noexcept
+      {
+        return is_success();
+      }
+    };
+  } // namespace details
 
   /// @brief Boolean that represents a success/failure state that must be checked.
-  using ErrorFlag = std::conditional_t<is_debug_build(), details::ErrorDebug, details::ErrorRelease>;
+  using ErrorFlag = std::conditional_t<
+      is_debug_build(), details::ErrorDebug, details::ErrorRelease>;
 
-  template<typename T> requires (!std::is_reference_v<T>) && (!std::is_const_v<T>)
+  template<typename T>
+    requires(!std::is_reference_v<T>) && (!std::is_const_v<T>)
   /// @brief An 'out' parameter, which is a uninitialized reference that must be
   /// initialized inside the function. 'out' parameters are taken as is (without const or references).
   /// @tparam T The type of the out parameter
-  using out = std::add_const_t<std::conditional_t<is_debug_build(), details::OutDebug<T>, details::OutRelease<T>>>&;
+  using out = std::add_const_t<std::conditional_t<
+      is_debug_build(), details::OutDebug<T>, details::OutRelease<T>>>&;
 
-  template<typename T> requires (!std::is_reference_v<T>) && (!std::is_const_v<T>)
+  template<typename T>
+    requires(!std::is_reference_v<T>) && (!std::is_const_v<T>)
   /// @brief An uninitialized variable.
   /// @tparam T The type of the uninitialized variable
-  using uninit = std::conditional_t<is_debug_build(), details::UninitDebug<T>, details::UninitRelease<T>>;  
+  using uninit = std::conditional_t<
+      is_debug_build(), details::UninitDebug<T>, details::UninitRelease<T>>;
 
   namespace meta
   {
     template<typename T>
     /// @brief Unsigned integral
     concept UnsignedIntegral = std::same_as<std::remove_cv_t<T>, u8>
-      || std::same_as<std::remove_cv_t<T>, u16>
-      || std::same_as<std::remove_cv_t<T>, u32>
-      || std::same_as<std::remove_cv_t<T>, u64>;
+                               || std::same_as<std::remove_cv_t<T>, u16>
+                               || std::same_as<std::remove_cv_t<T>, u32>
+                               || std::same_as<std::remove_cv_t<T>, u64>;
 
     template<typename T>
     /// @brief Signed integral
     concept SignedIntegral = std::same_as<std::remove_cv_t<T>, i8>
-      || std::same_as<std::remove_cv_t<T>, i16>
-      || std::same_as<std::remove_cv_t<T>, i32>
-      || std::same_as<std::remove_cv_t<T>, i64>;
+                             || std::same_as<std::remove_cv_t<T>, i16>
+                             || std::same_as<std::remove_cv_t<T>, i32>
+                             || std::same_as<std::remove_cv_t<T>, i64>;
 
     template<typename T>
     /// @brief Signed/Unsigned integral
@@ -433,7 +474,7 @@ namespace clt
     template<typename T>
     /// @brief Floating point (f32, f64)
     concept FloatingPoint = std::same_as<std::remove_cv_t<T>, f32>
-      || std::same_as<std::remove_cv_t<T>, f64>;
+                            || std::same_as<std::remove_cv_t<T>, f64>;
 
     /// @brief Let fmt::formatter specialization inherit from this type if
     /// they only accept an empty format specification.
@@ -444,19 +485,21 @@ namespace clt
       {
         if constexpr (is_debug_build())
         {
-          assert_true("Only accepted format is {}!",
-            ctx.begin() == ctx.end() || *ctx.begin() == '}');
-        }        
+          assert_true(
+              "Only accepted format is {}!",
+              ctx.begin() == ctx.end() || *ctx.begin() == '}');
+        }
         return ctx.begin();
       }
     };
-  }
+  } // namespace meta
 
   namespace details
   {
-    template<typename T> requires std::unsigned_integral<T> && (!std::same_as<T, bool>)
-      /// @brief Class representing common byte sizes, simplifying bitwise operations
-      class BitSet
+    template<typename T>
+      requires std::unsigned_integral<T> && (!std::same_as<T, bool>)
+    /// @brief Class representing common byte sizes, simplifying bitwise operations
+    class BitSet
     {
       /// @brief Underlying integer storing the value
       T value = 0;
@@ -464,37 +507,47 @@ namespace clt
     public:
       /// @brief Constructs a BitSet with all the bits cleared (0)
       constexpr BitSet() noexcept
-        : value(0) {}
+          : value(0)
+      {
+      }
       /// @brief Constructs a BitSet from an Integer
       /// @param value The value of the bit-set
       constexpr BitSet(T value) noexcept
-        : value(value) {}
-      constexpr BitSet(const BitSet&)             noexcept = default;
-      constexpr BitSet(BitSet&&)                  noexcept = default;
-      constexpr BitSet& operator=(const BitSet&)  noexcept = default;
-      constexpr BitSet& operator=(BitSet&&)       noexcept = default;
+          : value(value)
+      {
+      }
+      constexpr BitSet(const BitSet&) noexcept            = default;
+      constexpr BitSet(BitSet&&) noexcept                 = default;
+      constexpr BitSet& operator=(const BitSet&) noexcept = default;
+      constexpr BitSet& operator=(BitSet&&) noexcept      = default;
 
       /// @brief Returns the state of the nth-bit
       /// @param n The index of the bit (starting at 0)
       /// @return True if on (1)
-      constexpr bool operator[](size_t n)  const noexcept { return (value >> n) & 1U; }
+      constexpr bool operator[](size_t n) const noexcept
+      {
+        return (value >> n) & 1U;
+      }
       /// @brief Check if the nth-bit is set (1)
       /// @param n The index of the bit (starting at 0)
       /// @return True if on (1)
-      constexpr bool is_set(size_t n)     const noexcept { return (value >> n) & 1U; }
+      constexpr bool is_set(size_t n) const noexcept { return (value >> n) & 1U; }
       /// @brief Check if the nth-bit is clear (0)
       /// @param n The index of the bit (starting at 0)
       /// @return True if off (0)
-      constexpr bool is_clr(size_t n)     const noexcept { return !is_set(n); }
+      constexpr bool is_clr(size_t n) const noexcept { return !is_set(n); }
       /// @brief Check if all the bits are set
       /// @return True if all the bits are on (1)
-      constexpr bool is_all_set()         const noexcept { return value == (T)(-1); }
+      constexpr bool is_all_set() const noexcept { return value == (T)(-1); }
       /// @brief Check if at least a bit is set
       /// @return True if at least a bit is on (1)
-      constexpr bool is_any_set()         const noexcept { return std::popcount(value) != 0; }
+      constexpr bool is_any_set() const noexcept
+      {
+        return std::popcount(value) != 0;
+      }
       /// @brief Check if no bit is set
       /// @return True if no bit is on (1)
-      constexpr bool is_none_set()        const noexcept { return value == 0; }
+      constexpr bool is_none_set() const noexcept { return value == 0; }
 
       /// @brief Sets the state of the nth-bit to 1
       /// @param n The index of the bit (starting at 0)
@@ -532,15 +585,24 @@ namespace clt
       /// @brief Bitwise OR operator
       /// @param byte The bit-set with which to perform the operation
       /// @return New bit-set containing the result of the operation
-      constexpr BitSet operator|(BitSet byte) const noexcept { return value | byte.value; }
+      constexpr BitSet operator|(BitSet byte) const noexcept
+      {
+        return value | byte.value;
+      }
       /// @brief Bitwise XOR operator
       /// @param byte The bit-set with which to perform the operation
       /// @return New bit-set containing the result of the operation
-      constexpr BitSet operator^(BitSet byte) const noexcept { return value ^ byte.value; }
+      constexpr BitSet operator^(BitSet byte) const noexcept
+      {
+        return value ^ byte.value;
+      }
       /// @brief Bitwise AND operator
       /// @param byte The bit-set with which to perform the operation
       /// @return New bit-set containing the result of the operation
-      constexpr BitSet operator&(BitSet byte) const noexcept { return value & byte.value; }
+      constexpr BitSet operator&(BitSet byte) const noexcept
+      {
+        return value & byte.value;
+      }
       /// @brief Shift Left operator
       /// @param by By how many bits to shift
       /// @return New bit-set containing the result of the operation
@@ -566,22 +628,35 @@ namespace clt
       /// @brief Bitwise OR operator
       /// @param byte The bit-set with which to perform the operation
       /// @return Self
-      constexpr BitSet& operator|=(BitSet byte) noexcept { value |= byte.value; return *this; }
+      constexpr BitSet& operator|=(BitSet byte) noexcept
+      {
+        value |= byte.value;
+        return *this;
+      }
       /// @brief Bitwise XOR operator
       /// @param byte The bit-set with which to perform the operation
       /// @return Self
-      constexpr BitSet& operator^=(BitSet byte) noexcept { value ^= byte.value; return *this; }
+      constexpr BitSet& operator^=(BitSet byte) noexcept
+      {
+        value ^= byte.value;
+        return *this;
+      }
       /// @brief Bitwise AND operator
       /// @param byte The bit-set with which to perform the operation
       /// @return Self
-      constexpr BitSet& operator&=(BitSet byte) noexcept { value &= byte.value; return *this; }
+      constexpr BitSet& operator&=(BitSet byte) noexcept
+      {
+        value &= byte.value;
+        return *this;
+      }
       /// @brief Shift Left operator
       /// @param by By how many bits to shift
       /// @return Self
       constexpr BitSet& operator<<=(size_t by) noexcept
       {
         assert_true("Invalid bit-shift!", by < sizeof(T) * 8);
-        value <<= by; return *this;
+        value <<= by;
+        return *this;
       }
 
       /// @brief Shift Right operator
@@ -590,7 +665,8 @@ namespace clt
       constexpr BitSet& operator>>=(size_t by) noexcept
       {
         assert_true("Invalid bit-shift!", by < sizeof(T) * 8);
-        value >>= by; return *this;
+        value >>= by;
+        return *this;
       }
 
       /// @brief Counts the number of set bits
@@ -606,9 +682,14 @@ namespace clt
 
       /// @brief Sets all the bits to 0
       /// @return Self
-      constexpr BitSet& clear() noexcept { value = 0; return *this; }
+      constexpr BitSet& clear() noexcept
+      {
+        value = 0;
+        return *this;
+      }
 
-      template<typename From> requires (sizeof(From) <= sizeof(T))
+      template<typename From>
+        requires(sizeof(From) <= sizeof(T))
       /// @brief Assigns the bitwise representation of 'frm'
       /// @param frm The value whose bitwise representation to use
       /// @return Self
@@ -618,7 +699,8 @@ namespace clt
         return *this;
       }
 
-      template<typename To> requires (sizeof(To) <= sizeof(T))
+      template<typename To>
+        requires(sizeof(To) <= sizeof(T))
       /// @brief Converts the underlying bits to an object of 'To'
       /// @tparam To The type to convert to
       /// @return The converted object
@@ -632,7 +714,7 @@ namespace clt
       /// @brief Underlying integer type storing the value
       using underlying_type = T;
     };
-  }
+  } // namespace details
 
   /// @brief 8-bit BitSet
   using BYTE_t = details::BitSet<u8>;
@@ -645,12 +727,11 @@ namespace clt
 
   template<typename T>
   /// @brief Check if a type is one of BYTE_t/WORD_t/DWORD_t/QWORD_t
-  concept BitType = std::same_as<T, BYTE_t>
-    || std::same_as<T, WORD_t>
-    || std::same_as<T, DWORD_t>
-    || std::same_as<T, QWORD_t>;
+  concept BitType = std::same_as<T, BYTE_t> || std::same_as<T, WORD_t>
+                    || std::same_as<T, DWORD_t> || std::same_as<T, QWORD_t>;
 
-  template<BitType T, typename Wt> requires (sizeof(Wt) == sizeof(T))
+  template<BitType T, typename Wt>
+    requires(sizeof(Wt) == sizeof(T))
   /// @brief Converts a type to its bit-set equivalent
   /// @tparam Wt The type to convert
   /// @tparam T One of [BYTE, WORD, DWORD, QWORD]
@@ -664,22 +745,24 @@ namespace clt
 
   namespace details
   {
-    template <auto fn>
+    template<auto fn>
     /// @brief Custom deleter for unique pointer
     struct deleter_from_fn
     {
-      template <typename T>
-      constexpr void operator()(T* arg) const { fn(arg); }
+      template<typename T>
+      constexpr void operator()(T* arg) const
+      {
+        fn(arg);
+      }
     };
-  }  
+  } // namespace details
 
-  template <typename T, auto fn>
+  template<typename T, auto fn>
   /// @brief Move-only resource that is automatically closed
   using RAIIResource = std::unique_ptr<T, details::deleter_from_fn<fn>>;
 
   /// @brief Used to unwind a recursion (to avoid stack overflow)
-  class ExitRecursionExcept
-    : public std::exception
+  class ExitRecursionExcept : public std::exception
   {
   public:
     ExitRecursionExcept() = default;
@@ -694,7 +777,7 @@ namespace clt
       throw ExitRecursionExcept{};
     ++a;
   }
-}
+} // namespace clt
 
 namespace clt::details
 {
@@ -708,14 +791,18 @@ namespace clt::details
     /// @brief Takes in a lambda to execute
     /// @param fn The function to execute
     ScopeGuard(Fun&& fn) noexcept
-      : fn(std::forward<Fun>(fn)) {}
+        : fn(std::forward<Fun>(fn))
+    {
+    }
 
     /// @brief Runs the lambda in the destructor
     ~ScopeGuard() noexcept { fn(); }
   };
 
   /// @brief Helper for ON_SCOPE_EXIT
-  enum class ScopeGuardOnExit {};
+  enum class ScopeGuardOnExit
+  {
+  };
 
   template<typename Fun>
   /// @brief Helper for ON_SCOPE_EXIT
@@ -723,7 +810,7 @@ namespace clt::details
   {
     return ScopeGuard<Fun>(std::forward<Fun>(fn));
   }
-}
+} // namespace clt::details
 
 /// @brief Register an action to be called at the end of the scope.
 /// Example:
@@ -735,6 +822,8 @@ namespace clt::details
 ///		}; // <- do not forget the semicolon
 /// }
 /// @endcode
-#define ON_SCOPE_EXIT auto COLT_CONCAT(SCOPE_EXIT_HELPER, __LINE__) = clt::details::ScopeGuardOnExit() + [&]() 
+#define ON_SCOPE_EXIT                             \
+  auto COLT_CONCAT(SCOPE_EXIT_HELPER, __LINE__) = \
+      clt::details::ScopeGuardOnExit() + [&]()
 
 #endif // !HG_COLT_TYPES

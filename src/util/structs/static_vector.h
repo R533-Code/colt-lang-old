@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   static_vector.h
  * @brief  StaticVector, vector with predefined capacity.
- * 
+ *
  * @author RPC
  * @date   February 2024
  *********************************************************************/
@@ -13,7 +13,7 @@
 namespace clt
 {
   template<typename T, size_t MAX_SIZE>
-    requires (MAX_SIZE != 0)
+    requires(MAX_SIZE != 0)
   /// @brief Dynamic size array, that can make use of a local allocator
   /// @tparam T The type stored in the Vector
   class StaticVector
@@ -56,8 +56,8 @@ namespace clt
     /// @param size The count of object to construct
     /// @param  Tag helper
     /// @param ...args The argument pack
-    constexpr StaticVector(size_t sz, meta::InPlaceT, Args&&... args)
-      noexcept(std::is_nothrow_constructible_v<T, Args...>)
+    constexpr StaticVector(size_t sz, meta::InPlaceT, Args&&... args) noexcept(
+        std::is_nothrow_constructible_v<T, Args...>)
     {
       assert_true("Not enough capacity!", sz <= MAX_SIZE);
       details::contiguous_construct(ptr(), sz, std::forward<Args>(args)...);
@@ -66,21 +66,23 @@ namespace clt
 
     /// @brief Constructs a Vector from an initializer_list
     /// @param list The initializer list
-    constexpr StaticVector(std::initializer_list<T> list)
-      noexcept(std::is_nothrow_copy_constructible_v<T>)
-      : blk_size(std::size(list))
+    constexpr StaticVector(std::initializer_list<T> list) noexcept(
+        std::is_nothrow_copy_constructible_v<T>)
+        : blk_size(std::size(list))
     {
       assert_true("Not enough capacity!", std::size(list) <= MAX_SIZE);
       details::contiguous_copy(std::data(list), ptr(), blk_size);
     }
 
     /// @brief Copy constructor, copy the content from 'to_copy'
-    /// @param to_copy 
+    /// @param to_copy
     /// @return Self
-    template<size_t OTHER_SIZE> requires (OTHER_SIZE <= MAX_SIZE)
-    explicit constexpr StaticVector(const StaticVector<T, OTHER_SIZE>& to_copy)
-      noexcept(std::is_nothrow_copy_constructible_v<T>)
-      : blk_size(to_copy.blk_size)
+    template<size_t OTHER_SIZE>
+      requires(OTHER_SIZE <= MAX_SIZE)
+    explicit constexpr StaticVector(
+        const StaticVector<T, OTHER_SIZE>&
+            to_copy) noexcept(std::is_nothrow_copy_constructible_v<T>)
+        : blk_size(to_copy.blk_size)
     {
       details::contiguous_copy(to_copy.ptr(), ptr(), blk_size);
     }
@@ -88,10 +90,12 @@ namespace clt
     /// @brief Destroy the active objects and copy the content from 'to_copy'.
     /// @param to_copy The Vector whose objects to copy
     /// @return Self
-    template<size_t OTHER_SIZE> requires (OTHER_SIZE <= MAX_SIZE)
-    constexpr StaticVector& operator=(const StaticVector<T, OTHER_SIZE>& to_copy)
-      noexcept(std::is_nothrow_copy_constructible_v<T>
-        && std::is_nothrow_destructible_v<T>)
+    template<size_t OTHER_SIZE>
+      requires(OTHER_SIZE <= MAX_SIZE)
+    constexpr StaticVector&
+        operator=(const StaticVector<T, OTHER_SIZE>& to_copy) noexcept(
+            std::is_nothrow_copy_constructible_v<T>
+            && std::is_nothrow_destructible_v<T>)
     {
       assert_true("Self assignment is prohibited!", &to_copy != this);
       details::contiguous_destruct(ptr(), blk_size);
@@ -102,11 +106,11 @@ namespace clt
 
     /// @brief Move constructor
     /// @param to_move The Vector whose resources to steal
-    template<size_t OTHER_SIZE> requires (OTHER_SIZE <= MAX_SIZE)      
-    explicit constexpr StaticVector(StaticVector<T, OTHER_SIZE>&& to_move)
-      noexcept(std::is_nothrow_move_constructible_v<T>
-        && std::is_nothrow_destructible_v<T>)
-      : blk_size(std::exchange(to_move.blk_size, 0))
+    template<size_t OTHER_SIZE>
+      requires(OTHER_SIZE <= MAX_SIZE)
+    explicit constexpr StaticVector(StaticVector<T, OTHER_SIZE>&& to_move) noexcept(
+        std::is_nothrow_move_constructible_v<T> && std::is_nothrow_destructible_v<T>)
+        : blk_size(std::exchange(to_move.blk_size, 0))
     {
       details::contiguous_destructive_move(to_move.ptr(), ptr(), blk_size);
     }
@@ -114,7 +118,8 @@ namespace clt
     /// @brief Move assignment operator, move-destroys content of 'to_move' to this
     /// @param to_move The StaticVector being assigned
     /// @return Self
-    template<size_t OTHER_SIZE> requires (OTHER_SIZE <= MAX_SIZE)
+    template<size_t OTHER_SIZE>
+      requires(OTHER_SIZE <= MAX_SIZE)
     constexpr StaticVector& operator=(StaticVector<T, OTHER_SIZE>&& to_move) noexcept
     {
       assert_true("Self assignment is prohibited!", &to_move != this);
@@ -124,8 +129,7 @@ namespace clt
     }
 
     /// @brief Destructor, destroy all active objects and free memory
-    constexpr ~StaticVector()
-      noexcept(std::is_nothrow_destructible_v<T>)
+    constexpr ~StaticVector() noexcept(std::is_nothrow_destructible_v<T>)
     {
       details::contiguous_destruct(ptr(), blk_size);
     }
@@ -173,23 +177,24 @@ namespace clt
 
     /// @brief Push an object at the end of the StaticVector by copying if there is enough capacity
     /// @param to_copy The object to copy at the end of the StaticVector
-    constexpr void push_back(const T& to_copy)
-      noexcept(std::is_nothrow_copy_constructible_v<T>)
+    constexpr void push_back(const T& to_copy) noexcept(
+        std::is_nothrow_copy_constructible_v<T>)
     {
       if (blk_size == MAX_SIZE)
         return;
-      new(ptr() + blk_size) T(to_copy);
+      new (ptr() + blk_size) T(to_copy);
       ++blk_size;
     }
 
     /// @brief Push an object at the end of the StaticVector by moving if there is enough capacity
     /// @param to_move The object to move at the end of the StaticVector
-    constexpr void push_back(T&& to_move)
-      noexcept(std::is_nothrow_move_constructible_v<T>) requires (!std::is_trivial_v<T>)
+    constexpr void push_back(T&& to_move) noexcept(
+        std::is_nothrow_move_constructible_v<T>)
+      requires(!std::is_trivial_v<T>)
     {
       if (blk_size == MAX_SIZE)
         return;
-      new(ptr() + blk_size) T(std::move(to_move));
+      new (ptr() + blk_size) T(std::move(to_move));
       ++blk_size;
     }
 
@@ -198,18 +203,17 @@ namespace clt
     /// @tparam ...Args The parameter pack
     /// @param  InPlaceT tag
     /// @param ...args The argument pack to forward to the constructor
-    constexpr void push_back(meta::InPlaceT, Args&&... args)
-      noexcept(std::is_nothrow_constructible_v<T, Args...>)
+    constexpr void push_back(meta::InPlaceT, Args&&... args) noexcept(
+        std::is_nothrow_constructible_v<T, Args...>)
     {
       if (blk_size == MAX_SIZE)
         return;
-      new(ptr() + blk_size) T(std::forward<Args>(args)...);
+      new (ptr() + blk_size) T(std::forward<Args>(args)...);
       ++blk_size;
     }
 
     /// @brief Pops an item from the back of the StaticVector.
-    constexpr void pop_back()
-      noexcept(std::is_nothrow_destructible_v<T>)
+    constexpr void pop_back() noexcept(std::is_nothrow_destructible_v<T>)
     {
       assert_true("StaticVector is empty!", !this->is_empty());
       --blk_size;
@@ -218,18 +222,17 @@ namespace clt
 
     /// @brief Pops N item from the back of the StaticVector.
     /// @param N The number of item to pop from the back
-    constexpr void pop_back_n(size_t N)
-      noexcept(std::is_nothrow_destructible_v<T>)
+    constexpr void pop_back_n(size_t N) noexcept(std::is_nothrow_destructible_v<T>)
     {
-      assert_true("StaticVector is does not contain enought elements!", N <= this->size());
+      assert_true(
+          "StaticVector is does not contain enought elements!", N <= this->size());
       for (size_t i = blk_size - N; i < blk_size; i++)
         ptr()[i].~T();
       blk_size -= N;
     }
 
     /// @brief Removes all the item from the StaticVector
-    constexpr void clear()
-      noexcept(std::is_nothrow_destructible_v<T>)
+    constexpr void clear() noexcept(std::is_nothrow_destructible_v<T>)
     {
       details::contiguous_destruct(ptr(), blk_size);
       blk_size = 0;
@@ -283,17 +286,11 @@ namespace clt
 
     /// @brief Converts a Vector to a View
     /// @return View over the whole Vector
-    constexpr operator View<T>() const noexcept
-    {
-      return { begin(), end() };
-    }
+    constexpr operator View<T>() const noexcept { return {begin(), end()}; }
 
     /// @brief Converts a Vector to a Span
     /// @return Span over the whole Vector
-    constexpr operator Span<T>() noexcept
-    {
-      return { begin(), end() };
-    }
+    constexpr operator Span<T>() noexcept { return {begin(), end()}; }
 
     constexpr Span<T> to_view() noexcept { return *this; }
     constexpr View<T> to_view() const noexcept { return *this; }
@@ -319,39 +316,41 @@ namespace clt
     friend constexpr auto operator<=>(const StaticVector& v1, View<T> v2) noexcept
     {
       return std::lexicographical_compare_three_way(
-        v1.begin(), v1.end(), v2.begin(), v2.end()
-      );
+          v1.begin(), v1.end(), v2.begin(), v2.end());
     }
   };
 
-  template<typename T, size_t MAX_SIZE> requires meta::is_hashable_v<T>
+  template<typename T, size_t MAX_SIZE>
+    requires meta::is_hashable_v<T>
   /// @brief clt::hash overload for StaticVector
   struct hash<StaticVector<T, MAX_SIZE>>
   {
     /// @brief Hashing operator
     /// @param value The value to hash
     /// @return Hash
-    constexpr size_t operator()(const StaticVector<T, MAX_SIZE>& value) const noexcept
+    constexpr size_t operator()(
+        const StaticVector<T, MAX_SIZE>& value) const noexcept
     {
       return hash_value(value.to_view());
     }
   };
-}
+} // namespace clt
 
-template<typename T, size_t MAX_SIZE> requires clt::meta::Parsable<T>
-struct scn::scanner<clt::StaticVector<T, MAX_SIZE>>
-  : scn::empty_parser
+template<typename T, size_t MAX_SIZE>
+  requires clt::meta::Parsable<T>
+struct scn::scanner<clt::StaticVector<T, MAX_SIZE>> : scn::empty_parser
 {
-  template <typename Context>
+  template<typename Context>
   error scan(clt::StaticVector<T, MAX_SIZE>& val, Context& ctx)
   {
-    auto r = scn::scan_list_ex(ctx.range(), val, scn::list_separator(','));
+    auto r      = scn::scan_list_ex(ctx.range(), val, scn::list_separator(','));
     ctx.range() = std::move(r.range());
     return r.error();
   }
 };
 
-template<typename T, size_t MAX_CAPACITY> requires fmt::is_formattable<T>::value
+template<typename T, size_t MAX_CAPACITY>
+  requires fmt::is_formattable<T>::value
 struct fmt::formatter<clt::StaticVector<T, MAX_CAPACITY>>
 {
   bool human_readable = false;
@@ -359,7 +358,7 @@ struct fmt::formatter<clt::StaticVector<T, MAX_CAPACITY>>
   template<typename ParseContext>
   constexpr auto parse(ParseContext& ctx)
   {
-    auto it = ctx.begin();
+    auto it  = ctx.begin();
     auto end = ctx.end();
     if (it == end)
       return it;

@@ -1,8 +1,8 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   meta_string_literal.h
  * @brief  Contains a StringLiteral type that can be passed as template
  *         argument.
- * 
+ *
  * @author RPC
  * @date   January 2024
  *********************************************************************/
@@ -15,16 +15,13 @@
 
 namespace clt::meta
 {
-  template <size_t N>
+  template<size_t N>
   /// @brief Type to pass string literals as template parameters
   struct StringLiteral
   {
     /// @brief Constructs a StringLiteral from a literal string
     /// @param str The literal string
-    constexpr StringLiteral(const char(&str)[N])
-    {
-      std::copy_n(str, N, value);
-    }
+    constexpr StringLiteral(const char (&str)[N]) { std::copy_n(str, N, value); }
 
     /// @brief Size of the literal string (without NUL terminator)
     /// @return Size of the literal string
@@ -34,7 +31,7 @@ namespace clt::meta
     char value[N];
   };
 
-  template <StringLiteral... Strs>
+  template<StringLiteral... Strs>
   /// @brief Concatenates StringView at compile time
   struct join
   {
@@ -43,9 +40,11 @@ namespace clt::meta
     {
       constexpr std::size_t len = (Strs.size() + ... + 0);
       std::array<char, len + 1> arr{};
-      auto append = [i = 0, &arr](auto const& s) mutable {
-        for (size_t j = 0; j < s.size(); j++) arr[i++] = s.value[j];
-        };
+      auto append = [i = 0, &arr](auto const& s) mutable
+      {
+        for (size_t j = 0; j < s.size(); j++)
+          arr[i++] = s.value[j];
+      };
       (append(Strs), ...);
       arr[len] = '\0';
       return arr;
@@ -53,12 +52,12 @@ namespace clt::meta
 
     /// @brief Array of characters representing concatenated string
     static constexpr auto arr = impl();
-    
+
     /// @brief Concatenation result
-    static constexpr const char* value{ arr.data() };
+    static constexpr const char* value{arr.data()};
   };
-  
-  template <StringLiteral... Strs>
+
+  template<StringLiteral... Strs>
   /// @brief Short-hand for join<...>::value
   static constexpr auto join_v = join<Strs...>::value;
 
@@ -71,9 +70,11 @@ namespace clt::meta
     {
       constexpr std::size_t len = (Strs.size() + ... + 0);
       std::array<char, len + 1> arr{};
-      auto append = [i = 0, &arr](const auto& s) mutable {
-        for (size_t j = 0; j < s.size(); j++) arr[i++] = s.data()[j];
-        };
+      auto append = [i = 0, &arr](const auto& s) mutable
+      {
+        for (size_t j = 0; j < s.size(); j++)
+          arr[i++] = s.data()[j];
+      };
       (append(Strs), ...);
       arr[len] = '\0';
       return arr;
@@ -82,12 +83,12 @@ namespace clt::meta
     /// @brief Array of characters representing concatenated string
     static constexpr auto arr = impl();
     /// @brief Concatenation result
-    static constexpr const char* value{ arr.data() };
+    static constexpr const char* value{arr.data()};
   };
 
   template<const std::string_view&... Strs>
   /// @brief Short-hand for join<...>::value
   static constexpr auto join_strv_v = join_strv<Strs...>::value;
-}
+} // namespace clt::meta
 
 #endif //!HG_META_STRING_LITERAL

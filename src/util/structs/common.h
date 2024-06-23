@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   common.h
  * @brief  Contains common helpers for data-structures.
- * 
+ *
  * @author RPC
  * @date   January 2024
  *********************************************************************/
@@ -28,15 +28,16 @@ namespace clt::details
   /// @param from Pointer to the objects to move then destruct
   /// @param to Pointer to where to move constructs the objects
   /// @param count The number of objects to move constructs
-  constexpr void contiguous_destructive_move(T* from, T* to, size_t count)
-    noexcept(std::is_nothrow_move_constructible_v<T>
-      && std::is_nothrow_destructible_v<T>)
+  constexpr void contiguous_destructive_move(T* from, T* to, size_t count) noexcept(
+      std::is_nothrow_move_constructible_v<T> && std::is_nothrow_destructible_v<T>)
   {
     assert_true("Invalid arguments!", clt::abs(from - to) >= count);
 
     if (!std::is_constant_evaluated())
     {
-      if constexpr (std::is_trivially_move_constructible_v<T> && std::is_trivially_destructible_v<T>)
+      if constexpr (
+          std::is_trivially_move_constructible_v<T>
+          && std::is_trivially_destructible_v<T>)
       {
         std::memcpy(to, from, count * sizeof(T));
         return;
@@ -44,7 +45,7 @@ namespace clt::details
     }
     for (size_t i = 0; i < count; i++)
     {
-      new(to + i) T(std::move(from[i]));
+      new (to + i) T(std::move(from[i]));
       from[i].~T();
     }
   }
@@ -55,8 +56,8 @@ namespace clt::details
   /// @param from Pointer to the objects to move
   /// @param to Pointer to where to move constructs the objects
   /// @param count The number of objects to move
-  constexpr void contiguous_move(T* from, T* to, size_t count)
-    noexcept(std::is_nothrow_move_constructible_v<T>)
+  constexpr void contiguous_move(T* from, T* to, size_t count) noexcept(
+      std::is_nothrow_move_constructible_v<T>)
   {
     assert_true("Invalid arguments!", clt::abs(from - to) >= count);
     if (!std::is_constant_evaluated())
@@ -68,7 +69,7 @@ namespace clt::details
       }
     }
     for (size_t i = 0; i < count; i++)
-      new(to + i) T(std::move(from[i]));
+      new (to + i) T(std::move(from[i]));
   }
 
   template<typename T, typename... Args>
@@ -78,11 +79,12 @@ namespace clt::details
   /// @param where Pointer to where to constructs the objects
   /// @param count The count of objects to construct
   /// @param ...args The argument pack
-  constexpr void contiguous_construct(T* where, size_t count, Args&&... args)
-    noexcept(std::is_nothrow_constructible_v<T, Args...>)
+  constexpr void contiguous_construct(
+      T* where, size_t count,
+      Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Args...>)
   {
     for (size_t i = 0; i < count; i++)
-      new(where + i) T(std::forward<Args>(args)...);
+      new (where + i) T(std::forward<Args>(args)...);
   }
 
   template<typename T>
@@ -91,19 +93,21 @@ namespace clt::details
   /// @param from Pointer to where to copy the objects from
   /// @param to Pointer to where to copy constructs the objects
   /// @param count The number of objects to copy constructs
-  inline void contiguous_copy(const T* from, T* to, size_t count)
-    noexcept(std::is_nothrow_copy_constructible_v<T>)
+  inline void contiguous_copy(const T* from, T* to, size_t count) noexcept(
+      std::is_nothrow_copy_constructible_v<T>)
   {
     if (!std::is_constant_evaluated())
     {
-      if constexpr (std::is_trivially_move_constructible_v<T> && std::is_trivially_destructible_v<T>)
+      if constexpr (
+          std::is_trivially_move_constructible_v<T>
+          && std::is_trivially_destructible_v<T>)
       {
         std::memcpy(to, from, count * sizeof(T));
         return;
       }
     }
     for (size_t i = 0; i < count; i++)
-      new(to + i) T(from[i]);
+      new (to + i) T(from[i]);
   }
 
   template<typename T>
@@ -111,8 +115,8 @@ namespace clt::details
   /// @tparam T The type to destroy
   /// @param begin Pointer to the objects to destroy
   /// @param count The number of objects to destroy
-  inline void contiguous_destruct(T* begin, size_t count)
-    noexcept(std::is_nothrow_destructible_v<T>)
+  inline void contiguous_destruct(T* begin, size_t count) noexcept(
+      std::is_nothrow_destructible_v<T>)
   {
     if constexpr (!std::is_trivially_destructible_v<T>)
     {
@@ -126,11 +130,10 @@ namespace clt::details
   /// An ACTIVE sentinel is one whose highest bit is 0.
   /// An EMPTY sentinel specifies that the slot is empty.
   /// A DELETED sentinel specifies that find should continue searching past that object.
-  enum KeySentinel
-    : uint8_t
+  enum KeySentinel : uint8_t
   {
-    ACTIVE = 0b00000000,
-    EMPTY = 0b10000000,
+    ACTIVE  = 0b00000000,
+    EMPTY   = 0b10000000,
     DELETED = 0b10000001,
   };
 
@@ -193,10 +196,12 @@ namespace clt::details
   constexpr size_t advance_prob(size_t prob, size_t mod) noexcept
   {
     //If this asserts then the optimization should be checked
-    assert_true("Verify optimization!", (prob + 1) % mod == ((prob + 1) * (prob + 1 != mod)));
-    return  (prob + 1) * static_cast<size_t>(prob + 1 != mod);
+    assert_true(
+        "Verify optimization!",
+        (prob + 1) % mod == ((prob + 1) * (prob + 1 != mod)));
+    return (prob + 1) * static_cast<size_t>(prob + 1 != mod);
   }
-}
+} // namespace clt::details
 
 namespace clt
 {
@@ -205,12 +210,13 @@ namespace clt
   /// @brief Possible String encoding provided by the library
   enum class StringEncoding
   {
-    ASCII, UTF8, UTF32
-  };  
+    ASCII,
+    UTF8,
+    UTF32
+  };
 
   /// @brief Represents the result of an insert/insert_or_assign operation
-  enum class InsertionResult
-    : u8
+  enum class InsertionResult : u8
   {
     /// @brief Insertion successful
     SUCCESS,
@@ -219,6 +225,6 @@ namespace clt
     /// @brief Performed an assignment rather than an insertion
     ASSIGNED
   };
-}
+} // namespace clt
 
 #endif //!HG_COLT_COMMON

@@ -12,12 +12,11 @@ namespace clt::run
 
   public:
     VMStack(u64 reserve = 128) noexcept
-      : stack(reserve) {}
-
-    void push(QWORD_t value) noexcept
+        : stack(reserve)
     {
-      stack.push_back(value);
     }
+
+    void push(QWORD_t value) noexcept { stack.push_back(value); }
 
     Option<QWORD_t> pop() noexcept
     {
@@ -28,6 +27,6 @@ namespace clt::run
       return value;
     }
   };
-}
+} // namespace clt::run
 
 #endif // !HG_COLTI_STACK

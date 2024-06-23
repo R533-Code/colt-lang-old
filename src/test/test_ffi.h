@@ -1,4 +1,4 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   test_lexer.h
  * @brief  Tests for FFI.
  *
@@ -16,6 +16,6 @@ namespace clt::test
   /// @brief Tests the FFI used by the interpreter.
   /// @param error_count The error count to increment on errors
   void test_ffi(u32& error_count) noexcept;
-}
+} // namespace clt::test
 
 #endif // !HG_COLT_TEST_FFI

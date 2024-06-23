@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   run_tests.h
  * @brief  Contains 'run_tests()' function.
- * 
+ *
  * @author RPC
  * @date   February 2024
  *********************************************************************/
@@ -17,6 +17,6 @@ namespace clt
   /// @brief Run all unit tests on Debug configuration or prints a warning
   ///        on Release configuration.
   void run_tests() noexcept;
-}
+} // namespace clt
 
 #endif // !HG_COLT_RUN_TESTS

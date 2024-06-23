@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   colt_type.h
  * @brief  Contains the types as represented by the colt compiler.
- * 
+ *
  * @author RPC
  * @date   February 2024
  *********************************************************************/
@@ -17,17 +17,17 @@
 #include "colt_support_op.h"
 #include "union_macro.h"
 
-DECLARE_ENUM_WITH_TYPE(u8, clt::lng, TypeID,
-  TYPE_ERROR, TYPE_BUILTIN, TYPE_VOID,
-  TYPE_PTR, TYPE_MUT_PTR, TYPE_OPTR, TYPE_MUT_OPTR, TYPE_FN
-);
+DECLARE_ENUM_WITH_TYPE(
+    u8, clt::lng, TypeID, TYPE_ERROR, TYPE_BUILTIN, TYPE_VOID, TYPE_PTR,
+    TYPE_MUT_PTR, TYPE_OPTR, TYPE_MUT_OPTR, TYPE_FN);
 
 /// @brief Macro Type List (with same index as TypeID declaration!)
-#define COLTC_TYPE_LIST ErrorType, BuiltinType, VoidType, \
-   PtrType, MutPtrType, OpaquePtrType, MutOpaquePtrType, FnType
+#define COLTC_TYPE_LIST                                                 \
+  ErrorType, BuiltinType, VoidType, PtrType, MutPtrType, OpaquePtrType, \
+      MutOpaquePtrType, FnType
 
-DECLARE_ENUM_WITH_TYPE(u8, clt::lng, ArgSpecifier,
-  ARG_IN, ARG_OUT, ARG_INOUT, ARG_MOVE);
+DECLARE_ENUM_WITH_TYPE(
+    u8, clt::lng, ArgSpecifier, ARG_IN, ARG_OUT, ARG_INOUT, ARG_MOVE);
 
 namespace clt::lng
 {
@@ -48,7 +48,9 @@ namespace clt::lng
     /// @brief Constructs a TypeBase
     /// @param id The Type ID
     constexpr TypeBase(TypeID id) noexcept
-      : type_id(id) {}    
+        : type_id(id)
+    {
+    }
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(TypeBase);
 
     /// @brief Returns the ID of the type (used for down-casts)
@@ -57,31 +59,55 @@ namespace clt::lng
   };
 
   class TypeVariant;
-  
+
   template<typename T>
   /// @brief A ColtType provides its ID and is equality comparable
-  concept ColtType = std::equality_comparable<T> && std::convertible_to<T, TypeBase> &&
-    requires (const T a, UnaryOp unary, BinaryOp binary, const TypeVariant& var)
-  {
-    { a.classof() } -> std::same_as<TypeID>;
-    { a.hash() } -> std::same_as<size_t>;
-    { a.supports(unary) } -> std::same_as<UnarySupport>;
-    { a.supports(binary, var) } -> std::same_as<BinarySupport>;
-    { a.castable_to(var) } -> std::same_as<ConversionSupport>;
-  };
+  concept ColtType =
+      std::equality_comparable<T> && std::convertible_to<T, TypeBase>
+      && requires(
+          const T a, UnaryOp unary, BinaryOp binary, const TypeVariant& var) {
+           {
+             a.classof()
+           } -> std::same_as<TypeID>;
+           {
+             a.hash()
+           } -> std::same_as<size_t>;
+           {
+             a.supports(unary)
+           } -> std::same_as<UnarySupport>;
+           {
+             a.supports(binary, var)
+           } -> std::same_as<BinarySupport>;
+           {
+             a.castable_to(var)
+           } -> std::same_as<ConversionSupport>;
+         };
 
   // Create a type that is default constructible, movable and move assignable
-#define CREATE_TYPE(name, unary_support) class name final : public TypeBase \
-                          { \
-                          public: \
-                            constexpr name() noexcept : TypeBase(TypeToTypeID<name>()) {} \
-                            MAKE_DEFAULT_COPY_AND_MOVE_FOR(name) \
-                            constexpr bool operator==(const name&) const { return true; } \
-                            constexpr size_t hash() const noexcept { return hash_value(static_cast<u8>(classof())); } \
-                            UnarySupport supports(UnaryOp op) const noexcept { return unary_support(op); } \
-                            BinarySupport supports(BinaryOp op, const TypeVariant& var) const noexcept; \
-                            ConversionSupport castable_to(const TypeVariant& var) const noexcept; \
-                          }
+#define CREATE_TYPE(name, unary_support)                                        \
+  class name final : public TypeBase                                            \
+  {                                                                             \
+  public:                                                                       \
+    constexpr name() noexcept                                                   \
+        : TypeBase(TypeToTypeID<name>())                                        \
+    {                                                                           \
+    }                                                                           \
+    MAKE_DEFAULT_COPY_AND_MOVE_FOR(name)                                        \
+    constexpr bool operator==(const name&) const                                \
+    {                                                                           \
+      return true;                                                              \
+    }                                                                           \
+    constexpr size_t hash() const noexcept                                      \
+    {                                                                           \
+      return hash_value(static_cast<u8>(classof()));                            \
+    }                                                                           \
+    UnarySupport supports(UnaryOp op) const noexcept                            \
+    {                                                                           \
+      return unary_support(op);                                                 \
+    }                                                                           \
+    BinarySupport supports(BinaryOp op, const TypeVariant& var) const noexcept; \
+    ConversionSupport castable_to(const TypeVariant& var) const noexcept;       \
+  }
 
   // Create the empty types.
   // These types have the default constructor,
@@ -101,8 +127,7 @@ namespace clt::lng
 #undef CREATE_TYPE
 
   /// @brief Represents a built-in type (integer, floating point...)
-  class BuiltinType
-    final : public TypeBase
+  class BuiltinType final : public TypeBase
   {
     /// @brief The built-in type ID
     BuiltinID _type_id;
@@ -111,7 +136,10 @@ namespace clt::lng
     /// @brief Constructs a built-in type
     /// @param id The built-in type ID
     constexpr BuiltinType(BuiltinID id) noexcept
-      : TypeBase(TypeToTypeID<BuiltinType>()), _type_id(id) {}
+        : TypeBase(TypeToTypeID<BuiltinType>())
+        , _type_id(id)
+    {
+    }
     // No default constructor
     BuiltinType() = delete;
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(BuiltinType);
@@ -119,7 +147,10 @@ namespace clt::lng
     /// @brief Check if two built-in types represent the same types
     /// @param b The other built-in type
     /// @return True if both built-in ID are the same
-    constexpr bool operator==(const BuiltinType& b) const noexcept { return _type_id == b._type_id; }
+    constexpr bool operator==(const BuiltinType& b) const noexcept
+    {
+      return _type_id == b._type_id;
+    }
 
     /// @brief Returns the built-in type ID
     /// @return The built-in type ID
@@ -130,21 +161,23 @@ namespace clt::lng
     constexpr size_t hash() const noexcept
     {
       size_t seed = 0;
-      seed = hash_combine(seed, hash_value(static_cast<u8>(classof())));
-      seed = hash_combine(seed, hash_value(static_cast<u8>(type_id())));
+      seed        = hash_combine(seed, hash_value(static_cast<u8>(classof())));
+      seed        = hash_combine(seed, hash_value(static_cast<u8>(type_id())));
       return seed;
     }
 
     /// @brief Check if the current type supports 'op'
     /// @param op The operator whose support to check
     /// @return INVALID or BUILTIN
-    UnarySupport supports(UnaryOp op) const noexcept { return builtin_support(type_id(), op); }
+    UnarySupport supports(UnaryOp op) const noexcept
+    {
+      return builtin_support(type_id(), op);
+    }
     BinarySupport supports(BinaryOp op, const TypeVariant& var) const noexcept;
     ConversionSupport castable_to(const TypeVariant& var) const noexcept;
   };
 
-  class PointerType
-    : public TypeBase
+  class PointerType : public TypeBase
   {
     /// @brief The type index pointed to
     TypeToken type_id;
@@ -154,14 +187,20 @@ namespace clt::lng
     /// @param type The type of the pointer
     /// @param id The type pointer to
     constexpr PointerType(TypeID type, TypeToken id) noexcept
-      : TypeBase(type), type_id(id)
+        : TypeBase(type)
+        , type_id(id)
     {
-      assert_true("Expected pointer type!", type == TypeID::TYPE_MUT_PTR || type == TypeID::TYPE_PTR);
+      assert_true(
+          "Expected pointer type!",
+          type == TypeID::TYPE_MUT_PTR || type == TypeID::TYPE_PTR);
     }
 
     /// @brief Check if the pointer type is mutable or not
     /// @return True if classof() == TYPE_MUT_PTR
-    constexpr bool is_mut() const noexcept { return classof() == TypeID::TYPE_MUT_PTR; }
+    constexpr bool is_mut() const noexcept
+    {
+      return classof() == TypeID::TYPE_MUT_PTR;
+    }
 
     /// @brief Returns the type pointed to
     /// @return The type pointed to
@@ -173,12 +212,13 @@ namespace clt::lng
   };
 
   /// @brief Represents a pointer to constant memory of a type
-  class PtrType
-    final : public PointerType
+  class PtrType final : public PointerType
   {
-  public:    
+  public:
     constexpr PtrType(TypeToken id) noexcept
-      : PointerType(TypeToTypeID<PtrType>(), id) {}
+        : PointerType(TypeToTypeID<PtrType>(), id)
+    {
+    }
 
     // No default constructor
     PtrType() = delete;
@@ -187,28 +227,32 @@ namespace clt::lng
     /// @brief Check if two ptr types represent the same type
     /// @param b The other pointer type
     /// @return True if both types point to the same type
-    constexpr bool operator==(const PtrType& b) const noexcept { return pointing_to() == b.pointing_to(); }
+    constexpr bool operator==(const PtrType& b) const noexcept
+    {
+      return pointing_to() == b.pointing_to();
+    }
 
     /// @brief Hashes the current type
     /// @return The hash of the current type
     constexpr size_t hash() const noexcept
     {
       size_t seed = 0;
-      seed = hash_combine(seed, hash_value(static_cast<u8>(classof())));
-      seed = hash_combine(seed, hash_value(pointing_to().getID()));
+      seed        = hash_combine(seed, hash_value(static_cast<u8>(classof())));
+      seed        = hash_combine(seed, hash_value(pointing_to().getID()));
       return seed;
     }
   };
 
   /// @brief Represents a pointer to mutable memory of a type
-  class MutPtrType
-    final : public PointerType
+  class MutPtrType final : public PointerType
   {
   public:
     /// @brief Constructor
     /// @param id The type pointer to
     constexpr MutPtrType(TypeToken id) noexcept
-      : PointerType(TypeToTypeID<MutPtrType>(), id) {}
+        : PointerType(TypeToTypeID<MutPtrType>(), id)
+    {
+    }
     // No default constructor
     MutPtrType() = delete;
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(MutPtrType);
@@ -216,15 +260,18 @@ namespace clt::lng
     /// @brief Check if two ptr types represent the same type
     /// @param b The other pointer type
     /// @return True if both types point to the same type
-    constexpr bool operator==(const MutPtrType& b) const noexcept { return pointing_to() == b.pointing_to(); }
+    constexpr bool operator==(const MutPtrType& b) const noexcept
+    {
+      return pointing_to() == b.pointing_to();
+    }
 
     /// @brief Hashes the current type
     /// @return The hash of the current type
     constexpr size_t hash() const noexcept
     {
       size_t seed = 0;
-      seed = hash_combine(seed, hash_value(static_cast<u8>(classof())));
-      seed = hash_combine(seed, hash_value(pointing_to().getID()));
+      seed        = hash_combine(seed, hash_value(static_cast<u8>(classof())));
+      seed        = hash_combine(seed, hash_value(pointing_to().getID()));
       return seed;
     }
   };
@@ -261,22 +308,24 @@ namespace clt::lng
     constexpr bool operator==(const FnTypePayload& b) const noexcept
     {
       return is_variadic == b.is_variadic || return_type == b.return_type
-        || arguments_type == b.arguments_type.to_view();
+             || arguments_type == b.arguments_type.to_view();
     }
   };
 
   /// @brief Represents a function type
-  class FnType
-    final : public TypeBase
+  class FnType final : public TypeBase
   {
     /// @brief Index into the set of FnTypePayload
     u32 payload_index;
-  
+
   public:
     /// @brief Constructor
     /// @param payload_index The index into the set of FnTypePayload
     constexpr FnType(u32 payload_index) noexcept
-      : TypeBase(TypeToTypeID<FnType>()), payload_index(payload_index) {}
+        : TypeBase(TypeToTypeID<FnType>())
+        , payload_index(payload_index)
+    {
+    }
     // No default constructor
     FnType() = delete;
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(FnType);
@@ -284,15 +333,18 @@ namespace clt::lng
     /// @brief Check if two ptr types represent the same type
     /// @param b The other pointer type
     /// @return True if both types point to the same type
-    constexpr bool operator==(const FnType& b) const noexcept { return payload_index == b.payload_index; }
+    constexpr bool operator==(const FnType& b) const noexcept
+    {
+      return payload_index == b.payload_index;
+    }
 
     /// @brief Hashes the current type
     /// @return The hash of the current type
     constexpr size_t hash() const noexcept
     {
       size_t seed = 0;
-      seed = hash_combine(seed, hash_value(static_cast<u8>(classof())));
-      seed = hash_combine(seed, hash_value(payload_index));
+      seed        = hash_combine(seed, hash_value(static_cast<u8>(classof())));
+      seed        = hash_combine(seed, hash_value(payload_index));
       return seed;
     }
 
@@ -322,16 +374,22 @@ namespace clt::lng
   /// @brief Type List of all Colt Types
   using ColtTypeList = meta::type_list<COLTC_TYPE_LIST>;
 
-  static_assert(ColtTypeList::size == reflect<TypeID>::count(),
-    "ColtTypeList and TypeID count must be equal!");
+  static_assert(
+      ColtTypeList::size == reflect<TypeID>::count(),
+      "ColtTypeList and TypeID count must be equal!");
 
   /// @brief Macro helper to generate function table
-#define COLTC_EXPAND_VARIANT_ARG(template_fn, value) , &template_fn<clt::lng:: value>
+#define COLTC_EXPAND_VARIANT_ARG(template_fn, value) , &template_fn<clt::lng::value>
   /// @brief Macro helper to generate function table
 #define COLTC_TYPE_VARIANT_IMPL_GEN_TABLE(template_fn, first, ...) \
-  std::array{ &template_fn<clt::lng:: first> COLT_FOR_EACH_1ARG(COLTC_EXPAND_VARIANT_ARG, template_fn, __VA_ARGS__) }
+  std::array                                                       \
+  {                                                                \
+    &template_fn<clt::lng::first> COLT_FOR_EACH_1ARG(              \
+        COLTC_EXPAND_VARIANT_ARG, template_fn, __VA_ARGS__)        \
+  }
   /// @brief Macro used inside of TypeVariant, see OperatorEqualTable
-#define COLTC_TYPE_VARIANT_GEN_TABLE(template_fn, list) COLTC_TYPE_VARIANT_IMPL_GEN_TABLE(template_fn, list)
+#define COLTC_TYPE_VARIANT_GEN_TABLE(template_fn, list) \
+  COLTC_TYPE_VARIANT_IMPL_GEN_TABLE(template_fn, list)
 
   /// @brief Represents a type.
   /// Rather than using an inheritance, we make use of a variant.
@@ -349,13 +407,14 @@ namespace clt::lng
 
     // Generates a dispatch table for using table_operator_equal.
     // The generated dispatch table can be indexed by type_id().
-    
+
     template<typename T>
     /// @brief Compares two variants if using their operator=
     /// @param a The first variant
     /// @param b The second variant
     /// @return True if a.getUnionMember<T>() == b.getUnionMember<T>() evaluates to true
-    static constexpr bool table_equal(const TypeVariant& a, const TypeVariant& b) noexcept
+    static constexpr bool table_equal(
+        const TypeVariant& a, const TypeVariant& b) noexcept
     {
       return a.getUnionMember<T>() == b.getUnionMember<T>();
     }
@@ -368,7 +427,7 @@ namespace clt::lng
     {
       return a.getUnionMember<T>().hash();
     }
-    
+
     template<typename T>
     /// @brief Check for 'op' support
     /// @param a The variant to hash
@@ -378,38 +437,45 @@ namespace clt::lng
     {
       return a.getUnionMember<T>().supports(op);
     }
-    
+
     template<typename T>
-    static constexpr BinarySupport table_supports_b(const TypeVariant& a, BinaryOp op, const TypeVariant& var) noexcept
+    static constexpr BinarySupport table_supports_b(
+        const TypeVariant& a, BinaryOp op, const TypeVariant& var) noexcept
     {
       return a.getUnionMember<T>().supports(op, var);
     }
-    
+
     template<typename T>
-    static constexpr ConversionSupport table_castable(const TypeVariant& a, const TypeVariant& var) noexcept
+    static constexpr ConversionSupport table_castable(
+        const TypeVariant& a, const TypeVariant& var) noexcept
     {
       return a.getUnionMember<T>().castable_to(var);
     }
-    
-    static constexpr auto EqualTable      = COLTC_TYPE_VARIANT_GEN_TABLE(table_equal, COLTC_TYPE_LIST);
-    static constexpr auto HashTable       = COLTC_TYPE_VARIANT_GEN_TABLE(table_hash, COLTC_TYPE_LIST);
-    static constexpr auto USupportsTable  = COLTC_TYPE_VARIANT_GEN_TABLE(table_supports_u, COLTC_TYPE_LIST);
-    static constexpr auto BSupportsTable  = COLTC_TYPE_VARIANT_GEN_TABLE(table_supports_b, COLTC_TYPE_LIST);
-    static constexpr auto CastableTable   = COLTC_TYPE_VARIANT_GEN_TABLE(table_castable, COLTC_TYPE_LIST);
+
+    static constexpr auto EqualTable =
+        COLTC_TYPE_VARIANT_GEN_TABLE(table_equal, COLTC_TYPE_LIST);
+    static constexpr auto HashTable =
+        COLTC_TYPE_VARIANT_GEN_TABLE(table_hash, COLTC_TYPE_LIST);
+    static constexpr auto USupportsTable =
+        COLTC_TYPE_VARIANT_GEN_TABLE(table_supports_u, COLTC_TYPE_LIST);
+    static constexpr auto BSupportsTable =
+        COLTC_TYPE_VARIANT_GEN_TABLE(table_supports_b, COLTC_TYPE_LIST);
+    static constexpr auto CastableTable =
+        COLTC_TYPE_VARIANT_GEN_TABLE(table_castable, COLTC_TYPE_LIST);
 
   public:
     template<ColtType Type, typename... Args>
     /// @brief Constructor
     /// @param args... The arguments to forward to the constructor
-    constexpr TypeVariant(std::type_identity<Type>, Args&&... args)
-      noexcept(std::is_nothrow_constructible_v<Type, Args...>)
+    constexpr TypeVariant(std::type_identity<Type>, Args&&... args) noexcept(
+        std::is_nothrow_constructible_v<Type, Args...>)
     {
       construct<Type>(&getUnionMember<Type>(), std::forward<Args>(args)...);
     }
 
-    constexpr TypeVariant(TypeVariant&&) noexcept = default;
-    constexpr TypeVariant(const TypeVariant&) noexcept = default;
-    constexpr TypeVariant& operator=(TypeVariant&&) noexcept = default;
+    constexpr TypeVariant(TypeVariant&&) noexcept                 = default;
+    constexpr TypeVariant(const TypeVariant&) noexcept            = default;
+    constexpr TypeVariant& operator=(TypeVariant&&) noexcept      = default;
     constexpr TypeVariant& operator=(const TypeVariant&) noexcept = default;
 
     /// @brief Returns the type ID of the current type
@@ -445,18 +511,15 @@ namespace clt::lng
 
     /// @brief Check if the type is a pointer (optionally to mutable)
     /// @return True if is_ptr or is_mut_ptr
-    constexpr bool is_any_ptr() const noexcept
-    {
-      return is_mut_ptr() || is_ptr();
-    }
+    constexpr bool is_any_ptr() const noexcept { return is_mut_ptr() || is_ptr(); }
 
-    /// @brief Check if the type is an opaque (possibly mutable) pointer 
+    /// @brief Check if the type is an opaque (possibly mutable) pointer
     /// @return True if mut? opaque pointer
     constexpr bool is_any_opaque_ptr() const noexcept
     {
       return type_id() == TypeID::TYPE_OPTR || type_id() == TypeID::TYPE_MUT_OPTR;
     }
-    
+
     /// @brief Check if the current type is built-in and 'check' its ID.
     /// The check is performed with the built-in ID only if the current type
     /// is built-in.
@@ -464,16 +527,24 @@ namespace clt::lng
     /// @return True only if built-in and 'check' returns true
     constexpr bool is_builtin_and(BuilinTypeCheck_t check) const noexcept
     {
-      return type_id() == TypeID::TYPE_BUILTIN
-        && check(_BuiltinType.type_id());
+      return type_id() == TypeID::TYPE_BUILTIN && check(_BuiltinType.type_id());
     }
 
     /// @brief Check if the current type is void
-    constexpr bool is_void()    const noexcept { return type_id() == TypeID::TYPE_VOID; }
+    constexpr bool is_void() const noexcept
+    {
+      return type_id() == TypeID::TYPE_VOID;
+    }
     /// @brief Check if the current type is an error
-    constexpr bool is_error()   const noexcept { return type_id() == TypeID::TYPE_ERROR; }
+    constexpr bool is_error() const noexcept
+    {
+      return type_id() == TypeID::TYPE_ERROR;
+    }
     /// @brief Check if the current type is a built-in type
-    constexpr bool is_builtin() const noexcept { return type_id() == TypeID::TYPE_BUILTIN; }
+    constexpr bool is_builtin() const noexcept
+    {
+      return type_id() == TypeID::TYPE_BUILTIN;
+    }
 
     /// @brief Check if the current type is equal to another type
     /// @param type The other type to compare to
@@ -484,7 +555,7 @@ namespace clt::lng
         return false;
       return EqualTable[static_cast<u8>(this->type_id())](*this, type);
     }
-    
+
     /// @brief Check if the current type is same as another.
     /// The difference between is_same_as and operator== is that
     /// if any of the types compared are errors is_same_as returns true.
@@ -530,7 +601,8 @@ namespace clt::lng
     /// @return nullptr if type does not match else pointer to the type
     constexpr const T* as() const noexcept
     {
-      static_assert(type_group_requirements_t<T>::size != 0, "Group must be inherited from!");
+      static_assert(
+          type_group_requirements_t<T>::size != 0, "Group must be inherited from!");
       if (!is_classof_any_of(type_group_requirements_t<T>{}))
         return nullptr;
       return (const T*)&_buffer;
@@ -574,32 +646,31 @@ namespace clt::lng
   /// @brief Constructs a TypeVariant containing a type
   /// @param args... The argument to forward to the constructor
   /// @return TypeVariant containing the constructed type
-  constexpr TypeVariant make_coltc_type(Args&&... args) noexcept(std::is_nothrow_constructible_v<type, Args...>)
+  constexpr TypeVariant make_coltc_type(Args&&... args) noexcept(
+      std::is_nothrow_constructible_v<type, Args...>)
   {
     return TypeVariant(std::type_identity<type>{}, std::forward<Args>(args)...);
   }
-  
+
   /// @brief Table of all built-in types
-  static constexpr std::array ColtBuiltinTypeTable =
-  {
-    make_coltc_type<BuiltinType>(BuiltinID::BOOL),
-    make_coltc_type<BuiltinType>(BuiltinID::CHAR),
-    make_coltc_type<BuiltinType>(BuiltinID::U8),
-    make_coltc_type<BuiltinType>(BuiltinID::U16),
-    make_coltc_type<BuiltinType>(BuiltinID::U32),
-    make_coltc_type<BuiltinType>(BuiltinID::U64),
-    make_coltc_type<BuiltinType>(BuiltinID::I8),
-    make_coltc_type<BuiltinType>(BuiltinID::I16),
-    make_coltc_type<BuiltinType>(BuiltinID::I32),
-    make_coltc_type<BuiltinType>(BuiltinID::I64),
-    make_coltc_type<BuiltinType>(BuiltinID::F32),
-    make_coltc_type<BuiltinType>(BuiltinID::F64),
-    make_coltc_type<BuiltinType>(BuiltinID::BYTE),
-    make_coltc_type<BuiltinType>(BuiltinID::WORD),
-    make_coltc_type<BuiltinType>(BuiltinID::DWORD),
-    make_coltc_type<BuiltinType>(BuiltinID::QWORD)
-  };
-}
+  static constexpr std::array ColtBuiltinTypeTable = {
+      make_coltc_type<BuiltinType>(BuiltinID::BOOL),
+      make_coltc_type<BuiltinType>(BuiltinID::CHAR),
+      make_coltc_type<BuiltinType>(BuiltinID::U8),
+      make_coltc_type<BuiltinType>(BuiltinID::U16),
+      make_coltc_type<BuiltinType>(BuiltinID::U32),
+      make_coltc_type<BuiltinType>(BuiltinID::U64),
+      make_coltc_type<BuiltinType>(BuiltinID::I8),
+      make_coltc_type<BuiltinType>(BuiltinID::I16),
+      make_coltc_type<BuiltinType>(BuiltinID::I32),
+      make_coltc_type<BuiltinType>(BuiltinID::I64),
+      make_coltc_type<BuiltinType>(BuiltinID::F32),
+      make_coltc_type<BuiltinType>(BuiltinID::F64),
+      make_coltc_type<BuiltinType>(BuiltinID::BYTE),
+      make_coltc_type<BuiltinType>(BuiltinID::WORD),
+      make_coltc_type<BuiltinType>(BuiltinID::DWORD),
+      make_coltc_type<BuiltinType>(BuiltinID::QWORD)};
+} // namespace clt::lng
 
 namespace clt
 {
@@ -618,25 +689,25 @@ namespace clt
     constexpr size_t operator()(const lng::FnTypeArgument& var) noexcept
     {
       size_t seed = 0;
-      seed = hash_combine(seed, hash_value((u8)var.specifier));
-      seed = hash_combine(seed, hash_value(var.type.getID()));
+      seed        = hash_combine(seed, hash_value((u8)var.specifier));
+      seed        = hash_combine(seed, hash_value(var.type.getID()));
       return seed;
     }
   };
-  
+
   template<>
   struct hash<lng::FnTypePayload>
   {
     constexpr size_t operator()(const lng::FnTypePayload& var) noexcept
     {
       size_t seed = 0;
-      seed = hash_combine(seed, hash_value(var.is_variadic));
-      seed = hash_combine(seed, hash_value(var.return_type.getID()));
-      seed = hash_combine(seed, hash_value(var.arguments_type.to_view()));
+      seed        = hash_combine(seed, hash_value(var.is_variadic));
+      seed        = hash_combine(seed, hash_value(var.return_type.getID()));
+      seed        = hash_combine(seed, hash_value(var.arguments_type.to_view()));
       return seed;
     }
   };
-}
+} // namespace clt
 
 #undef COLTC_TYPE_VARIANT_GEN_TABLE
 #undef COLTC_TYPE_VARIANT_IMPL_GEN_TABLE

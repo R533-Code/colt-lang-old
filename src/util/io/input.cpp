@@ -4,7 +4,7 @@
   #include <termios.h>
   #include <unistd.h>
 #else
-#define NOMINMAX
+  #define NOMINMAX
   #include <Windows.h>
 #endif //COLT_WINDOWS
 
@@ -31,4 +31,4 @@ namespace clt::io
     tcsetattr(fileno(stdin), TCSANOW, &ts);
 #endif
   }
-}
+} // namespace clt::io

@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   block.h
  * @brief  Contains MemBlock, the result of an allocation.
- * 
+ *
  * @author RPC
  * @date   January 2024
  *********************************************************************/
@@ -30,13 +30,17 @@ namespace clt::mem
     /// @param blk The block
     /// @param sz The size of the block
     constexpr MemBlock(void* blk, u64 sz = 0ULL) noexcept
-      : blk_ptr(blk), blk_sz(sz * static_cast<u64>(blk != nullptr)) {}
+        : blk_ptr(blk)
+        , blk_sz(sz * static_cast<u64>(blk != nullptr))
+    {
+    }
 
     /// @brief Constructs a MemBlock from two pointers
     /// @param start The beginning of the block
     /// @param end The end of the block
     constexpr MemBlock(void* start, void* end) noexcept
-      : blk_ptr(start), blk_sz(static_cast<u8*>(end) - static_cast<u8*>(start))
+        : blk_ptr(start)
+        , blk_sz(static_cast<u8*>(end) - static_cast<u8*>(start))
     {
       assert_true("'start' must precede 'end'!", start < end);
       blk_sz *= static_cast<u64>(start != nullptr);
@@ -47,21 +51,21 @@ namespace clt::mem
     constexpr MemBlock(std::nullptr_t, u64 = 0) noexcept {}
 
     //Copy constructor
-    constexpr MemBlock(const MemBlock&)               noexcept = default;
+    constexpr MemBlock(const MemBlock&) noexcept = default;
     //Move constructor
-    constexpr MemBlock(MemBlock&&)                    noexcept = default;
+    constexpr MemBlock(MemBlock&&) noexcept = default;
     //Copy-assignment operator
-    constexpr MemBlock& operator=(const MemBlock&)    noexcept = default;
+    constexpr MemBlock& operator=(const MemBlock&) noexcept = default;
     //Move-assignment operator
-    constexpr MemBlock& operator=(MemBlock&&)         noexcept = default;
-    
+    constexpr MemBlock& operator=(MemBlock&&) noexcept = default;
+
     /// @brief Sets the block to nullptr
     /// @param  nullptr
     /// @return Self
     constexpr MemBlock& operator=(std::nullptr_t) noexcept
     {
       blk_ptr = nullptr;
-      blk_sz = 0;
+      blk_sz  = 0;
       return *this;
     }
 
@@ -72,7 +76,7 @@ namespace clt::mem
     /// @brief Returns the pointer to the memory block
     /// @return Pointer (can be nullptr)
     constexpr void* ptr() const noexcept { return blk_ptr; }
-    
+
     /// @brief Check if 'ptr() == nullptr'
     /// @return True if the MemBlock points to no block
     constexpr bool is_null() const noexcept { return blk_ptr == nullptr; }
@@ -89,15 +93,22 @@ namespace clt::mem
     /// @brief Check if a block is nullptr
     /// @param  nullptr
     /// @return True if nullptr
-    constexpr bool operator==(std::nullptr_t) const noexcept { return blk_ptr == nullptr; }
+    constexpr bool operator==(std::nullptr_t) const noexcept
+    {
+      return blk_ptr == nullptr;
+    }
 
     /// @brief Check if a block is not nullptr
     /// @param  nullptr
     /// @return True if not nullptr
-    constexpr bool operator!=(std::nullptr_t) const noexcept { return blk_ptr != nullptr; }
+    constexpr bool operator!=(std::nullptr_t) const noexcept
+    {
+      return blk_ptr != nullptr;
+    }
   };
 
-  template<typename T> requires (!std::is_array_v<T>)
+  template<typename T>
+    requires(!std::is_array_v<T>)
   class TypedBlock
   {
     /// @brief Pointer to the block
@@ -112,12 +123,18 @@ namespace clt::mem
     /// @param ptr The pointer to the memory block
     /// @param size The size of the memory block pointed by 'ptr'
     constexpr TypedBlock(void* ptr, size_t size) noexcept
-      : blk_ptr(static_cast<T*>(ptr)), blk_count((size* static_cast<u64>(ptr != nullptr)) / sizeof(T)) {}
+        : blk_ptr(static_cast<T*>(ptr))
+        , blk_count((size * static_cast<u64>(ptr != nullptr)) / sizeof(T))
+    {
+    }
 
     /// @brief Constructs a TypedBlock over a MemBlock
     /// @param blk The MemBlock
     constexpr TypedBlock(MemBlock blk) noexcept
-      : blk_ptr(static_cast<T*>(blk.ptr())), blk_count(blk.size().to_bytes() / sizeof(T)) {}
+        : blk_ptr(static_cast<T*>(blk.ptr()))
+        , blk_count(blk.size().to_bytes() / sizeof(T))
+    {
+    }
 
     /// @brief Check if the block is empty (get_ptr() == nullptr)
     /// @return True if the block is empty
@@ -157,11 +174,14 @@ namespace clt::mem
 
     /// @brief Convert a TypedBlock to a MemBlock
     /// @return MemBlock
-    constexpr operator MemBlock() const noexcept { return MemBlock{ static_cast<void*>(blk_ptr), blk_count * sizeof(T) }; }
+    constexpr operator MemBlock() const noexcept
+    {
+      return MemBlock{static_cast<void*>(blk_ptr), blk_count * sizeof(T)};
+    }
   };
 
   /// @brief Represents an empty block
-  inline constexpr MemBlock nullblk = MemBlock{ nullptr, 0 };  
+  inline constexpr MemBlock nullblk = MemBlock{nullptr, 0};
 
   template<u64 ALIGN>
   /// @brief Rounds 'sz' to an alignment if it is not already aligned
@@ -179,7 +199,7 @@ namespace clt::mem
   namespace details
   {
     template<typename Old, typename New>
-    /// @brief Reallocates using new allocator, copying the memory, 
+    /// @brief Reallocates using new allocator, copying the memory,
     /// and deallocating the block on success.
     /// @tparam New The type of the new allocator
     /// @tparam Old The type of the old allocator
@@ -188,19 +208,24 @@ namespace clt::mem
     /// @param blk The block to "reallocate"
     /// @param n The new size
     /// @return True on success
-    constexpr bool realloc_with_copy(Old& old_a, New& new_a, MemBlock& blk, ByteSize<Byte> n) noexcept
+    constexpr bool realloc_with_copy(
+        Old& old_a, New& new_a, MemBlock& blk, ByteSize<Byte> n) noexcept
     {
       MemBlock new_blk = new_a.alloc(n);
-      if (new_blk.is_null()) {
+      if (new_blk.is_null())
+      {
         return false;
       }
-      std::memcpy(new_blk.ptr(), blk.ptr(), blk.size() < new_blk.size() ? blk.size().to_bytes() : new_blk.size().to_bytes());
+      std::memcpy(
+          new_blk.ptr(), blk.ptr(),
+          blk.size() < new_blk.size() ? blk.size().to_bytes()
+                                      : new_blk.size().to_bytes());
       old_a.dealloc(blk);
       blk = new_blk;
       return true;
     }
-  }
-}
+  } // namespace details
+} // namespace clt::mem
 
 namespace clt
 {
@@ -214,8 +239,8 @@ namespace clt
     constexpr size_t operator()(const clt::mem::MemBlock& pair) const noexcept
     {
       size_t seed = 0xCBF29CE484222325;
-      seed = hash_combine(seed, hash_value(pair.ptr()));
-      seed = hash_combine(seed, hash_value(pair.size().to_bytes()));
+      seed        = hash_combine(seed, hash_value(pair.ptr()));
+      seed        = hash_combine(seed, hash_value(pair.size().to_bytes()));
       return seed;
     }
   };
@@ -230,16 +255,15 @@ namespace clt
     constexpr size_t operator()(const clt::mem::TypedBlock<T>& pair) const noexcept
     {
       size_t seed = 0xCBF29CE484222325;
-      seed = hash_combine(seed, hash_value(pair.ptr()));
-      seed = hash_combine(seed, hash_value(pair.size().to_bytes()));
+      seed        = hash_combine(seed, hash_value(pair.ptr()));
+      seed        = hash_combine(seed, hash_value(pair.size().to_bytes()));
       return seed;
     }
   };
-}
+} // namespace clt
 
 template<>
-struct fmt::formatter<clt::mem::MemBlock>
-  : public clt::meta::DefaultParserFMT
+struct fmt::formatter<clt::mem::MemBlock> : public clt::meta::DefaultParserFMT
 {
   template<typename FormatContext>
   auto format(const clt::mem::MemBlock& vec, FormatContext& ctx)
@@ -249,13 +273,13 @@ struct fmt::formatter<clt::mem::MemBlock>
 };
 
 template<typename T>
-struct fmt::formatter<clt::mem::TypedBlock<T>>
-  : public clt::meta::DefaultParserFMT
+struct fmt::formatter<clt::mem::TypedBlock<T>> : public clt::meta::DefaultParserFMT
 {
   template<typename FormatContext>
   auto format(const clt::mem::TypedBlock<T>& vec, FormatContext& ctx)
   {
-    return fmt::format_to(ctx.out(), "{{ {}, {} }}", static_cast<void*>(vec.ptr()), vec.size());
+    return fmt::format_to(
+        ctx.out(), "{{ {}, {} }}", static_cast<void*>(vec.ptr()), vec.size());
   }
 };
 

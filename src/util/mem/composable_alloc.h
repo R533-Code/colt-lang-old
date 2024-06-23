@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   composable_alloc.h
  * @brief  Contains composable allocators.
- * 
+ *
  * @author RPC
  * @date   January 2024
  *********************************************************************/
@@ -19,10 +19,13 @@ namespace clt::mem
   template<meta::OwningAllocator Primary, meta::Allocator Fallback>
   /// @brief Allocator that tries to allocate through the Primary allocator and on failure uses the Fallback allocator
   struct FallbackAllocator
-    : private Primary, private Fallback
+      : private Primary
+      , private Fallback
   {
     /// @brief Alignment of returned MemBlock (min alignment of both allocator)
-    static constexpr u64 alignment = (Primary::alignment < Fallback::alignment) ? Primary::alignment : Fallback::alignment;
+    static constexpr u64 alignment = (Primary::alignment < Fallback::alignment)
+                                         ? Primary::alignment
+                                         : Fallback::alignment;
 
     /// @brief Allocates a MemBlock
     /// @param size The size of the allocation
@@ -59,7 +62,8 @@ namespace clt::mem
     /// @param n The new size of the block
     /// @return True if reallocation was successful
     constexpr bool realloc(MemBlock& blk, ByteSize<Byte> n) noexcept
-      requires meta::ReallocatableAllocator<Primary> && meta::ReallocatableAllocator<Fallback>
+      requires meta::ReallocatableAllocator<Primary>
+               && meta::ReallocatableAllocator<Fallback>
     {
       if (Primary::owns(blk))
         return Primary::realloc(blk);
@@ -72,7 +76,8 @@ namespace clt::mem
     /// @param delta The new size
     /// @return True if expansion was done successfully
     constexpr bool expand(MemBlock& blk, ByteSize<Byte> delta) noexcept
-      requires meta::ExpandingAllocator<Primary> && meta::ExpandingAllocator<Fallback>
+      requires meta::ExpandingAllocator<Primary>
+               && meta::ExpandingAllocator<Fallback>
     {
       if (Primary::owns(blk))
         return Primary::expand(blk);
@@ -84,11 +89,14 @@ namespace clt::mem
   template<ByteSize<Byte> SIZE, meta::Allocator Primary, meta::Allocator Secondary>
   /// @brief For all allocation sizes <= size, allocates through Primary, else through Secondary
   struct Segregator
-    : private Primary, private Secondary
+      : private Primary
+      , private Secondary
   {
     /// @brief Alignment of returned MemBlock (min alignment of both allocator)
-    static constexpr u64 alignment = (Primary::alignment < Secondary::alignment) ? Primary::alignment : Secondary::alignment;
-    
+    static constexpr u64 alignment = (Primary::alignment < Secondary::alignment)
+                                         ? Primary::alignment
+                                         : Secondary::alignment;
+
     /// @brief Allocates a MemBlock
     /// @param size The size of the allocation
     /// @return Allocated MemBlock or empty MemBlock
@@ -125,7 +133,8 @@ namespace clt::mem
     /// @param n The new size of the block
     /// @return True if reallocation was successful
     constexpr bool realloc(MemBlock& blk, ByteSize<Byte> n) noexcept
-      requires meta::ReallocatableAllocator<Primary> && meta::ReallocatableAllocator<Secondary>
+      requires meta::ReallocatableAllocator<Primary>
+               && meta::ReallocatableAllocator<Secondary>
     {
       if (blk.size() == n)
         return true;
@@ -144,11 +153,13 @@ namespace clt::mem
       {
         if (n <= SIZE)
           return Primary::realloc(blk, n);
-        return details::realloc_with_copy(*this, static_cast<Secondary&>(*this), blk, n);
+        return details::realloc_with_copy(
+            *this, static_cast<Secondary&>(*this), blk, n);
       }
 
       if (n <= SIZE)
-        return details::realloc_with_copy(*this, static_cast<Primary&>(*this), blk, n);
+        return details::realloc_with_copy(
+            *this, static_cast<Primary&>(*this), blk, n);
       return Secondary::realloc(blk, n);
     }
 
@@ -157,13 +168,15 @@ namespace clt::mem
     /// @param delta The new size
     /// @return True if expansion was done successfully
     constexpr bool expand(MemBlock& blk, ByteSize<Byte> delta) noexcept
-      requires meta::ExpandingAllocator<Primary> && meta::ExpandingAllocator<Secondary>
+      requires meta::ExpandingAllocator<Primary>
+               && meta::ExpandingAllocator<Secondary>
     {
       //If expansion will make block size go over SIZE,
       //then expansion is not possible.
-      if (blk.size() <= SIZE && blk.size().to_bytes() + delta.to_bytes() > SIZE.to_bytes())
+      if (blk.size() <= SIZE
+          && blk.size().to_bytes() + delta.to_bytes() > SIZE.to_bytes())
         return false;
-      
+
       if (blk.size() <= SIZE)
         return Primary::expand(blk, delta);
       return Secondary::expand(blk, delta);
@@ -171,24 +184,25 @@ namespace clt::mem
   };
 
   template<meta::Allocator allocator, typename Prefix, typename Suffix>
-    requires (std::is_trivially_copyable_v<Prefix> || std::is_void_v<Prefix>) && (std::is_trivially_copyable_v<Suffix> || std::is_void_v<Suffix>)
-  && (!(std::is_void_v<Prefix> && std::is_void_v<Prefix>))
+    requires(std::is_trivially_copyable_v<Prefix> || std::is_void_v<Prefix>)
+            && (std::is_trivially_copyable_v<Suffix> || std::is_void_v<Suffix>)
+            && (!(std::is_void_v<Prefix> && std::is_void_v<Prefix>))
   /// @brief Allocator that allocates memory before and after the allocation for a Prefix and Suffix object.
   /// @tparam Prefix The type of the prefix (or void if no prefix)
   /// @tparam Suffix The type of the suffix (or void if no suffix)
-  struct AffixAllocator
-    : private allocator
+  struct AffixAllocator : private allocator
   {
     /// @brief Alignment of returned MemBlock
     static constexpr u64 alignment = allocator::alignment;
-    
-    /// @brief Aligned size of prefix in bytes
-    static constexpr u64 prefix_size = round_to_alignment<alignment>(meta::sizeof_or_zero_v<Prefix>);
-    /// @brief Aligned size of suffix in bytes
-    static constexpr u64 suffix_size = round_to_alignment<alignment>(meta::sizeof_or_zero_v<Suffix>);
-  
-  private:
 
+    /// @brief Aligned size of prefix in bytes
+    static constexpr u64 prefix_size =
+        round_to_alignment<alignment>(meta::sizeof_or_zero_v<Prefix>);
+    /// @brief Aligned size of suffix in bytes
+    static constexpr u64 suffix_size =
+        round_to_alignment<alignment>(meta::sizeof_or_zero_v<Suffix>);
+
+  private:
     /// @brief This helper avoids compile time errors due to 'void&' being invalid
     using helper_suffix_t = std::conditional_t<std::is_void_v<Suffix>, u8, Suffix>;
     /// @brief This helper avoids compile time errors due to 'void&' being invalid
@@ -199,8 +213,9 @@ namespace clt::mem
     /// @return The converted block
     static constexpr MemBlock from_ret_to_prefix(MemBlock blk) noexcept
     {
-      return MemBlock{ static_cast<u8*>(blk.ptr()) - prefix_size,
-        blk.size().to_bytes() + prefix_size + suffix_size };
+      return MemBlock{
+          static_cast<u8*>(blk.ptr()) - prefix_size,
+          blk.size().to_bytes() + prefix_size + suffix_size};
     }
 
     /// @brief Converts a block from its prefix form to the returned form
@@ -208,12 +223,12 @@ namespace clt::mem
     /// @return The converted block
     static constexpr MemBlock from_prefix_to_ret(MemBlock blk) noexcept
     {
-      return MemBlock{ static_cast<u8*>(blk.ptr()) + prefix_size,
-        blk.size().to_bytes() - prefix_size - suffix_size };
+      return MemBlock{
+          static_cast<u8*>(blk.ptr()) + prefix_size,
+          blk.size().to_bytes() - prefix_size - suffix_size};
     }
 
   public:
-
     /// @brief Allocates a MemBlock
     /// @param size The size of the allocation
     /// @return Allocated MemBlock or empty MemBlock
@@ -241,46 +256,58 @@ namespace clt::mem
       return blk.is_null() || allocator::owns(from_ret_to_prefix(blk));
     }
 
-    template<typename... Args> requires (!std::same_as<void, Prefix>)
+    template<typename... Args>
+      requires(!std::same_as<void, Prefix>)
     /// @brief Constructs the prefix
     /// @tparam ...Args The types of the arguments to forward
     /// @param blk The block whose prefix to modify
     /// @param ...args The parameter pack to forward to the constructor
     /// @return Reference to the constructed prefix
-    constexpr helper_prefix_t& create_prefix(MemBlock blk, Args&&... args) const noexcept(std::is_nothrow_constructible_v<Prefix, Args...>)
+    constexpr helper_prefix_t& create_prefix(MemBlock blk, Args&&... args) const
+        noexcept(std::is_nothrow_constructible_v<Prefix, Args...>)
     {
       assert_true("Expected non empty block!", !blk.is_null());
-      return *static_cast<Prefix*>(new(static_cast<u8*>(blk.ptr()) - prefix_size) Prefix(std::forward<Args>(args)...));
+      return *static_cast<Prefix*>(new (static_cast<u8*>(blk.ptr()) - prefix_size)
+                                       Prefix(std::forward<Args>(args)...));
     }
 
-    template<typename... Args> requires (!std::same_as<void, Suffix>)
+    template<typename... Args>
+      requires(!std::same_as<void, Suffix>)
     /// @brief Constructs the suffix
     /// @tparam ...Args The types of the arguments to forward
     /// @param blk The block whose suffix to modify
     /// @param ...args The parameter pack to forward to the constructor
     /// @return Reference to the constructed suffix
-    constexpr helper_suffix_t& create_suffix(MemBlock blk, Args&&... args) const noexcept(std::is_nothrow_constructible_v<Suffix, Args...>)
+    constexpr helper_suffix_t& create_suffix(MemBlock blk, Args&&... args) const
+        noexcept(std::is_nothrow_constructible_v<Suffix, Args...>)
     {
       assert_true("Expected non empty block!", !blk.is_null());
-      return *static_cast<Suffix*>(new(static_cast<u8*>(blk.ptr()) + blk.size().to_bytes()) Suffix(std::forward<Args>(args)...));
+      return *static_cast<Suffix*>(
+          new (static_cast<u8*>(blk.ptr()) + blk.size().to_bytes())
+              Suffix(std::forward<Args>(args)...));
     }
 
     /// @brief Destroy the prefix. Be sure to have constructed the prefix!
     /// @param blk The block whose prefix to destroy
-    constexpr void destroy_prefix(MemBlock blk) const noexcept(std::is_nothrow_destructible_v<Prefix>)
+    constexpr void destroy_prefix(MemBlock blk) const
+        noexcept(std::is_nothrow_destructible_v<Prefix>)
     {
       assert_true("Expected non empty block!", !blk.is_null());
-      static_assert(!std::same_as<void, Prefix>, "AffixAllocator does not have a prefix!");
+      static_assert(
+          !std::same_as<void, Prefix>, "AffixAllocator does not have a prefix!");
       static_cast<Prefix*>(static_cast<u8*>(blk.ptr()) - prefix_size)->~Prefix();
     }
 
     /// @brief Destroy the suffix. Be sure to have constructed the suffix!
     /// @param blk The block whose suffix to destroy
-    constexpr void destroy_suffix(MemBlock blk) const noexcept(std::is_nothrow_destructible_v<Suffix>)
+    constexpr void destroy_suffix(MemBlock blk) const
+        noexcept(std::is_nothrow_destructible_v<Suffix>)
     {
       assert_true("Expected non empty block!", !blk.is_null());
-      static_assert(!std::same_as<void, Suffix>, "AffixAllocator does not have a suffix!");
-      static_cast<Suffix*>(static_cast<u8*>(blk.ptr()) + blk.size().to_bytes())->~Suffix();
+      static_assert(
+          !std::same_as<void, Suffix>, "AffixAllocator does not have a suffix!");
+      static_cast<Suffix*>(static_cast<u8*>(blk.ptr()) + blk.size().to_bytes())
+          ->~Suffix();
     }
 
     /// @brief Returns the prefix. Be sure to have constructed the prefix!
@@ -289,8 +316,10 @@ namespace clt::mem
     constexpr helper_prefix_t& get_prefix(MemBlock blk) const noexcept
     {
       assert_true("Expected non empty block!", !blk.is_null());
-      static_assert(!std::same_as<void, Prefix>, "AffixAllocator does not have a prefix!");
-      return *static_cast<Prefix*>(static_cast<void*>(static_cast<u8*>(blk.ptr()) - prefix_size));
+      static_assert(
+          !std::same_as<void, Prefix>, "AffixAllocator does not have a prefix!");
+      return *static_cast<Prefix*>(
+          static_cast<void*>(static_cast<u8*>(blk.ptr()) - prefix_size));
     }
 
     /// @brief Returns the suffix. Be sure to have constructed the suffix!
@@ -299,8 +328,10 @@ namespace clt::mem
     constexpr helper_suffix_t& get_suffix(MemBlock blk) const noexcept
     {
       assert_true("Expected non empty block!", !blk.is_null());
-      static_assert(!std::same_as<void, Suffix>, "AffixAllocator does not have a suffix!");
-      return *static_cast<Suffix*>(static_cast<void*>(static_cast<u8*>(blk.ptr()) + blk.size().to_bytes()));
+      static_assert(
+          !std::same_as<void, Suffix>, "AffixAllocator does not have a suffix!");
+      return *static_cast<Suffix*>(
+          static_cast<void*>(static_cast<u8*>(blk.ptr()) + blk.size().to_bytes()));
     }
 
     /// @brief Reallocates a MemBlock
@@ -325,25 +356,23 @@ namespace clt::mem
       if constexpr (!std::is_void_v<Suffix>) //if suffix
       {
         Suffix suffix = get_suffix(blk); //copy suffix
-        if (MemBlock cpy = from_ret_to_prefix(blk);
-          allocator::realloc(cpy, n))
+        if (MemBlock cpy = from_ret_to_prefix(blk); allocator::realloc(cpy, n))
         {
-          blk = from_prefix_to_ret(cpy);
+          blk             = from_prefix_to_ret(cpy);
           get_suffix(blk) = suffix;
           return true;
         }
       }
       else
       {
-        if (MemBlock cpy = from_ret_to_prefix(blk);
-          allocator::realloc(cpy, n))
+        if (MemBlock cpy = from_ret_to_prefix(blk); allocator::realloc(cpy, n))
         {
           blk = from_prefix_to_ret(cpy);
           return true;
         }
         return false;
       }
-      
+
       return false;
     }
 
@@ -366,18 +395,16 @@ namespace clt::mem
       {
         Suffix suffix = get_suffix(blk); //copy suffix
 
-        if (MemBlock cpy = from_ret_to_prefix(blk);
-          allocator::expand(cpy, delta))
+        if (MemBlock cpy = from_ret_to_prefix(blk); allocator::expand(cpy, delta))
         {
-          blk = from_prefix_to_ret(cpy);
+          blk             = from_prefix_to_ret(cpy);
           get_suffix(blk) = suffix;
           return true;
         }
       }
       else
       {
-        if (MemBlock cpy = from_ret_to_prefix(blk);
-          allocator::expand(cpy, delta))
+        if (MemBlock cpy = from_ret_to_prefix(blk); allocator::expand(cpy, delta))
         {
           blk = from_prefix_to_ret(cpy);
           return true;
@@ -391,10 +418,14 @@ namespace clt::mem
   template<meta::Allocator allocator, ByteSize<Byte> BUFFER_SIZE, u8 PATTERN = 0xFD>
   /// @brief Memory corruption detector, detects if memory around a block was corrupted
   class MemCorruptDetector
-    : private AffixAllocator<allocator, std::array<u8, BUFFER_SIZE.to_bytes()>, std::array<u8, BUFFER_SIZE.to_bytes()>>
+      : private AffixAllocator<
+            allocator, std::array<u8, BUFFER_SIZE.to_bytes()>,
+            std::array<u8, BUFFER_SIZE.to_bytes()>>
   {
     /// @brief Inherited allocator
-    using Allocator = AffixAllocator<allocator, std::array<u8, BUFFER_SIZE.to_bytes()>, std::array<u8, BUFFER_SIZE.to_bytes()>>;
+    using Allocator = AffixAllocator<
+        allocator, std::array<u8, BUFFER_SIZE.to_bytes()>,
+        std::array<u8, BUFFER_SIZE.to_bytes()>>;
     /// @brief Type of suffix and prefix
     using Array = std::array<u8, BUFFER_SIZE.to_bytes()>;
 
@@ -420,7 +451,9 @@ namespace clt::mem
     /// @return True if corrupted
     constexpr bool is_prefix_corrupted(MemBlock blk) const noexcept
     {
-      return std::memcmp(&Allocator::get_prefix(blk), pattern.data(), BUFFER_SIZE.to_bytes()) != 0;
+      return std::memcmp(
+                 &Allocator::get_prefix(blk), pattern.data(), BUFFER_SIZE.to_bytes())
+             != 0;
     }
 
     /// @brief Check if suffix of block is corrupted
@@ -428,7 +461,9 @@ namespace clt::mem
     /// @return True if corrupted
     constexpr bool is_suffix_corrupted(MemBlock blk) const noexcept
     {
-      return std::memcmp(&Allocator::get_suffix(blk), pattern.data(), BUFFER_SIZE.to_bytes()) != 0;
+      return std::memcmp(
+                 &Allocator::get_suffix(blk), pattern.data(), BUFFER_SIZE.to_bytes())
+             != 0;
     }
 
     /// @brief Allocates a MemBlock
@@ -449,7 +484,9 @@ namespace clt::mem
     /// @param to_free The block whose resources to free
     constexpr void dealloc(MemBlock to_free) noexcept
     {
-      assert_true("Memory corruption detected!", !is_prefix_corrupted(to_free), !is_suffix_corrupted(to_free));
+      assert_true(
+          "Memory corruption detected!", !is_prefix_corrupted(to_free),
+          !is_suffix_corrupted(to_free));
       Allocator::dealloc(to_free);
     }
 
@@ -484,11 +521,10 @@ namespace clt::mem
   };
 
   template<meta::Allocator allocator, size_t REGISTER_SIZE = 32>
-  class AbortOnNULLAllocator
-    : private allocator
+  class AbortOnNULLAllocator : private allocator
   {
     /// @brief The function pointer type that can be registered
-    using register_fn_t = void(*)(void) noexcept;
+    using register_fn_t = void (*)(void) noexcept;
 
     /// @brief The array of registered function pointer
     register_fn_t reg_array[REGISTER_SIZE] = {};
@@ -503,9 +539,10 @@ namespace clt::mem
     /// @brief Register function to call on exit
     /// @param func The function to register
     /// @return True if registering was successful, false if there is no more capacity for registering
-    constexpr bool register_on_null(void(*func)() noexcept) noexcept
+    constexpr bool register_on_null(void (*func)() noexcept) noexcept
     {
-      if (auto index = register_count.fetch_add(1, std::memory_order_acq_rel); index < REGISTER_SIZE)
+      if (auto index = register_count.fetch_add(1, std::memory_order_acq_rel);
+          index < REGISTER_SIZE)
       {
         reg_array[index] = func;
         return true;
@@ -524,10 +561,9 @@ namespace clt::mem
       // As 'register_on_null' will keep incrementing 'register_count'
       // at each call, 'register_count' might be greater than the max number
       // of registered functions
-      const size_t registered_count = clt::min(
-        register_count.load(std::memory_order_acquire), REGISTER_SIZE
-      );
-      
+      const size_t registered_count =
+          clt::min(register_count.load(std::memory_order_acquire), REGISTER_SIZE);
+
       //Call registered functions
       for (size_t i = 0; i < registered_count; i++)
         reg_array[i]();
@@ -578,10 +614,17 @@ namespace clt::mem
   /// to detect corruption and report it.
   /// If allocator is 'Mallocator', the size is not written as the OS will have saved it itself.
   class SaveSizeAllocator
-    : private std::conditional_t<std::is_same_v<allocator, Mallocator>, Mallocator, AffixAllocator<allocator, size_type, meta::for_debug_for_release_t<size_type, void>>>
+      : private std::conditional_t<
+            std::is_same_v<allocator, Mallocator>, Mallocator,
+            AffixAllocator<
+                allocator, size_type,
+                meta::for_debug_for_release_t<size_type, void>>>
   {
-    using Allocator = std::conditional_t<std::is_same_v<allocator, Mallocator>, Mallocator, AffixAllocator<allocator, size_type, meta::for_debug_for_release_t<size_type, void>>>;
-    
+    using Allocator = std::conditional_t<
+        std::is_same_v<allocator, Mallocator>, Mallocator,
+        AffixAllocator<
+            allocator, size_type, meta::for_debug_for_release_t<size_type, void>>>;
+
     static constexpr bool is_mallocator = std::is_same_v<allocator, Mallocator>;
 
     /// @brief Check if (on Debug configuration) both sizes before and after are the same.
@@ -604,7 +647,7 @@ namespace clt::mem
     {
       if constexpr (is_mallocator)
         return Allocator::alloc(size).ptr();
-      
+
       if (auto blk = Allocator::alloc(size))
       {
         Allocator::create_prefix(blk, size.to_bytes());
@@ -621,11 +664,11 @@ namespace clt::mem
     {
       if constexpr (is_mallocator)
         Allocator::dealloc(to_free);
-      
+
       if constexpr (is_debug_build())
         assert_true("Size information was corrupted!", !is_corrupted());
       if (to_free != nullptr)
-        Allocator::dealloc({ to_free, Allocator::get_prefix(MemBlock{ to_free }) });
+        Allocator::dealloc({to_free, Allocator::get_prefix(MemBlock{to_free})});
     }
 
     /// @brief Check if the current allocator owns 'blk'
@@ -660,13 +703,13 @@ namespace clt::mem
 
   template<meta::Allocator allocator>
   /// @brief Thread safe allocator
-  class ThreadSafeAllocator
-    : private allocator
+  class ThreadSafeAllocator : private allocator
   {
     static constexpr bool is_mallocator = std::is_same_v<allocator, Mallocator>;
 
-    [[no_unique_address]]
-    mutable std::conditional_t<std::is_same_v<allocator, Mallocator>, meta::Empty, std::mutex> mtx{};
+    [[no_unique_address]] mutable std::conditional_t<
+        std::is_same_v<allocator, Mallocator>, meta::Empty, std::mutex>
+        mtx{};
 
   public:
     /// @brief Alignment of returned MemBlock
@@ -727,6 +770,6 @@ namespace clt::mem
       return allocator::expand(blk, delta);
     }
   };
-}
+} // namespace clt::mem
 
 #endif //!HG_COLT_COMPOSABLE_ALLOC

@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   composable_reporter.h
  * @brief  Contains the building blocks of ErrorReporter.
- * 
+ *
  * @author RPC
  * @date   January 2024
  *********************************************************************/
@@ -13,25 +13,29 @@
 namespace clt::lng
 {
   /// @brief Filter function for FilterReporter (true to keep, false to remove)
-  using filter_reporter_t = bool(*)(StringView, const Option<SourceInfo>&, const Option<ReportNumber>&) noexcept;
+  using filter_reporter_t = bool (*)(
+      StringView, const Option<SourceInfo>&, const Option<ReportNumber>&) noexcept;
 
   /// @brief Consumes all reports
   struct SinkReporter
   {
     /// @brief Does nothing
-    void message(StringView, const Option<SourceInfo>&, const Option<ReportNumber>&) const noexcept
+    void message(StringView, const Option<SourceInfo>&, const Option<ReportNumber>&)
+        const noexcept
     {
       // Does nothing
     }
 
     /// @brief Does nothing
-    void warn(StringView, const Option<SourceInfo>&, const Option<ReportNumber>&) const noexcept
+    void warn(StringView, const Option<SourceInfo>&, const Option<ReportNumber>&)
+        const noexcept
     {
       // Does nothing
     }
 
     /// @brief Does nothing
-    void error(StringView, const Option<SourceInfo>&, const Option<ReportNumber>&) const noexcept
+    void error(StringView, const Option<SourceInfo>&, const Option<ReportNumber>&)
+        const noexcept
     {
       // Does nothing
     }
@@ -44,7 +48,9 @@ namespace clt::lng
     /// @param str The message
     /// @param info The source information if it exist
     /// @param nb The report information if it exist
-    void message(StringView str, const Option<SourceInfo>& info, const Option<ReportNumber>& nb) const noexcept
+    void message(
+        StringView str, const Option<SourceInfo>& info,
+        const Option<ReportNumber>& nb) const noexcept
     {
       generate_message(str, info, nb);
     }
@@ -53,7 +59,9 @@ namespace clt::lng
     /// @param str The warning
     /// @param info The source information if it exist
     /// @param nb The report information if it exist
-    void warn(StringView str, const Option<SourceInfo>& info, const Option<ReportNumber>& nb) const noexcept
+    void warn(
+        StringView str, const Option<SourceInfo>& info,
+        const Option<ReportNumber>& nb) const noexcept
     {
       generate_warn(str, info, nb);
     }
@@ -62,7 +70,9 @@ namespace clt::lng
     /// @param str The error
     /// @param info The source information if it exist
     /// @param nb The report information if it exist
-    void error(StringView str, const Option<SourceInfo>& info, const Option<ReportNumber>& nb) const noexcept
+    void error(
+        StringView str, const Option<SourceInfo>& info,
+        const Option<ReportNumber>& nb) const noexcept
     {
       generate_error(str, info, nb);
     }
@@ -71,8 +81,7 @@ namespace clt::lng
   template<Reporter Rep>
   /// @brief Filters reports generated
   /// @tparam Rep The reporter to forward reports to if not filtered
-  class FilterReporter
-    : public Rep
+  class FilterReporter : public Rep
   {
     /// @brief Message filter or nullptr
     filter_reporter_t message_filter;
@@ -82,8 +91,8 @@ namespace clt::lng
     filter_reporter_t error_filter;
 
   public:
-    FilterReporter() = delete;
-    constexpr FilterReporter(FilterReporter&&)      noexcept = default;
+    FilterReporter()                                         = delete;
+    constexpr FilterReporter(FilterReporter&&) noexcept      = default;
     constexpr FilterReporter(const FilterReporter&) noexcept = default;
 
     template<typename... Args>
@@ -92,15 +101,24 @@ namespace clt::lng
     /// @param wrn The warning filter (or nullptr)
     /// @param msg The message filter (or nullptr)
     /// @param args Arguments to forward to the constructor of 'Rep'
-    constexpr FilterReporter(filter_reporter_t err, filter_reporter_t wrn, filter_reporter_t msg, Args&&... args) noexcept(std::is_nothrow_constructible_v<Rep, Args...>)
-      : Rep(std::forward<Args>(args)...), message_filter(msg), warn_filter(wrn), error_filter(err) {}
+    constexpr FilterReporter(
+        filter_reporter_t err, filter_reporter_t wrn, filter_reporter_t msg,
+        Args&&... args) noexcept(std::is_nothrow_constructible_v<Rep, Args...>)
+        : Rep(std::forward<Args>(args)...)
+        , message_filter(msg)
+        , warn_filter(wrn)
+        , error_filter(err)
+    {
+    }
 
     /// @brief Forward the message to 'Rep' if there is no message filter
     ///        or the filter returns true.
     /// @param str The message
     /// @param src_info The source information if it exist
     /// @param msg_nb The report information if it exist
-    void message(StringView str, const Option<SourceInfo>& src_info = None, const Option<ReportNumber>& msg_nb = None) noexcept
+    void message(
+        StringView str, const Option<SourceInfo>& src_info = None,
+        const Option<ReportNumber>& msg_nb = None) noexcept
     {
       if (message_filter == nullptr || message_filter(str, src_info, msg_nb))
         Rep::message(str, src_info, msg_nb);
@@ -111,7 +129,9 @@ namespace clt::lng
     /// @param str The warning
     /// @param src_info The source information if it exist
     /// @param msg_nb The report information if it exist
-    void warn(StringView str, const Option<SourceInfo>& src_info = None, const Option<ReportNumber>& msg_nb = None) noexcept
+    void warn(
+        StringView str, const Option<SourceInfo>& src_info = None,
+        const Option<ReportNumber>& msg_nb = None) noexcept
     {
       if (warn_filter == nullptr || warn_filter(str, src_info, msg_nb))
         Rep::warn(str, src_info, msg_nb);
@@ -122,7 +142,9 @@ namespace clt::lng
     /// @param str The error
     /// @param src_info The source information if it exist
     /// @param msg_nb The report information if it exist
-    void error(StringView str, const Option<SourceInfo>& src_info = None, const Option<ReportNumber>& msg_nb = None) noexcept
+    void error(
+        StringView str, const Option<SourceInfo>& src_info = None,
+        const Option<ReportNumber>& msg_nb = None) noexcept
     {
       if (error_filter == nullptr || error_filter(str, src_info, msg_nb))
         Rep::error(str, src_info, msg_nb);
@@ -132,8 +154,7 @@ namespace clt::lng
   template<Reporter Rep>
   /// @brief Limits the number reports generated
   /// @tparam Rep The reporter to forward reports to if the limit is not hit
-  class LimiterReporter
-    : public Rep
+  class LimiterReporter : public Rep
   {
     /// @brief Count of remaining messages
     u16 message_rem;
@@ -152,8 +173,8 @@ namespace clt::lng
     static constexpr u16 NO_DECREMENT = std::numeric_limits<u16>::max();
 
   public:
-    LimiterReporter() = delete;
-    constexpr LimiterReporter(LimiterReporter&&)      noexcept = default;
+    LimiterReporter()                                          = delete;
+    constexpr LimiterReporter(LimiterReporter&&) noexcept      = default;
     constexpr LimiterReporter(const LimiterReporter&) noexcept = default;
 
     template<typename... Args>
@@ -163,14 +184,17 @@ namespace clt::lng
     /// @param msg The message limit or none if no limit on messages
     /// @param args Arguments to forward to the constructor of 'Rep'
     /// @pre err.value() and wrn.value() and msg.value() != 0
-    constexpr LimiterReporter(Option<u16> err, Option<u16> wrn, Option<u16> msg, Args&&... args) noexcept(std::is_nothrow_constructible_v<Rep, Args...>)
-      : Rep(std::forward<Args>(args)...)
-      , message_rem(msg.is_value() ? *msg : NO_DECREMENT)
-      , warn_rem(wrn.is_value() ? *wrn : NO_DECREMENT)
-      , error_rem(err.is_value() ? *err : NO_DECREMENT)
+    constexpr LimiterReporter(
+        Option<u16> err, Option<u16> wrn, Option<u16> msg,
+        Args&&... args) noexcept(std::is_nothrow_constructible_v<Rep, Args...>)
+        : Rep(std::forward<Args>(args)...)
+        , message_rem(msg.is_value() ? *msg : NO_DECREMENT)
+        , warn_rem(wrn.is_value() ? *wrn : NO_DECREMENT)
+        , error_rem(err.is_value() ? *err : NO_DECREMENT)
     {
-      assert_true("Invalid arguments for LimiterReporter!",
-        message_rem != 0, warn_rem != 0, error_rem != 0);
+      assert_true(
+          "Invalid arguments for LimiterReporter!", message_rem != 0, warn_rem != 0,
+          error_rem != 0);
     }
 
     /// @brief Forward the message to 'Rep' if the message limit was not hit.
@@ -179,7 +203,9 @@ namespace clt::lng
     /// @param str The message
     /// @param src_info The source information if it exist
     /// @param msg_nb The report information if it exist
-    void message(StringView str, const Option<SourceInfo>& src_info = None, const Option<ReportNumber>& msg_nb = None) noexcept
+    void message(
+        StringView str, const Option<SourceInfo>& src_info = None,
+        const Option<ReportNumber>& msg_nb = None) noexcept
     {
       if (message_rem == 0 && exhausted_message)
         return;
@@ -195,7 +221,9 @@ namespace clt::lng
     /// @param str The warning
     /// @param src_info The source information if it exist
     /// @param msg_nb The report information if it exist
-    void warn(StringView str, const Option<SourceInfo>& src_info = None, const Option<ReportNumber>& msg_nb = None) noexcept
+    void warn(
+        StringView str, const Option<SourceInfo>& src_info = None,
+        const Option<ReportNumber>& msg_nb = None) noexcept
     {
       if (warn_rem == 0 && exhausted_warn)
         return;
@@ -211,7 +239,9 @@ namespace clt::lng
     /// @param str The warning
     /// @param src_info The source information if it exist
     /// @param msg_nb The report information if it exist
-    void error(StringView str, const Option<SourceInfo>& src_info = None, const Option<ReportNumber>& msg_nb = None) noexcept
+    void error(
+        StringView str, const Option<SourceInfo>& src_info = None,
+        const Option<ReportNumber>& msg_nb = None) noexcept
     {
       if (error_rem == 0 && exhausted_error)
         return;
@@ -221,6 +251,6 @@ namespace clt::lng
       Rep::error("No more errors will be reported.", None, None);
     }
   };
-}
+} // namespace clt::lng
 
 #endif // !HG_COLT_COMPOSABLE_REPORTER

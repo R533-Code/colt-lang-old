@@ -1,8 +1,8 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   colt_builtin_id.h
  * @brief  Contains BuiltinID enum that represent the possible
  *         built-in types.
- * 
+ *
  * @author RPC
  * @date   February 2024
  *********************************************************************/
@@ -12,14 +12,9 @@
 #include "meta/meta_enum.h"
 #include "common/assertions.h"
 
-DECLARE_ENUM_WITH_TYPE(u8, clt::lng, BuiltinID,
-  BOOL,
-  CHAR,
-  U8, U16, U32, U64,
-  I8, I16, I32, I64,
-  F32, F64,
-  BYTE, WORD, DWORD, QWORD
-);
+DECLARE_ENUM_WITH_TYPE(
+    u8, clt::lng, BuiltinID, BOOL, CHAR, U8, U16, U32, U64, I8, I16, I32, I64, F32,
+    F64, BYTE, WORD, DWORD, QWORD);
 
 namespace clt::lng
 {
@@ -40,7 +35,7 @@ namespace clt::lng
   }
 
   /// @brief Check if an ID represents a unsigned integer
-  /// @param id The ID to check for 
+  /// @param id The ID to check for
   /// @return True if u(8|16|32|64)
   constexpr bool is_uint(BuiltinID id) noexcept
   {
@@ -48,7 +43,7 @@ namespace clt::lng
   }
 
   /// @brief Check if an ID represents a signed integer
-  /// @param id The ID to check for 
+  /// @param id The ID to check for
   /// @return True if i(8|16|32|64)
   constexpr bool is_sint(BuiltinID id) noexcept
   {
@@ -70,7 +65,7 @@ namespace clt::lng
   {
     return BuiltinID::BYTE <= id && id <= BuiltinID::QWORD;
   }
-  
+
   /// @brief Check if an ID represents a floating point type
   /// @param id The ID to check for
   /// @return True if F32 or F64
@@ -90,18 +85,17 @@ namespace clt::lng
     /// @brief The type of the QWORD_t
     BuiltinID ID;
   };
-}
+} // namespace clt::lng
 
 template<>
-struct fmt::formatter<clt::lng::TypedQWORD>
-  : clt::meta::DefaultParserFMT
+struct fmt::formatter<clt::lng::TypedQWORD> : clt::meta::DefaultParserFMT
 {
   template<typename context>
   auto format(const clt::lng::TypedQWORD& c, context& ctx) const
   {
     using enum clt::lng::BuiltinID;
-    
-    switch_no_default (c.ID)
+
+    switch_no_default(c.ID)
     {
     case BOOL:
       return fmt::format_to(ctx.out(), "{}", c.value.as<bool>());

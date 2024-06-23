@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   global_alloc.h
  * @brief  Contains the global allocator, and descriptions helpers.
- * 
+ *
  * @author RPC
  * @date   January 2024
  *********************************************************************/
@@ -14,7 +14,7 @@ namespace clt::mem
 {
   /// @brief The global allocator
   inline AbortOnNULLAllocator<FreeList<Mallocator, 16_B, 4_KiB, 1024>>
-    /*Segregator<1_KiB,
+      /*Segregator<1_KiB,
       ThreadSafeAllocator<
         Segregator<256, FreeList<StackAllocator<8_KiB, 16>, 16_B, 256_B, 32>,
           FreeList<Mallocator, 256_B, 1_KiB, 32>>
@@ -22,7 +22,8 @@ namespace clt::mem
       ThreadSafeAllocator<
         FreeList<Mallocator, 1_KiB, 4_KiB, 32>>
         >
-    >*/ GlobalAllocator;
+    >*/
+          GlobalAllocator;
 
   /// @brief Allocate a block of memory through the global allocator
   /// @param sz The size of the block
@@ -44,28 +45,29 @@ namespace clt::mem
   /// @brief Registers a function to call if memory could not be allocated.
   /// This function will be called before aborting the app.
   /// @param fn The function to register
-  static void global_on_null(void(*fn)() noexcept) noexcept
+  static void global_on_null(void (*fn)() noexcept) noexcept
   {
     GlobalAllocator.register_on_null(fn);
   }
 
   /// @brief Function pointer to an allocation function
-  using AllocFn   = MemBlock(*)(ByteSize<Byte>) noexcept;
+  using AllocFn = MemBlock (*)(ByteSize<Byte>) noexcept;
   /// @brief Function pointer to a deallocation function
-  using DeallocFn = void(*)(MemBlock) noexcept;
+  using DeallocFn = void (*)(MemBlock) noexcept;
   /// @brief Function pointer to a reallocation function
-  using ReallocFn = bool(*)(MemBlock, ByteSize<Byte>) noexcept;
+  using ReallocFn = bool (*)(MemBlock, ByteSize<Byte>) noexcept;
   /// @brief Function pointer to an expanding function
-  using ExpandFn  = bool(*)(MemBlock, ByteSize<Byte>) noexcept;
+  using ExpandFn = bool (*)(MemBlock, ByteSize<Byte>) noexcept;
   /// @brief Function pointer to an owning function
-  using OwnFn     = bool(*)(MemBlock) noexcept;
-  
+  using OwnFn = bool (*)(MemBlock) noexcept;
+
   template<AllocFn A, DeallocFn D, ReallocFn R, ExpandFn E, OwnFn O>
   /// @brief Describes a global allocator
   struct AllocatorDescription
   {
-    static_assert(A != nullptr && D != nullptr,
-      "An allocator at least has an allocation and deallocation function!");
+    static_assert(
+        A != nullptr && D != nullptr,
+        "An allocator at least has an allocation and deallocation function!");
 
     static constexpr bool is_allocator_description = true;
 
@@ -82,7 +84,9 @@ namespace clt::mem
   };
 
   /// @brief Description of the GlobalAllocator
-  inline constexpr AllocatorDescription<&clt::mem::global_alloc, &clt::mem::global_dealloc, nullptr, nullptr, nullptr> GlobalAllocatorDescription{};
+  inline constexpr AllocatorDescription<
+      &clt::mem::global_alloc, &clt::mem::global_dealloc, nullptr, nullptr, nullptr>
+      GlobalAllocatorDescription{};
 
   /// @brief Tag type for asking
   template<typename T>
@@ -96,14 +100,15 @@ namespace clt::mem
   /// @brief Helper tag for local allocators used in data structure
   /// @tparam T The type of the allocator
   inline constexpr LocalAllocatorTag<T> LocalAllocator;
-}
+} // namespace clt::mem
 
 namespace clt::meta
 {
   template<auto T>
   /// @brief A LocalAllocator is an a LocalAllocatorTag<...>
-  concept LocalAllocator = Allocator<std::decay_t<typename decltype(T)::allocator_type>>;
-  
+  concept LocalAllocator =
+      Allocator<std::decay_t<typename decltype(T)::allocator_type>>;
+
   template<auto T>
   /// @brief A Global allocator is a AllocatorDescription
   concept GlobalAllocator = (decltype(T)::is_allocator_description == true);
@@ -111,7 +116,7 @@ namespace clt::meta
   template<auto T>
   /// @brief An allocator value is either a LocalAllocator or GlobalAllocator
   concept AllocatorScope = GlobalAllocator<T> || LocalAllocator<T>;
-}
+} // namespace clt::meta
 
 namespace clt::mem
 {
@@ -125,31 +130,35 @@ namespace clt::mem
   /// If local, then the constructor NEEDS to take in a reference to the allocator,
   /// and initialize 'allocator_ref' with that reference.
   /// To allocate and deallocate, use allocator_ref<ALLOCATOR>.alloc()/dealloc().
-  struct allocator_ref {};
+  struct allocator_ref
+  {
+  };
 
   template<auto ALLOCATOR>
-    requires (meta::LocalAllocator<ALLOCATOR>)
+    requires(meta::LocalAllocator<ALLOCATOR>)
   /// @brief Overload for local allocators: Contains a reference to the allocator.
   struct allocator_ref<ALLOCATOR>
   {
     /// @brief The allocator type
-    using alloc_t = typename decltype(ALLOCATOR)::allocator_type;    
+    using alloc_t = typename decltype(ALLOCATOR)::allocator_type;
 
     /// @brief The reference to the allocator to use
     alloc_t* ref;
 
     // No default constructor
     allocator_ref() = delete;
-    
+
     /// @brief Constructor
     /// @param ref Reference to the allocator
     constexpr allocator_ref(alloc_t& ref) noexcept
-      : ref(&ref) {}
+        : ref(&ref)
+    {
+    }
 
-    constexpr allocator_ref(const allocator_ref&)             noexcept = default;
-    constexpr allocator_ref& operator=(const allocator_ref&)   noexcept = default;
-    constexpr allocator_ref(allocator_ref&&)                  noexcept = default;
-    constexpr allocator_ref& operator=(allocator_ref&&)        noexcept = default;
+    constexpr allocator_ref(const allocator_ref&) noexcept            = default;
+    constexpr allocator_ref& operator=(const allocator_ref&) noexcept = default;
+    constexpr allocator_ref(allocator_ref&&) noexcept                 = default;
+    constexpr allocator_ref& operator=(allocator_ref&&) noexcept      = default;
 
     /// @brief Allocates a MemBlock through the reference to the allocator
     /// @param size The size of the block
@@ -161,18 +170,15 @@ namespace clt::mem
 
     /// @brief Deallocates a MemBlock through the reference to the allocator
     /// @param blk The block to deallocate
-    constexpr void dealloc(MemBlock blk) noexcept
-    {
-      return ref->dealloc(blk);
-    }
+    constexpr void dealloc(MemBlock blk) noexcept { return ref->dealloc(blk); }
   };
 
   template<meta::Allocator alloc>
   /// @brief CTAD helper
-  allocator_ref(alloc&)->allocator_ref<mem::LocalAllocator<alloc>>;
+  allocator_ref(alloc&) -> allocator_ref<mem::LocalAllocator<alloc>>;
 
   template<auto ALLOCATOR>
-    requires (meta::GlobalAllocator<ALLOCATOR>)
+    requires(meta::GlobalAllocator<ALLOCATOR>)
   /// @brief Overload for global allocators: uses information in the AllocatorDescription to allocate/deallocate.
   struct allocator_ref<ALLOCATOR>
   {
@@ -191,7 +197,6 @@ namespace clt::mem
       return (*decltype(ALLOCATOR)::dealloc_fn)(blk);
     }
   };
-}
-
+} // namespace clt::mem
 
 #endif //!HG_COLT_GLOBAL_ALLOC

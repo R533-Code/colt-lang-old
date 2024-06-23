@@ -1,4 +1,4 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   clt_dyncall.h
  * @brief  Wrapper over the Dyncall library.
  * Contains DynamicBinder, that allows to dynamically call a function
@@ -7,7 +7,7 @@
  * if it has its address.
  * This is inherently unsafe as no runtime checks can be done over
  * missing/invalid/extra arguments passed to a function.
- * 
+ *
  * @author RPC
  * @date   June 2024
  *********************************************************************/
@@ -31,14 +31,14 @@ namespace clt::run
     /// @brief Constructor
     /// @param size The size to reserve
     DynamicBinder(size_t size = 4096) noexcept
-      : vm(dcNewCallVM(size))
+        : vm(dcNewCallVM(size))
     {
       dcMode(vm.get(), DC_CALL_C_DEFAULT);
     }
 
-    DynamicBinder(const DynamicBinder&) = delete;
-    DynamicBinder(DynamicBinder&& other) noexcept = default;
-    DynamicBinder& operator=(const DynamicBinder&) = delete;
+    DynamicBinder(const DynamicBinder&)                = delete;
+    DynamicBinder(DynamicBinder&& other) noexcept      = default;
+    DynamicBinder& operator=(const DynamicBinder&)     = delete;
     DynamicBinder& operator=(DynamicBinder&&) noexcept = default;
 
     /// @brief Adds a new argument to the next function call
@@ -47,7 +47,9 @@ namespace clt::run
     template<typename T>
     void push_arg(T value) noexcept
     {
-      if constexpr (std::same_as<T, char> || std::same_as<T, unsigned char> || std::same_as<T, signed char>)
+      if constexpr (
+          std::same_as<T, char> || std::same_as<T, unsigned char>
+          || std::same_as<T, signed char>)
         dcArgChar(vm.get(), (char)value);
       else if constexpr (std::same_as<T, bool>)
         dcArgBool(vm.get(), (bool)value);
@@ -57,7 +59,8 @@ namespace clt::run
         dcArgInt(vm.get(), (int)value);
       else if constexpr (std::same_as<T, long int> || std::same_as<T, long unsigned>)
         dcArgLong(vm.get(), (long int)value);
-      else if constexpr (std::same_as<T, long long int> || std::same_as<T, long long unsigned>)
+      else if constexpr (
+          std::same_as<T, long long int> || std::same_as<T, long long unsigned>)
         dcArgLongLong(vm.get(), (long long int)value);
       else if constexpr (std::same_as<T, float>)
         dcArgFloat(vm.get(), value);
@@ -75,7 +78,7 @@ namespace clt::run
     void push_qword(QWORD_t qword, run::TypeOp type) noexcept
     {
       using enum clt::run::TypeOp;
-      
+
       switch (type)
       {
       case i8_t:
@@ -110,12 +113,15 @@ namespace clt::run
     /// @param fn The function address
     /// @return The returned value of the function
     template<typename T, typename... Args>
-    T call(T(*fn)(Args...)) noexcept
+    T call(T (*fn)(Args...)) noexcept
     {
-      ON_SCOPE_EXIT{
+      ON_SCOPE_EXIT
+      {
         dcReset(vm.get());
       };
-      if constexpr (std::same_as<T, char> || std::same_as<T, unsigned char> || std::same_as<T, signed char>)
+      if constexpr (
+          std::same_as<T, char> || std::same_as<T, unsigned char>
+          || std::same_as<T, signed char>)
         return (T)dcCallChar(vm.get(), (void*)fn);
       else if constexpr (std::same_as<T, bool>)
         return (T)dcCallBool(vm.get(), (void*)fn);
@@ -125,7 +131,8 @@ namespace clt::run
         return (T)dcCallInt(vm.get(), (void*)fn);
       else if constexpr (std::same_as<T, long int> || std::same_as<T, long unsigned>)
         return (T)dcCallLong(vm.get(), (void*)fn);
-      else if constexpr (std::same_as<T, long long int> || std::same_as<T, long long unsigned>)
+      else if constexpr (
+          std::same_as<T, long long int> || std::same_as<T, long long unsigned>)
         return (T)dcCallLongLong(vm.get(), (void*)fn);
       else if constexpr (std::same_as<T, float>)
         return (T)dcCallFloat(vm.get(), (void*)fn);
@@ -142,10 +149,7 @@ namespace clt::run
     /// @brief Calls a function that returns void using the arguments
     /// pushed using 'push_arg/push_qword'.
     /// @param fn The address of the function to call
-    void call_fn(void* fn) noexcept
-    {
-      call((void(*)())fn);
-    }
+    void call_fn(void* fn) noexcept { call((void (*)())fn); }
 
     /// @brief Calls a function that returns value using the arguments
     /// pushed using 'push_arg/push_qword'.
@@ -153,14 +157,14 @@ namespace clt::run
     /// @param return_t The return type of the function
     /// @return QWORD that represents the return value
     QWORD_t call_fn(void* fn, run::TypeOp return_t) noexcept
-    {      
+    {
       QWORD_t ret;
       switch (return_t)
       {
       case clt::run::TypeOp::i8_t:
       case clt::run::TypeOp::u8_t:
-         ret.bit_assign(call((i8(*)())fn));
-         break;
+        ret.bit_assign(call((i8(*)())fn));
+        break;
       case clt::run::TypeOp::i16_t:
       case clt::run::TypeOp::u16_t:
         ret.bit_assign(call((i16(*)())fn));
@@ -183,6 +187,6 @@ namespace clt::run
       return ret;
     }
   };
-}
+} // namespace clt::run
 
 #endif // !HG_CLT_DYNCALL

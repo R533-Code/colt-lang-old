@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   main.cpp
  * @brief  Starting point of the compiler.
- * 
+ *
  * @author RPC
  * @date   February 2024
  *********************************************************************/
@@ -18,7 +18,7 @@ void REPL()
 
   io::print_warn("REPL is not implemented...");
 
-  auto reporter = lng::make_error_reporter<lng::ConsoleReporter>();
+  auto reporter    = lng::make_error_reporter<lng::ConsoleReporter>();
   const auto& warn = GlobalWarnFor;
   Vector<std::filesystem::path> includes = {};
   while (true)
@@ -28,17 +28,19 @@ void REPL()
     if (a.is_error())
       return;
     const auto& str = *a;
-    auto program = ParsedProgram{ *reporter, StringView{ str }, includes, warn };
+    auto program    = ParsedProgram{*reporter, StringView{str}, includes, warn};
   }
 }
 
 int main(int argc, const char** argv)
 {
   // Register to print a message on allocation failure
-  mem::global_on_null([]() noexcept { io::print_fatal("Compiler could not allocate enough memory!"); });
+  mem::global_on_null(
+      []() noexcept
+      { io::print_fatal("Compiler could not allocate enough memory!"); });
   // Parse command line arguments
   cl::parse_command_line_options<CMDs>(argc, argv);
-  
+
   // On debug configuration, runs tests
   if (RunTests)
     clt::run_tests();
@@ -48,7 +50,7 @@ int main(int argc, const char** argv)
       REPL();
     else
       io::print_warn("Transpilation is not implemented...");
-  }  
+  }
 
   if (WaitForUserInput)
     io::press_to_continue();

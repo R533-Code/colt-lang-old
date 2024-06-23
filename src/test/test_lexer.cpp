@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   test_lexer.cpp
  * @brief  Implementation of 'test_lexer'.
- * 
+ *
  * @author RPC
  * @date   June 2024
  *********************************************************************/
@@ -15,12 +15,12 @@ namespace clt::test
   void test_lexer(StringView file_path, u32& error_count) noexcept
   {
     io::print_message("Testing Lexer...");
-    
+
     using namespace lng;
 
     auto reporter = make_error_reporter<SinkReporter>();
 
-    std::string str = { file_path.data(), file_path.size() };
+    std::string str = {file_path.data(), file_path.size()};
     std::ifstream is(str);
     if (!is.good())
     {
@@ -30,7 +30,6 @@ namespace clt::test
 
     // The line number in the file to report eventual errors
     u64 true_line_nb = 0;
-    
 
     bool consume_line = false;
     // When multiple of 2, we are parsing the expected lexemes
@@ -54,7 +53,8 @@ namespace clt::test
           {
             consume_line = true;
             error_count++;
-            io::print_error("'{}' is not a valid lexeme (on line {}).", tkn_str, true_line_nb);
+            io::print_error(
+                "'{}' is not a valid lexeme (on line {}).", tkn_str, true_line_nb);
             goto WHILE_END;
           }
           expected_lexemes.push_back(*try_cnv);
@@ -68,20 +68,26 @@ namespace clt::test
         if (!consume_line)
         {
           lex(buffer, *reporter, str);
-          for (size_t i = 0; i < clt::min(buffer.token_buffer().size(), expected_lexemes.size()); i++)
+          for (size_t i = 0;
+               i < clt::min(buffer.token_buffer().size(), expected_lexemes.size());
+               i++)
           {
             if (expected_lexemes[i] != buffer.token_buffer()[i])
             {
               error_count++;
-              io::print_error("Expected '{:h}' but Lexer returned '{:h}' instead (on line {})!",
-                expected_lexemes[i], buffer.token_buffer()[i].lexeme(), true_line_nb);
+              io::print_error(
+                  "Expected '{:h}' but Lexer returned '{:h}' instead (on line {})!",
+                  expected_lexemes[i], buffer.token_buffer()[i].lexeme(),
+                  true_line_nb);
             }
           }
           if (buffer.token_buffer().size() != expected_lexemes.size())
           {
             error_count++;
-            io::print_error("Expected '{}' lexemes but Lexer returned '{}' instead (on line {})!",
-              expected_lexemes.size(), buffer.token_buffer().size(), true_line_nb);
+            io::print_error(
+                "Expected '{}' lexemes but Lexer returned '{}' instead (on line "
+                "{})!",
+                expected_lexemes.size(), buffer.token_buffer().size(), true_line_nb);
           }
           // To avoid constructing a TokenBuffer in each iteration
           buffer.unsafe_clear();
@@ -94,5 +100,4 @@ namespace clt::test
       ++line_count;
     }
   }
-}
-
+} // namespace clt::test

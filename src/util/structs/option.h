@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   option.h
  * @brief  Contains `Option`, which is either a value or None.
- * 
+ *
  * @author RPC
  * @date   January 2024
  *********************************************************************/
@@ -18,11 +18,13 @@ namespace clt
   {
     template<typename T>
     /// @brief Check if a type is parsable from a string
-    concept Parsable = requires (T a) { scn::scan_default("10", a); };
-    
+    concept Parsable = requires(T a) { scn::scan_default("10", a); };
+
     /// @brief Tag struct for constructing an object in place
-    struct InPlaceT {};
-  }
+    struct InPlaceT
+    {
+    };
+  } // namespace meta
 
   /// @brief Tag object for construting an object in place
   inline constexpr meta::InPlaceT InPlace;
@@ -30,8 +32,10 @@ namespace clt
   namespace details
   {
     /// @brief Tag type for constructing an empty Option
-    struct NoneT{};
-  }
+    struct NoneT
+    {
+    };
+  } // namespace details
 
   /// @brief Tag object for constructing an empty Option
   static constexpr details::NoneT None;
@@ -49,8 +53,7 @@ namespace clt
   public:
     /// @brief Destroy the stored value if it exists, and sets the Option to an empty one.
     /// Called automatically by the destructor.
-    constexpr void reset()
-      noexcept(std::is_nothrow_destructible_v<T>)
+    constexpr void reset() noexcept(std::is_nothrow_destructible_v<T>)
     {
       if (!is_none_v)
       {
@@ -61,31 +64,34 @@ namespace clt
 
     /// @brief Constructs an empty Option.
     constexpr Option() noexcept
-      : is_none_v(true) {}
+        : is_none_v(true)
+    {
+    }
 
     /// @brief Constructs an empty Option.
     /// Same as Option().
     /// @param  NoneT: use None
     constexpr Option(details::NoneT) noexcept
-      : is_none_v(true) {}
+        : is_none_v(true)
+    {
+    }
 
     /// @brief Copy constructs an object into the Option.
     /// @param to_copy The object to copy
-    constexpr Option(const T& to_copy)
-      noexcept(std::is_nothrow_copy_constructible_v<T>)
-      : is_none_v(false)
+    constexpr Option(const T& to_copy) noexcept(
+        std::is_nothrow_copy_constructible_v<T>)
+        : is_none_v(false)
     {
-      new(opt_buffer) T(to_copy);
+      new (opt_buffer) T(to_copy);
     }
 
     /// @brief Move constructs an object into the Option
     /// @param to_move The object to move
-    constexpr Option(T&& to_move)
-      noexcept(std::is_nothrow_move_constructible_v<T>)
-      requires (!std::is_trivial_v<T>)
-    : is_none_v(false)
+    constexpr Option(T&& to_move) noexcept(std::is_nothrow_move_constructible_v<T>)
+      requires(!std::is_trivial_v<T>)
+        : is_none_v(false)
     {
-      new(opt_buffer) T(std::move(to_move));
+      new (opt_buffer) T(std::move(to_move));
     }
 
     template<typename... Args>
@@ -93,46 +99,45 @@ namespace clt
     /// @tparam ...Args The parameter pack
     /// @param  InPlaceT, use InPlace
     /// @param ...args The argument pack
-    constexpr Option(meta::InPlaceT, Args&&... args)
-      noexcept(std::is_nothrow_constructible_v<T, Args...>)
-      : is_none_v(false)
+    constexpr Option(meta::InPlaceT, Args&&... args) noexcept(
+        std::is_nothrow_constructible_v<T, Args...>)
+        : is_none_v(false)
     {
-      new(opt_buffer) T(std::forward<Args>(args)...);
+      new (opt_buffer) T(std::forward<Args>(args)...);
     }
 
     /// @brief Copy constructor.
     /// @param to_copy The Option to copy
-    constexpr Option(const Option& to_copy)
-      noexcept(std::is_nothrow_copy_constructible_v<T>)
-      : is_none_v(to_copy.is_none_v)
+    constexpr Option(const Option& to_copy) noexcept(
+        std::is_nothrow_copy_constructible_v<T>)
+        : is_none_v(to_copy.is_none_v)
     {
       if (!is_none_v)
-        new(opt_buffer) T(*ptr_to<const T*>(to_copy.opt_buffer));
+        new (opt_buffer) T(*ptr_to<const T*>(to_copy.opt_buffer));
     }
 
     /// @brief Move constructor.
     /// @param to_move The Option to move
-    constexpr Option(Option&& to_move)
-      noexcept(std::is_nothrow_move_constructible_v<T>)
-      : is_none_v(to_move.is_none_v)
+    constexpr Option(Option&& to_move) noexcept(
+        std::is_nothrow_move_constructible_v<T>)
+        : is_none_v(to_move.is_none_v)
     {
       if (!is_none_v)
-        new(opt_buffer) T(std::move(*ptr_to<T*>(to_move.opt_buffer)));
+        new (opt_buffer) T(std::move(*ptr_to<T*>(to_move.opt_buffer)));
     }
 
     /// @brief Copy assignment operator
     /// @param to_copy The optional to copy
     /// @return Self
-    constexpr Option& operator=(const Option& to_copy)
-      noexcept(std::is_nothrow_destructible_v<T>
-        && std::is_nothrow_copy_constructible_v<T>)
+    constexpr Option& operator=(const Option& to_copy) noexcept(
+        std::is_nothrow_destructible_v<T> && std::is_nothrow_copy_constructible_v<T>)
     {
       assert_true("Self assignment is prohibited!", &to_copy != this);
       reset();
       if (to_copy.is_value())
       {
         is_none_v = false;
-        new(opt_buffer) T(*ptr_to<const T*>(to_copy.opt_buffer));
+        new (opt_buffer) T(*ptr_to<const T*>(to_copy.opt_buffer));
       }
       return *this;
     }
@@ -140,16 +145,15 @@ namespace clt
     /// @brief Move assignment operator
     /// @param to_move The optional to move
     /// @return Self
-    constexpr Option& operator=(Option&& to_move)
-      noexcept(std::is_nothrow_destructible_v<T>
-        && std::is_nothrow_move_constructible_v<T>)
+    constexpr Option& operator=(Option&& to_move) noexcept(
+        std::is_nothrow_destructible_v<T> && std::is_nothrow_move_constructible_v<T>)
     {
       assert_true("Self assignment is prohibited!", &to_move != this);
       reset();
       if (to_move.is_value())
       {
         is_none_v = false;
-        new(opt_buffer) T(std::move(*ptr_to<T*>(to_move.opt_buffer)));
+        new (opt_buffer) T(std::move(*ptr_to<T*>(to_move.opt_buffer)));
       }
       return *this;
     }
@@ -157,26 +161,24 @@ namespace clt
     /// @brief Copy a value to the optional
     /// @param to_copy The value to copy
     /// @return Self
-    constexpr Option& operator=(const T& to_copy)
-      noexcept(std::is_nothrow_destructible_v<T>
-        && std::is_nothrow_copy_constructible_v<T>)
+    constexpr Option& operator=(const T& to_copy) noexcept(
+        std::is_nothrow_destructible_v<T> && std::is_nothrow_copy_constructible_v<T>)
     {
       reset();
       is_none_v = false;
-      new(opt_buffer) T(to_copy);
+      new (opt_buffer) T(to_copy);
       return *this;
     }
 
     /// @brief Move a value to the optional
     /// @param to_move The value to move
     /// @return Self
-    constexpr Option& operator=(T&& to_move)
-      noexcept(std::is_nothrow_destructible_v<T>
-        && std::is_nothrow_move_constructible_v<T>)
+    constexpr Option& operator=(T&& to_move) noexcept(
+        std::is_nothrow_destructible_v<T> && std::is_nothrow_move_constructible_v<T>)
     {
       reset();
       is_none_v = false;
-      new(opt_buffer) T(std::move(to_move));
+      new (opt_buffer) T(std::move(to_move));
       return *this;
     }
 
@@ -184,19 +186,15 @@ namespace clt
     /// Same as `reset()`.
     /// @param  Error type (Error)
     /// @return Reference to self
-    constexpr Option& operator=(details::NoneT)
-      noexcept(std::is_nothrow_destructible_v<T>)
+    constexpr Option& operator=(details::NoneT) noexcept(
+        std::is_nothrow_destructible_v<T>)
     {
       reset();
       return *this;
     }
 
     /// @brief Destructor, destructs the value if it exist.
-    constexpr ~Option()
-      noexcept(std::is_nothrow_destructible_v<T>)
-    {
-      reset();
-    }
+    constexpr ~Option() noexcept(std::is_nothrow_destructible_v<T>) { reset(); }
 
     /// @brief Check if the Option contains a value.
     /// @return True if the Option contains a value
@@ -220,8 +218,8 @@ namespace clt
       return ptr_to<const T*>(opt_buffer);
     }
 
-      /// @brief Returns the stored value.
-      /// @return The value
+    /// @brief Returns the stored value.
+    /// @return The value
     constexpr T* operator->() noexcept
     {
       assert_true("Option does not contain a value!", is_value());
@@ -306,21 +304,22 @@ namespace clt
     /// @return The value or 'default_value'
     constexpr T value_or(T&& default_value) &&
     {
-      return is_none_v ? static_cast<T>(std::forward<T>(default_value)) : std::move(**this);
+      return is_none_v ? static_cast<T>(std::forward<T>(default_value))
+                       : std::move(**this);
     }
   };
-}
+} // namespace clt
 
 template<clt::meta::Parsable T>
-struct scn::scanner<clt::Option<T>>
-  : scn::empty_parser
+struct scn::scanner<clt::Option<T>> : scn::empty_parser
 {
-  template <typename Context>
+  template<typename Context>
   error scan(clt::Option<T>& val, Context& ctx)
   {
     std::string_view strv;
     auto r = scn::scan(ctx.range(), "{}", strv);
-    ON_SCOPE_EXIT {
+    ON_SCOPE_EXIT
+    {
       ctx.range() = std::move(r.range());
     };
     if (r && clt::is_equal_case_insensitive("none", strv))
@@ -329,7 +328,7 @@ struct scn::scanner<clt::Option<T>>
       return r.error();
     }
     T value;
-    r = scn::scan(ctx.range(), "{}", value);
+    r   = scn::scan(ctx.range(), "{}", value);
     val = value;
     return r.error();
   }
@@ -351,13 +350,13 @@ struct fmt::formatter<clt::Option<T>>
     auto it = ctx.begin();
     if (it == ctx.end())
       return it;
-    
+
     // Parse the string to print if empty optional
-    none_str = it;
+    none_str  = it;
     none_size = 0;
     while (*it != '}')
       ++none_size, ++it;
-    
+
     return it;
   }
 

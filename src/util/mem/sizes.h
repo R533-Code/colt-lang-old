@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   sizes.h
  * @brief  Contains byte sizes units.
- * 
+ *
  * @author RPC
  * @date   January 2024
  *********************************************************************/
@@ -22,25 +22,26 @@ namespace clt
   {
     template<typename T>
     /// @brief True if the type represents a compile-time ratio
-    concept ConstexprRatio = (std::is_integral_v<decltype(T::num)>) && (std::is_integral_v<decltype(T::den)>);
+    concept ConstexprRatio = (std::is_integral_v<decltype(T::num)>)&&(
+        std::is_integral_v<decltype(T::den)>);
   }
 
   /// @brief Byte ratio
-  using B         = std::ratio<1, 1>;
+  using B = std::ratio<1, 1>;
   /// @brief Byte ratio
-  using Byte      = std::ratio<1, 1>;
+  using Byte = std::ratio<1, 1>;
   /// @brief Kibibyte ratio
-  using KiB       = std::ratio<1024, 1>;
+  using KiB = std::ratio<1024, 1>;
   /// @brief Kibibyte ratio
-  using KibiByte  = std::ratio<1024, 1>;
+  using KibiByte = std::ratio<1024, 1>;
   /// @brief Mebibyte ratio
-  using MiB       = std::ratio<1024 * 1024, 1>;
+  using MiB = std::ratio<1024 * 1024, 1>;
   /// @brief Mebibyte ratio
-  using MebiByte  = std::ratio<1024 * 1024, 1>;
+  using MebiByte = std::ratio<1024 * 1024, 1>;
   /// @brief Gibibyte ratio
-  using GiB       = std::ratio<1024 * 1024 * 1024, 1>;
+  using GiB = std::ratio<1024 * 1024 * 1024, 1>;
   /// @brief Gibibyte ratio
-  using GibiByte  = std::ratio<1024 * 1024 * 1024, 1>;  
+  using GibiByte = std::ratio<1024 * 1024 * 1024, 1>;
 
   template<meta::ConstexprRatio RatioT = B>
   /// @brief Class responsible of holding byte sizes
@@ -59,15 +60,20 @@ namespace clt
     /// @brief Constructs a size from a count of RatioT
     /// @param count The size
     constexpr ByteSize(u64 count) noexcept
-      : count(count) {}
+        : count(count)
+    {
+    }
 
-    template<typename rt> requires (RatioT::num < rt::num)
+    template<typename rt>
+      requires(RatioT::num < rt::num)
     /// @brief Constructs a size from another size only when the conversion is not lossy.
     /// Use size_cast for lossy conversions.
     /// @tparam rt The ratio of the other size
     /// @param count The other size
     constexpr ByteSize(ByteSize<rt> count) noexcept
-      : count(count.count * rt::num) {}
+        : count(count.count * rt::num)
+    {
+    }
 
     /// @brief Converts the size to a byte count
     /// @return Byte count
@@ -171,38 +177,50 @@ namespace clt
   {
     return (value.value() * From::num) / Ratio::num;
   }
-  
+
   /// @brief Creates a Byte size
   /// @param i The size count
   /// @return Byte size
-  consteval ByteSize<B>   operator""_B(unsigned long long int i)   noexcept { return ByteSize<B>(i); }
+  consteval ByteSize<B> operator""_B(unsigned long long int i) noexcept
+  {
+    return ByteSize<B>(i);
+  }
   /// @brief Creates a Kibibyte size
   /// @param i The size count
   /// @return Kibibyte size
-  consteval ByteSize<KiB> operator""_KiB(unsigned long long int i) noexcept { return ByteSize<KiB>(i); }
+  consteval ByteSize<KiB> operator""_KiB(unsigned long long int i) noexcept
+  {
+    return ByteSize<KiB>(i);
+  }
   /// @brief Creates a Mebibyte size
   /// @param i The size count
   /// @return Mebibyte size
-  consteval ByteSize<MiB> operator""_MiB(unsigned long long int i) noexcept { return ByteSize<MiB>(i); }
+  consteval ByteSize<MiB> operator""_MiB(unsigned long long int i) noexcept
+  {
+    return ByteSize<MiB>(i);
+  }
   /// @brief Creates a Gibibyte size
   /// @param i The size count
   /// @return Gibibyte size
-  consteval ByteSize<GiB> operator""_GiB(unsigned long long int i) noexcept { return ByteSize<GiB>(i); }
-}
+  consteval ByteSize<GiB> operator""_GiB(unsigned long long int i) noexcept
+  {
+    return ByteSize<GiB>(i);
+  }
+} // namespace clt
 
 template<>
-struct scn::scanner<clt::ByteSize<clt::B>>
-  : scn::empty_parser
+struct scn::scanner<clt::ByteSize<clt::B>> : scn::empty_parser
 {
-  template <typename Context>
+  template<typename Context>
   error scan(clt::ByteSize<clt::B>& val, Context& ctx)
   {
     using namespace clt;
-    
+
     u64 count;
     std::string_view str;
     auto r = scn::scan(ctx.range(), "{}{}", count, str);
-    ON_SCOPE_EXIT {
+    ON_SCOPE_EXIT
+    {
       ctx.range() = std::move(r.range());
     };
 
@@ -210,42 +228,49 @@ struct scn::scanner<clt::ByteSize<clt::B>>
     {
       if (r.error().code() == error::value_out_of_range)
         return r.error();
-      return { r.error().code(), "Expected an integer followed by 'B', 'KiB', 'MiB', or 'GiB'." };
+      return {
+          r.error().code(),
+          "Expected an integer followed by 'B', 'KiB', 'MiB', or 'GiB'."};
     }
 
     if (is_equal_case_insensitive(str, "B"))
     {
-      val = ByteSize<B>{ count };
-      return { error::good, nullptr };
+      val = ByteSize<B>{count};
+      return {error::good, nullptr};
     }
     if (is_equal_case_insensitive(str, "KiB"))
     {
       if (count > 18'014'398'509'481'984)
-        return { error::value_out_of_range, "Value too great to be representable as bytes!" };
-      val = ByteSize<KiB>{ count };
-      return { error::good, nullptr };
+        return {
+            error::value_out_of_range,
+            "Value too great to be representable as bytes!"};
+      val = ByteSize<KiB>{count};
+      return {error::good, nullptr};
     }
     if (is_equal_case_insensitive(str, "MiB"))
     {
       if (count > 17'592'186'044'416)
-        return { error::value_out_of_range, "Value too great to be representable as bytes!" };
-      val = ByteSize<MiB>{ count };
-      return { error::good, nullptr };
+        return {
+            error::value_out_of_range,
+            "Value too great to be representable as bytes!"};
+      val = ByteSize<MiB>{count};
+      return {error::good, nullptr};
     }
     if (is_equal_case_insensitive(str, "GiB"))
     {
       if (count > 17'179'869'184)
-        return { error::value_out_of_range, "Value too great to be representable as bytes!" };
-      val = ByteSize<GiB>{ count };
-      return { error::good, nullptr };
+        return {
+            error::value_out_of_range,
+            "Value too great to be representable as bytes!"};
+      val = ByteSize<GiB>{count};
+      return {error::good, nullptr};
     }
-    return { error::invalid_scanned_value, "Expected 'B', 'KiB', 'MiB', or 'GiB'." };
+    return {error::invalid_scanned_value, "Expected 'B', 'KiB', 'MiB', or 'GiB'."};
   }
 };
 
 template<>
-struct fmt::formatter<clt::ByteSize<clt::Byte>>
-  : public clt::meta::DefaultParserFMT
+struct fmt::formatter<clt::ByteSize<clt::Byte>> : public clt::meta::DefaultParserFMT
 {
   template<typename FormatContext>
   auto format(const clt::ByteSize<clt::Byte>& vec, FormatContext& ctx)
@@ -263,7 +288,7 @@ struct fmt::formatter<clt::ByteSize<clt::Byte>>
 
 template<>
 struct fmt::formatter<clt::ByteSize<clt::KibiByte>>
-  : public clt::meta::DefaultParserFMT
+    : public clt::meta::DefaultParserFMT
 {
   template<typename FormatContext>
   auto format(const clt::ByteSize<clt::KibiByte>& vec, FormatContext& ctx)
@@ -279,7 +304,7 @@ struct fmt::formatter<clt::ByteSize<clt::KibiByte>>
 
 template<>
 struct fmt::formatter<clt::ByteSize<clt::MebiByte>>
-  : public clt::meta::DefaultParserFMT
+    : public clt::meta::DefaultParserFMT
 {
   template<typename FormatContext>
   auto format(const clt::ByteSize<clt::MebiByte>& vec, FormatContext& ctx)
@@ -293,7 +318,7 @@ struct fmt::formatter<clt::ByteSize<clt::MebiByte>>
 
 template<>
 struct fmt::formatter<clt::ByteSize<clt::GibiByte>>
-  : public clt::meta::DefaultParserFMT
+    : public clt::meta::DefaultParserFMT
 {
   template<typename FormatContext>
   auto format(const clt::ByteSize<clt::GibiByte>& vec, FormatContext& ctx)

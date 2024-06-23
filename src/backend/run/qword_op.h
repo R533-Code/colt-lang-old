@@ -1,9 +1,9 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   qword_op.h
  * @brief  Contains functions that applies operations to QWORD_t.
  * The functions provided allows to apply checked operations
  * on QWORD_t. This is useful for interpreters and constant folding.
- * 
+ *
  * @author RPC
  * @date   April 2024
  *********************************************************************/
@@ -15,44 +15,55 @@
 #include "common/types.h"
 #include "meta/meta_enum.h"
 
-#define COLT_TypeOp_PACK TypeOp::i8_t, TypeOp::i16_t, TypeOp::i32_t, TypeOp::i64_t, TypeOp::u8_t, TypeOp::u16_t, TypeOp::u32_t, TypeOp::u64_t, TypeOp::f32_t, TypeOp::f64_t
+#define COLT_TypeOp_PACK                                                   \
+  TypeOp::i8_t, TypeOp::i16_t, TypeOp::i32_t, TypeOp::i64_t, TypeOp::u8_t, \
+      TypeOp::u16_t, TypeOp::u32_t, TypeOp::u64_t, TypeOp::f32_t, TypeOp::f64_t
 #define COLT_Size_PACK Size::_8bits, Size::_16bits, Size::_32bits, Size::_64bits
 
-#define COLT_GENERATE_TABLE_FOR(FnPtr) \
-template<typename T, T... Op> \
-consteval auto COLT_CONCAT(generate_table_, FnPtr)() \
-{ \
-  return std::array{ &(FnPtr<Op>)... }; \
-}
+#define COLT_GENERATE_TABLE_FOR(FnPtr)                 \
+  template<typename T, T... Op>                        \
+  consteval auto COLT_CONCAT(generate_table_, FnPtr)() \
+  {                                                    \
+    return std::array{&(FnPtr<Op>)...};                \
+  }
 
-#define COLT_TypeOpTable(Name) clt::run::details::COLT_CONCAT(generate_table_, Name)<clt::run::TypeOp, COLT_TypeOp_PACK>()
+#define COLT_TypeOpTable(Name)    \
+  clt::run::details::COLT_CONCAT( \
+      generate_table_, Name)<clt::run::TypeOp, COLT_TypeOp_PACK>()
 
-#define COLT_TypeOpFnBinary(Name, fnname)  inline ResultQWORD fnname (QWORD_t a, QWORD_t b, TypeOp type) noexcept\
-{ \
-  static constexpr std::array table = COLT_TypeOpTable(Name); \
-  return table[static_cast<u8>(type)](a, b); \
-}
+#define COLT_TypeOpFnBinary(Name, fnname)                               \
+  inline ResultQWORD fnname(QWORD_t a, QWORD_t b, TypeOp type) noexcept \
+  {                                                                     \
+    static constexpr std::array table = COLT_TypeOpTable(Name);         \
+    return table[static_cast<u8>(type)](a, b);                          \
+  }
 
-#define COLT_TypeOpFnUnary(Name, fnname)  inline ResultQWORD fnname (QWORD_t a, TypeOp type) noexcept\
-{ \
-  static constexpr std::array table = COLT_TypeOpTable(Name); \
-  return table[static_cast<u8>(type)](a); \
-}
+#define COLT_TypeOpFnUnary(Name, fnname)                        \
+  inline ResultQWORD fnname(QWORD_t a, TypeOp type) noexcept    \
+  {                                                             \
+    static constexpr std::array table = COLT_TypeOpTable(Name); \
+    return table[static_cast<u8>(type)](a);                     \
+  }
 
 /// @brief Helpers for interpreting code
 namespace clt::run
 {
-  enum class TypeOp
-    : u8
+  enum class TypeOp : u8
   {
-    i8_t, i16_t, i32_t, i64_t,
-    u8_t, u16_t, u32_t, u64_t,
-    f32_t, f64_t
+    i8_t,
+    i16_t,
+    i32_t,
+    i64_t,
+    u8_t,
+    u16_t,
+    u32_t,
+    u64_t,
+    f32_t,
+    f64_t
   };
 
   /// @brief Represents the outcome of an operation
-  enum OpError
-    : u8
+  enum OpError : u8
   {
     /// @brief No error
     NO_ERROR,
@@ -86,7 +97,8 @@ namespace clt::run
       OP_UNDERFLOW
     };
 
-    template<typename T> requires std::is_integral_v<T>
+    template<typename T>
+      requires std::is_integral_v<T>
     IntOpResult add_int(T a, T x, T& result) noexcept
     {
       if constexpr (std::is_signed_v<T>)
@@ -121,7 +133,8 @@ namespace clt::run
       }
     }
 
-    template<typename T> requires std::is_integral_v<T>
+    template<typename T>
+      requires std::is_integral_v<T>
     IntOpResult sub_int(T a, T x, T& result) noexcept
     {
       if constexpr (std::is_signed_v<T>)
@@ -142,7 +155,8 @@ namespace clt::run
       }
     }
 
-    template<typename T> requires std::is_integral_v<T>
+    template<typename T>
+      requires std::is_integral_v<T>
     IntOpResult mul_int(T a, T x, T& result) noexcept
     {
       if constexpr (std::is_signed_v<T>)
@@ -151,9 +165,13 @@ namespace clt::run
           return OP_OVERFLOW;
         if (x == -1 && a == std::numeric_limits<T>::min())
           return OP_OVERFLOW;
-        if (x > 0 && (a > std::numeric_limits<T>::max() / x || a < std::numeric_limits<T>::min() / x))
+        if (x > 0
+            && (a > std::numeric_limits<T>::max() / x
+                || a < std::numeric_limits<T>::min() / x))
           return OP_OVERFLOW;
-        if (x < 0 && (a < std::numeric_limits<T>::max() / x || a > std::numeric_limits<T>::min() / x))
+        if (x < 0
+            && (a < std::numeric_limits<T>::max() / x
+                || a > std::numeric_limits<T>::min() / x))
           return OP_UNDERFLOW;
         result = a * x;
         return OP_VALID;
@@ -165,7 +183,9 @@ namespace clt::run
           uint64_t res = a;
           res += x;
           result = static_cast<T>(res);
-          if (res & (std::numeric_limits<uint64_t>::max() & ~static_cast<uint64_t>(std::numeric_limits<T>::max())))
+          if (res
+              & (std::numeric_limits<uint64_t>::max()
+                 & ~static_cast<uint64_t>(std::numeric_limits<T>::max())))
             return OP_OVERFLOW;
           return OP_VALID;
         }
@@ -181,7 +201,8 @@ namespace clt::run
       }
     }
 
-    template<typename T> requires std::is_integral_v<T>
+    template<typename T>
+      requires std::is_integral_v<T>
     IntOpResult div_int(T a, T x, T& result) noexcept
     {
       if constexpr (std::is_signed_v<T>)
@@ -198,7 +219,8 @@ namespace clt::run
       }
     }
 
-    template<typename T> requires std::is_integral_v<T>
+    template<typename T>
+      requires std::is_integral_v<T>
     IntOpResult mod_int(T a, T x, T& result) noexcept
     {
       if constexpr (std::is_signed_v<T>)
@@ -218,7 +240,7 @@ namespace clt::run
     template<typename T>
     constexpr OpError int_op_to_op_error(IntOpResult res) noexcept
     {
-      switch_no_default (res)
+      switch_no_default(res)
       {
       case OP_VALID:
         return NO_ERROR;
@@ -228,13 +250,13 @@ namespace clt::run
         return std::is_signed_v<T> ? SIGNED_UNDERFLOW : UNSIGNED_UNDERFLOW;
       }
     }
-  }
+  } // namespace details
 
   constexpr u8 to_sizeof(TypeOp op) noexcept
   {
     using enum clt::run::TypeOp;
 
-    switch_no_default (op)
+    switch_no_default(op)
     {
     case i8_t:
     case u8_t:
@@ -253,25 +275,69 @@ namespace clt::run
     }
   }
 
-  template<TypeOp Type> struct TypeOp_to_type {};
-  template<> struct TypeOp_to_type<TypeOp::u8_t> { using type = u8; };
-  template<> struct TypeOp_to_type<TypeOp::u16_t> { using type = u16; };
-  template<> struct TypeOp_to_type<TypeOp::u32_t> { using type = u32; };
-  template<> struct TypeOp_to_type<TypeOp::u64_t> { using type = u64; };
-  template<> struct TypeOp_to_type<TypeOp::i8_t> { using type = i8; };
-  template<> struct TypeOp_to_type<TypeOp::i16_t> { using type = i16; };
-  template<> struct TypeOp_to_type<TypeOp::i32_t> { using type = i32; };
-  template<> struct TypeOp_to_type<TypeOp::i64_t> { using type = i64; };
-  template<> struct TypeOp_to_type<TypeOp::f32_t> { using type = f32; };
-  template<> struct TypeOp_to_type<TypeOp::f64_t> { using type = f64; };
-  template<TypeOp Type> using TypeOp_to_type_t = typename TypeOp_to_type<Type>::type;
+  template<TypeOp Type>
+  struct TypeOp_to_type
+  {
+  };
+  template<>
+  struct TypeOp_to_type<TypeOp::u8_t>
+  {
+    using type = u8;
+  };
+  template<>
+  struct TypeOp_to_type<TypeOp::u16_t>
+  {
+    using type = u16;
+  };
+  template<>
+  struct TypeOp_to_type<TypeOp::u32_t>
+  {
+    using type = u32;
+  };
+  template<>
+  struct TypeOp_to_type<TypeOp::u64_t>
+  {
+    using type = u64;
+  };
+  template<>
+  struct TypeOp_to_type<TypeOp::i8_t>
+  {
+    using type = i8;
+  };
+  template<>
+  struct TypeOp_to_type<TypeOp::i16_t>
+  {
+    using type = i16;
+  };
+  template<>
+  struct TypeOp_to_type<TypeOp::i32_t>
+  {
+    using type = i32;
+  };
+  template<>
+  struct TypeOp_to_type<TypeOp::i64_t>
+  {
+    using type = i64;
+  };
+  template<>
+  struct TypeOp_to_type<TypeOp::f32_t>
+  {
+    using type = f32;
+  };
+  template<>
+  struct TypeOp_to_type<TypeOp::f64_t>
+  {
+    using type = f64;
+  };
+  template<TypeOp Type>
+  using TypeOp_to_type_t = typename TypeOp_to_type<Type>::type;
 
   /// @brief Converts an 'OpError' to a string explaining it
   /// @param err The OpError to explain
   /// @return String explaining the error
   constexpr const char* toExplanation(OpError err) noexcept
   {
-    switch_no_default (err)
+    switch_no_default(err)
     {
     case NO_ERROR:
       return "No errors detected!";
@@ -308,21 +374,21 @@ namespace clt::run
     if constexpr (std::is_floating_point_v<Ty>)
     {
       if (std::isnan(a.as<Ty>()))
-        return { a, WAS_NAN };
+        return {a, WAS_NAN};
       if (std::isnan(b.as<Ty>()))
-        return { b, WAS_NAN };
+        return {b, WAS_NAN};
       a.bit_assign(a.as<Ty>() + b.as<Ty>());
-      return { a, std::isnan(a.as<Ty>()) ? RET_NAN : NO_ERROR };
+      return {a, std::isnan(a.as<Ty>()) ? RET_NAN : NO_ERROR};
     }
     else
     {
-      Ty ret = 0;
-      auto error = details::int_op_to_op_error<Ty>(details::add_int(a.as<Ty>(), b.as<Ty>(), ret));
+      Ty ret     = 0;
+      auto error = details::int_op_to_op_error<Ty>(
+          details::add_int(a.as<Ty>(), b.as<Ty>(), ret));
       a.bit_assign(ret);
-      return { a, error };
+      return {a, error};
     }
   }
-
 
   template<TypeOp Op>
   ResultQWORD templated_sub(QWORD_t a, QWORD_t b) noexcept
@@ -331,21 +397,21 @@ namespace clt::run
     if constexpr (std::is_floating_point_v<Ty>)
     {
       if (std::isnan(a.as<Ty>()))
-        return { a, WAS_NAN };
+        return {a, WAS_NAN};
       if (std::isnan(b.as<Ty>()))
-        return { b, WAS_NAN };
+        return {b, WAS_NAN};
       a.bit_assign(a.as<Ty>() - b.as<Ty>());
-      return { a, std::isnan(a.as<Ty>()) ? RET_NAN : NO_ERROR };
+      return {a, std::isnan(a.as<Ty>()) ? RET_NAN : NO_ERROR};
     }
     else
     {
-      Ty ret = 0;
-      auto error = details::int_op_to_op_error<Ty>(details::sub_int(a.as<Ty>(), b.as<Ty>(), ret));
+      Ty ret     = 0;
+      auto error = details::int_op_to_op_error<Ty>(
+          details::sub_int(a.as<Ty>(), b.as<Ty>(), ret));
       a.bit_assign(ret);
-      return { a, error };
+      return {a, error};
     }
   }
-
 
   template<TypeOp Op>
   ResultQWORD templated_mul(QWORD_t a, QWORD_t b) noexcept
@@ -354,21 +420,21 @@ namespace clt::run
     if constexpr (std::is_floating_point_v<Ty>)
     {
       if (std::isnan(a.as<Ty>()))
-        return { a, WAS_NAN };
+        return {a, WAS_NAN};
       if (std::isnan(b.as<Ty>()))
-        return { b, WAS_NAN };
+        return {b, WAS_NAN};
       a.bit_assign(a.as<Ty>() * b.as<Ty>());
-      return { a, std::isnan(a.as<Ty>()) ? RET_NAN : NO_ERROR };
+      return {a, std::isnan(a.as<Ty>()) ? RET_NAN : NO_ERROR};
     }
     else
     {
-      Ty ret = 0;
-      auto error = details::int_op_to_op_error<Ty>(details::mul_int(a.as<Ty>(), b.as<Ty>(), ret));
+      Ty ret     = 0;
+      auto error = details::int_op_to_op_error<Ty>(
+          details::mul_int(a.as<Ty>(), b.as<Ty>(), ret));
       a.bit_assign(ret);
-      return { a, error };
+      return {a, error};
     }
   }
-
 
   template<TypeOp Op>
   ResultQWORD templated_div(QWORD_t a, QWORD_t b) noexcept
@@ -377,61 +443,62 @@ namespace clt::run
     if constexpr (std::is_floating_point_v<Ty>)
     {
       if (std::isnan(a.as<Ty>()))
-        return { a, WAS_NAN };
+        return {a, WAS_NAN};
       if (std::isnan(b.as<Ty>()))
-        return { b, WAS_NAN };
+        return {b, WAS_NAN};
       a.bit_assign(a.as<Ty>() / b.as<Ty>());
-      return { a, std::isnan(a.as<Ty>()) ? RET_NAN : NO_ERROR };
+      return {a, std::isnan(a.as<Ty>()) ? RET_NAN : NO_ERROR};
     }
     else
     {
       if (b.as<Ty>() == 0)
-        return { a, DIV_BY_ZERO };
-      Ty ret = 0;
-      auto error = details::int_op_to_op_error<Ty>(details::div_int(a.as<Ty>(), b.as<Ty>(), ret));
+        return {a, DIV_BY_ZERO};
+      Ty ret     = 0;
+      auto error = details::int_op_to_op_error<Ty>(
+          details::div_int(a.as<Ty>(), b.as<Ty>(), ret));
       a.bit_assign(ret);
-      return { a, error };
+      return {a, error};
     }
   }
 
-
   template<TypeOp Op>
-  ResultQWORD  templated_mod(QWORD_t a, QWORD_t b) noexcept
+  ResultQWORD templated_mod(QWORD_t a, QWORD_t b) noexcept
   {
     using Ty = TypeOp_to_type_t<Op>;
     if constexpr (std::is_floating_point_v<Ty>)
-      return { a, INVALID_OP };
+      return {a, INVALID_OP};
     else
     {
       if (b.as<Ty>() == 0)
-        return { a, DIV_BY_ZERO };
-      Ty ret = 0;
-      OpError error = details::int_op_to_op_error<Ty>(details::mod_int(a.as<Ty>(), b.as<Ty>(), ret));
+        return {a, DIV_BY_ZERO};
+      Ty ret        = 0;
+      OpError error = details::int_op_to_op_error<Ty>(
+          details::mod_int(a.as<Ty>(), b.as<Ty>(), ret));
       a.bit_assign(ret);
-      return { a, error };
-    }    
+      return {a, error};
+    }
   }
 
   template<TypeOp Op>
-  ResultQWORD  templated_neg(QWORD_t a) noexcept
+  ResultQWORD templated_neg(QWORD_t a) noexcept
   {
     using Ty = TypeOp_to_type_t<Op>;
     if constexpr (std::is_floating_point_v<Ty>)
     {
       if (std::isnan(a.as<Ty>()))
-        return { a, WAS_NAN };
+        return {a, WAS_NAN};
       a.bit_assign(-a.as<Ty>());
-      return { a, std::isnan(a.as<Ty>()) ? RET_NAN : NO_ERROR };
+      return {a, std::isnan(a.as<Ty>()) ? RET_NAN : NO_ERROR};
     }
     else if constexpr (std::is_signed_v<Ty>)
     {
       if (a.as<Ty>() == std::numeric_limits<Ty>::min())
-        return { a.as<Ty>(), SIGNED_UNDERFLOW };
+        return {a.as<Ty>(), SIGNED_UNDERFLOW};
       a.bit_assign(-a.as<Ty>());
-      return { a, NO_ERROR };
+      return {a, NO_ERROR};
     }
     else
-      return { a, INVALID_OP };
+      return {a, INVALID_OP};
   }
 
   /*************** COMPARISON ***************/
@@ -445,11 +512,10 @@ namespace clt::run
     if constexpr (std::is_floating_point_v<Ty>)
     {
       if (std::isnan(a.as<Ty>()) || std::isnan(b.as<Ty>()))
-        return { ret, WAS_NAN };
+        return {ret, WAS_NAN};
     }
-    return { ret, NO_ERROR };
+    return {ret, NO_ERROR};
   }
-
 
   template<TypeOp Op>
   ResultQWORD templated_neq(QWORD_t a, QWORD_t b) noexcept
@@ -460,11 +526,10 @@ namespace clt::run
     if constexpr (std::is_floating_point_v<Ty>)
     {
       if (std::isnan(a.as<Ty>()) || std::isnan(b.as<Ty>()))
-        return { ret, WAS_NAN };
+        return {ret, WAS_NAN};
     }
-    return { ret, NO_ERROR };
+    return {ret, NO_ERROR};
   }
-
 
   template<TypeOp Op>
   ResultQWORD templated_le(QWORD_t a, QWORD_t b) noexcept
@@ -475,11 +540,10 @@ namespace clt::run
     if constexpr (std::is_floating_point_v<Ty>)
     {
       if (std::isnan(a.as<Ty>()) || std::isnan(b.as<Ty>()))
-        return { ret, WAS_NAN };
+        return {ret, WAS_NAN};
     }
-    return { ret, NO_ERROR };
+    return {ret, NO_ERROR};
   }
-
 
   template<TypeOp Op>
   ResultQWORD templated_ge(QWORD_t a, QWORD_t b) noexcept
@@ -490,11 +554,10 @@ namespace clt::run
     if constexpr (std::is_floating_point_v<Ty>)
     {
       if (std::isnan(a.as<Ty>()) || std::isnan(b.as<Ty>()))
-        return { ret, WAS_NAN };
+        return {ret, WAS_NAN};
     }
-    return { ret, NO_ERROR };
+    return {ret, NO_ERROR};
   }
-
 
   template<TypeOp Op>
   ResultQWORD templated_leq(QWORD_t a, QWORD_t b) noexcept
@@ -505,11 +568,10 @@ namespace clt::run
     if constexpr (std::is_floating_point_v<Ty>)
     {
       if (std::isnan(a.as<Ty>()) || std::isnan(b.as<Ty>()))
-        return { ret, WAS_NAN };
+        return {ret, WAS_NAN};
     }
-    return { ret, NO_ERROR };
+    return {ret, NO_ERROR};
   }
-
 
   template<TypeOp Op>
   ResultQWORD templated_geq(QWORD_t a, QWORD_t b) noexcept
@@ -520,9 +582,9 @@ namespace clt::run
     if constexpr (std::is_floating_point_v<Ty>)
     {
       if (std::isnan(a.as<Ty>()) || std::isnan(b.as<Ty>()))
-        return { ret, WAS_NAN };
+        return {ret, WAS_NAN};
     }
-    return { ret, NO_ERROR };
+    return {ret, NO_ERROR};
   }
 
   /***************** BITWISE *****************/
@@ -533,42 +595,42 @@ namespace clt::run
     {
       return ((u64)2 << (u64)bits) - 1;
     }
-  }
+  } // namespace details
 
   inline ResultQWORD bit_and(QWORD_t a, QWORD_t b, u8 bits) noexcept
   {
-    return { (a & b) & details::generate_n_bits_1(bits), NO_ERROR};
+    return {(a & b) & details::generate_n_bits_1(bits), NO_ERROR};
   }
 
-
-  inline ResultQWORD  bit_or(QWORD_t a, QWORD_t b, u8 bits) noexcept
+  inline ResultQWORD bit_or(QWORD_t a, QWORD_t b, u8 bits) noexcept
   {
-    return { (a | b) & details::generate_n_bits_1(bits), NO_ERROR };
+    return {(a | b) & details::generate_n_bits_1(bits), NO_ERROR};
   }
-
 
   inline ResultQWORD bit_xor(QWORD_t a, QWORD_t b, u8 bits) noexcept
   {
-    return { (a ^ b) & details::generate_n_bits_1(bits), NO_ERROR };
+    return {(a ^ b) & details::generate_n_bits_1(bits), NO_ERROR};
   }
 
   inline ResultQWORD lsr(QWORD_t a, QWORD_t b, u8 bits) noexcept
   {
     QWORD_t result;
-    result.bit_assign((a.as<u64>() >> b.as<u64>()) & details::generate_n_bits_1(bits));
-    return { result, b.as<u64>() < bits ? NO_ERROR : SHIFT_BY_GRE_SIZEOF };
+    result.bit_assign(
+        (a.as<u64>() >> b.as<u64>()) & details::generate_n_bits_1(bits));
+    return {result, b.as<u64>() < bits ? NO_ERROR : SHIFT_BY_GRE_SIZEOF};
   }
 
   inline ResultQWORD lsl(QWORD_t a, QWORD_t b, u8 bits) noexcept
   {
     QWORD_t result;
-    result.bit_assign((a.as<u64>() << b.as<u64>()) & details::generate_n_bits_1(bits));
-    return { result, b.as<u64>() < bits ? NO_ERROR : SHIFT_BY_GRE_SIZEOF };
+    result.bit_assign(
+        (a.as<u64>() << b.as<u64>()) & details::generate_n_bits_1(bits));
+    return {result, b.as<u64>() < bits ? NO_ERROR : SHIFT_BY_GRE_SIZEOF};
   }
 
   inline ResultQWORD asr(QWORD_t a, QWORD_t b, u8 bits) noexcept
   {
-    QWORD_t result = 0;
+    QWORD_t result    = 0;
     const u64 bitmask = details::generate_n_bits_1(bits);
     a &= bitmask;
     if (a.is_set(bits))
@@ -578,7 +640,7 @@ namespace clt::run
     }
     else
       result.bit_assign(a.as<u64>() >> b.as<u64>());
-    return { result & bitmask, b.as<u64>() < bits ? NO_ERROR : SHIFT_BY_GRE_SIZEOF };
+    return {result & bitmask, b.as<u64>() < bits ? NO_ERROR : SHIFT_BY_GRE_SIZEOF};
   }
 
   inline ResultQWORD bit_not(QWORD_t a, u8 bits) noexcept
@@ -586,7 +648,7 @@ namespace clt::run
     a = ~a;
     // We turn off the bits that shouldn't be on
     a &= details::generate_n_bits_1(bits);
-    return { a, NO_ERROR };
+    return {a, NO_ERROR};
   }
 
   /***************** CONVERSIONS *****************/
@@ -595,52 +657,58 @@ namespace clt::run
   ResultQWORD templated_cnv(QWORD_t a) noexcept
   {
     using From_t = TypeOp_to_type_t<From>;
-    using To_t = TypeOp_to_type_t<To>;
+    using To_t   = TypeOp_to_type_t<To>;
     if constexpr (std::is_floating_point_v<From_t>)
       if (std::isnan(a.as<From_t>()))
-        return { {}, WAS_NAN };
-    if constexpr (std::is_floating_point_v<From_t> && !std::is_floating_point_v<To_t>)
+        return {{}, WAS_NAN};
+    if constexpr (
+        std::is_floating_point_v<From_t> && !std::is_floating_point_v<To_t>)
     {
       if constexpr (std::is_unsigned_v<To_t>)
       {
-        constexpr auto MAX_VALUE = static_cast<From_t>(std::numeric_limits<To_t>::max() / 2 + 1) * static_cast<From_t>(2.0);
+        constexpr auto MAX_VALUE =
+            static_cast<From_t>(std::numeric_limits<To_t>::max() / 2 + 1)
+            * static_cast<From_t>(2.0);
         if (a.as<From_t>() < static_cast<From_t>(0.0))
-          return { {}, UNSIGNED_UNDERFLOW };
+          return {{}, UNSIGNED_UNDERFLOW};
         if (!(a.as<From_t>() - MAX_VALUE < static_cast<From_t>(-0.5)))
         {
           a.bit_assign(std::numeric_limits<To_t>::max());
-          return { a, UNSIGNED_OVERFLOW };
+          return {a, UNSIGNED_OVERFLOW};
         }
       }
       else if constexpr (std::is_signed_v<To_t>)
       {
-        constexpr auto MAX_VALUE = static_cast<From_t>(std::numeric_limits<To_t>::max() / 2 + 1) * static_cast<From_t>(2.0);
+        constexpr auto MAX_VALUE =
+            static_cast<From_t>(std::numeric_limits<To_t>::max() / 2 + 1)
+            * static_cast<From_t>(2.0);
         if (!(a.as<From_t>() - MAX_VALUE < static_cast<From_t>(-0.5)))
         {
           a.bit_assign(std::numeric_limits<To_t>::max());
-          return { a, SIGNED_OVERFLOW };
+          return {a, SIGNED_OVERFLOW};
         }
-        if (!(a.as<From_t>() - static_cast<From_t>(std::numeric_limits<To_t>::min()) > static_cast<From_t>(-0.5)))
+        if (!(a.as<From_t>() - static_cast<From_t>(std::numeric_limits<To_t>::min())
+              > static_cast<From_t>(-0.5)))
         {
           a.bit_assign(std::numeric_limits<To_t>::min());
-          return { std::numeric_limits<To_t>::min(), SIGNED_UNDERFLOW };
+          return {std::numeric_limits<To_t>::min(), SIGNED_UNDERFLOW};
         }
       }
     }
     a.bit_assign(static_cast<To_t>(a.as<From_t>()));
-    return { a, NO_ERROR };
+    return {a, NO_ERROR};
   }
 
   /***************** UTILITIES *****************/
 
   /// @brief QWORD_t binary instruction function type
-  using BinaryInst_t = ResultQWORD(*)(QWORD_t, QWORD_t, TypeOp) noexcept;
+  using BinaryInst_t = ResultQWORD (*)(QWORD_t, QWORD_t, TypeOp) noexcept;
 
   /// @brief Helper to avoid casting nullptr to BinaryInst_t type
   inline constexpr BinaryInst_t nullbinary = nullptr;
 
   /// @brief QWORD_t unary instruction function type
-  using UnaryInst_t = ResultQWORD(*)(QWORD_t, TypeOp) noexcept;
+  using UnaryInst_t = ResultQWORD (*)(QWORD_t, TypeOp) noexcept;
 
   /// @brief Helper to avoid casting nullptr to UnaryInst_t type
   inline constexpr UnaryInst_t nullunary = nullptr;
@@ -703,18 +771,16 @@ namespace clt::run
     template<TypeOp Op, TypeOp... Ty>
     consteval auto generate_cnv_row()
     {
-      return std::array{ &templated_cnv<Op, Ty>... };
+      return std::array{&templated_cnv<Op, Ty>...};
     }
 
     template<TypeOp... Ty>
     consteval auto generate_cnv()
     {
       // We need to generate a matrix of all possible conversions
-      return std::array{
-        generate_cnv_row<Ty, Ty...>()...
-      };
+      return std::array{generate_cnv_row<Ty, Ty...>()...};
     }
-  }
+  } // namespace details
 
   /// @brief Adds two QWORDs
   /// @param a The first operand
@@ -798,6 +864,6 @@ namespace clt::run
     static constexpr auto cnv = details::generate_cnv<COLT_TypeOp_PACK>();
     return cnv[(u8)from][(u8)to](value);
   }
-}
+} // namespace clt::run
 
 #endif //!HG_COLT_QWORD_OP

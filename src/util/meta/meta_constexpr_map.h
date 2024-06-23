@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   meta_constexpr_map.h
  * @brief  A constexpr map used for compile-time lookups
- * 
+ *
  * @author RPC
  * @date   January 2024
  *********************************************************************/
@@ -16,7 +16,7 @@
 
 namespace clt::meta
 {
-  template <typename Key, typename Value, std::size_t Size>
+  template<typename Key, typename Value, std::size_t Size>
   /// @brief constexpr Map for compile-time lookups
   /// @tparam Key The Key type
   /// @tparam Value The Value type
@@ -26,27 +26,30 @@ namespace clt::meta
     std::array<std::pair<Key, Value>, Size> data;
 
     constexpr ConstexprMap(std::array<std::pair<Key, Value>, Size> data)
-      : data(data)
+        : data(data)
     {
       using pair_t = std::pair<Key, Value>;
 
-      std::sort(this->data.begin(), this->data.end(),
-        [](const pair_t& a, const pair_t& b) { return a.first < b.first; });
+      std::sort(
+          this->data.begin(), this->data.end(),
+          [](const pair_t& a, const pair_t& b) { return a.first < b.first; });
 
-      assert_true("Items not unique!",
-        std::adjacent_find(data.begin(), data.end()) == data.end());
+      assert_true(
+          "Items not unique!",
+          std::adjacent_find(data.begin(), data.end()) == data.end());
     }
 
     [[nodiscard]]
     /// @brief Searches for the value associated with 'key'
     /// @param key The key whose value to find
     /// @return None if not found, else the value
-    constexpr Option<Value> find(const Key& key) const
+    constexpr Option<Value>
+        find(const Key& key) const
     {
       if constexpr (Size == 0)
         return None;
 
-      u64 low = 0;
+      u64 low  = 0;
       u64 high = Size - 1;
 
       // Binary search
@@ -68,6 +71,6 @@ namespace clt::meta
       return None;
     }
   };
-}
+} // namespace clt::meta
 
 #endif //!HG_META_CONSTEXPR_MAP

@@ -7,8 +7,7 @@ namespace clt::run
 {
   class ColtIAssembler
   {
-
   };
-}
+} // namespace clt::run
 
 #endif // !HG_COLTI_ASSEMBLER

@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   ascii.h
  * @brief  Contains helpers to identify the category of ASCII character.
- * 
+ *
  * @author RPC
  * @date   January 2024
  *********************************************************************/
@@ -17,8 +17,7 @@ namespace clt
   namespace details
   {
     /// @brief Used to extract data from CHAR_INFO_TABLE (see example in 'islower')
-    enum CharInfo
-      : u8
+    enum CharInfo : u8
     {
       /// @brief Check if the result of indexing into
       /// CHAR_INFO_TABLE is a control character.
@@ -51,138 +50,137 @@ namespace clt
     };
 
     /// @brief Table of all the characters information
-    constexpr std::array<u8, 256> CHAR_INFO_TABLE =
-    {
-      0b00000001, //[NULL]
-      0b00000001, //[START OF HEADING]
-      0b00000001, //[START OF TEXT]
-      0b00000001, //[END OF TEXT]
-      0b00000001, //[END OF TRANSMISSION]
-      0b00000001, //[ENQUIRY]
-      0b00000001, //[ACKNOWLEDGE]
-      0b00000001, //[BELL]
-      0b00000001, //[BACKSPACE]
-      0b00100001, //[HORIZONTAL TAB]
-      0b00100001, //[LINE FEED]
-      0b00100001, //[VERTICAL TAB]
-      0b00100001, //[FORM FEED]
-      0b00100001, //[CARRIAGE RETURN]
-      0b00000001, //[SHIFT OUT]
-      0b00000001, //[SHIFT IN]
-      0b00000001, //[DATA LINK ESCAPE]
-      0b00000001, //[DEVICE CONTROL 1]
-      0b00000001, //[DEVICE CONTROL 2]
-      0b00000001, //[DEVICE CONTROL 3]
-      0b00000001, //[DEVICE CONTROL 4]
-      0b00000001, //[NEGATIVE ACKNOWLEDGE]
-      0b00000001, //[SYNCHRONOUS IDLE]
-      0b00000001, //[ENG OF TRANS. BLOCK]
-      0b00000001, //[CANCEL]
-      0b00000001, //[END OF MEDIUM]
-      0b00000001, //[SUBSTITUTE]
-      0b00000001, //[ESCAPE]
-      0b00000001, //[FILE SEPARATOR]
-      0b00000001, //[GROUP SEPARATOR]
-      0b00000001, //[RECORD SEPARATOR]
-      0b00000001, //[UNIT SEPARATOR]
-      0b00100000, //[SPACE]
-      0b00010000, // '!'
-      0b00010000, // '"'
-      0b00010000, // '#'
-      0b00010000, // '$'
-      0b00010000, // '%'
-      0b00010000, // '&'
-      0b00010000, // '''
-      0b00010000, // '('
-      0b00010000, // ')'
-      0b00010000, // '*'
-      0b00010000, // '+'
-      0b00010000, // ','
-      0b00010000, // '-'
-      0b00010000, // '.'
-      0b00010000, // '/'
-      0b00000100, // '0'
-      0b00000100, // '1'
-      0b00000100, // '2'
-      0b00000100, // '3'
-      0b00000100, // '4'
-      0b00000100, // '5'
-      0b00000100, // '6'
-      0b00000100, // '7'
-      0b00000100, // '8'
-      0b00000100, // '9'
-      0b00010000, // ':'
-      0b00010000, // ';'
-      0b00010000, // '<'
-      0b00010000, // '='
-      0b00010000, // '>'
-      0b00010000, // '?'
-      0b00010000, // '@'
-      0b01000000, // 'A'
-      0b01000000, // 'B'
-      0b01000000, // 'C'
-      0b01000000, // 'D'
-      0b01000000, // 'E'
-      0b01000000, // 'F'
-      0b01000000, // 'G'
-      0b01000000, // 'H'
-      0b01000000, // 'I'
-      0b01000000, // 'J'
-      0b01000000, // 'K'
-      0b01000000, // 'L'
-      0b01000000, // 'M'
-      0b01000000, // 'N'
-      0b01000000, // 'O'
-      0b01000000, // 'P'
-      0b01000000, // 'Q'
-      0b01000000, // 'R'
-      0b01000000, // 'S'
-      0b01000000, // 'T'
-      0b01000000, // 'U'
-      0b01000000, // 'V'
-      0b01000000, // 'W'
-      0b01000000, // 'X'
-      0b01000000, // 'Y'
-      0b01000000, // 'Z'
-      0b00010000, // '['
-      0b00010000, // '\'
-      0b00010000, // ']'
-      0b00010000, // '^'
-      0b00010000, // '_'
-      0b00010000, // '`'
-      0b00001000, // 'a'
-      0b00001000, // 'b'
-      0b00001000, // 'c'
-      0b00001000, // 'd'
-      0b00001000, // 'e'
-      0b00001000, // 'f'
-      0b00001000, // 'g'
-      0b00001000, // 'h'
-      0b00001000, // 'i'
-      0b00001000, // 'j'
-      0b00001000, // 'k'
-      0b00001000, // 'l'
-      0b00001000, // 'm'
-      0b00001000, // 'n'
-      0b00001000, // 'o'
-      0b00001000, // 'p'
-      0b00001000, // 'q'
-      0b00001000, // 'r'
-      0b00001000, // 's'
-      0b00001000, // 't'
-      0b00001000, // 'u'
-      0b00001000, // 'v'
-      0b00001000, // 'w'
-      0b00001000, // 'x'
-      0b00001000, // 'y'
-      0b00001000, // 'z'
-      0b00010000, // '{'
-      0b00010000, // '|'
-      0b00010000, // '}'
-      0b00010000, // '~'
-      0b00000001, //[DEL]
+    constexpr std::array<u8, 256> CHAR_INFO_TABLE = {
+        0b00000001, //[NULL]
+        0b00000001, //[START OF HEADING]
+        0b00000001, //[START OF TEXT]
+        0b00000001, //[END OF TEXT]
+        0b00000001, //[END OF TRANSMISSION]
+        0b00000001, //[ENQUIRY]
+        0b00000001, //[ACKNOWLEDGE]
+        0b00000001, //[BELL]
+        0b00000001, //[BACKSPACE]
+        0b00100001, //[HORIZONTAL TAB]
+        0b00100001, //[LINE FEED]
+        0b00100001, //[VERTICAL TAB]
+        0b00100001, //[FORM FEED]
+        0b00100001, //[CARRIAGE RETURN]
+        0b00000001, //[SHIFT OUT]
+        0b00000001, //[SHIFT IN]
+        0b00000001, //[DATA LINK ESCAPE]
+        0b00000001, //[DEVICE CONTROL 1]
+        0b00000001, //[DEVICE CONTROL 2]
+        0b00000001, //[DEVICE CONTROL 3]
+        0b00000001, //[DEVICE CONTROL 4]
+        0b00000001, //[NEGATIVE ACKNOWLEDGE]
+        0b00000001, //[SYNCHRONOUS IDLE]
+        0b00000001, //[ENG OF TRANS. BLOCK]
+        0b00000001, //[CANCEL]
+        0b00000001, //[END OF MEDIUM]
+        0b00000001, //[SUBSTITUTE]
+        0b00000001, //[ESCAPE]
+        0b00000001, //[FILE SEPARATOR]
+        0b00000001, //[GROUP SEPARATOR]
+        0b00000001, //[RECORD SEPARATOR]
+        0b00000001, //[UNIT SEPARATOR]
+        0b00100000, //[SPACE]
+        0b00010000, // '!'
+        0b00010000, // '"'
+        0b00010000, // '#'
+        0b00010000, // '$'
+        0b00010000, // '%'
+        0b00010000, // '&'
+        0b00010000, // '''
+        0b00010000, // '('
+        0b00010000, // ')'
+        0b00010000, // '*'
+        0b00010000, // '+'
+        0b00010000, // ','
+        0b00010000, // '-'
+        0b00010000, // '.'
+        0b00010000, // '/'
+        0b00000100, // '0'
+        0b00000100, // '1'
+        0b00000100, // '2'
+        0b00000100, // '3'
+        0b00000100, // '4'
+        0b00000100, // '5'
+        0b00000100, // '6'
+        0b00000100, // '7'
+        0b00000100, // '8'
+        0b00000100, // '9'
+        0b00010000, // ':'
+        0b00010000, // ';'
+        0b00010000, // '<'
+        0b00010000, // '='
+        0b00010000, // '>'
+        0b00010000, // '?'
+        0b00010000, // '@'
+        0b01000000, // 'A'
+        0b01000000, // 'B'
+        0b01000000, // 'C'
+        0b01000000, // 'D'
+        0b01000000, // 'E'
+        0b01000000, // 'F'
+        0b01000000, // 'G'
+        0b01000000, // 'H'
+        0b01000000, // 'I'
+        0b01000000, // 'J'
+        0b01000000, // 'K'
+        0b01000000, // 'L'
+        0b01000000, // 'M'
+        0b01000000, // 'N'
+        0b01000000, // 'O'
+        0b01000000, // 'P'
+        0b01000000, // 'Q'
+        0b01000000, // 'R'
+        0b01000000, // 'S'
+        0b01000000, // 'T'
+        0b01000000, // 'U'
+        0b01000000, // 'V'
+        0b01000000, // 'W'
+        0b01000000, // 'X'
+        0b01000000, // 'Y'
+        0b01000000, // 'Z'
+        0b00010000, // '['
+        0b00010000, // '\'
+        0b00010000, // ']'
+        0b00010000, // '^'
+        0b00010000, // '_'
+        0b00010000, // '`'
+        0b00001000, // 'a'
+        0b00001000, // 'b'
+        0b00001000, // 'c'
+        0b00001000, // 'd'
+        0b00001000, // 'e'
+        0b00001000, // 'f'
+        0b00001000, // 'g'
+        0b00001000, // 'h'
+        0b00001000, // 'i'
+        0b00001000, // 'j'
+        0b00001000, // 'k'
+        0b00001000, // 'l'
+        0b00001000, // 'm'
+        0b00001000, // 'n'
+        0b00001000, // 'o'
+        0b00001000, // 'p'
+        0b00001000, // 'q'
+        0b00001000, // 'r'
+        0b00001000, // 's'
+        0b00001000, // 't'
+        0b00001000, // 'u'
+        0b00001000, // 'v'
+        0b00001000, // 'w'
+        0b00001000, // 'x'
+        0b00001000, // 'y'
+        0b00001000, // 'z'
+        0b00010000, // '{'
+        0b00010000, // '|'
+        0b00010000, // '}'
+        0b00010000, // '~'
+        0b00000001, //[DEL]
     };
-  }
+  } // namespace details
 
   /// @brief Checks if the given character is a control character.
   /// Locale independent.
@@ -315,7 +313,8 @@ namespace clt
   /// @param a The first string
   /// @param b The second string
   /// @return True if both strings are equal (without regard to case)
-  constexpr bool is_equal_case_insensitive(std::string_view a, std::string_view b) noexcept
+  constexpr bool is_equal_case_insensitive(
+      std::string_view a, std::string_view b) noexcept
   {
     if (a.size() != b.size())
       return false;
@@ -332,18 +331,19 @@ namespace clt
   /// @return Split iterator
   constexpr auto split_by_char(std::string_view strv, char chr) noexcept
   {
-    return strv
-      | std::views::split(chr)
-      | std::views::transform([](auto&& r) -> std::string_view {
-      return { r.begin(), r.end() };
-        });
+    return strv | std::views::split(chr)
+           | std::views::transform(
+               [](auto&& r) -> std::string_view {
+                 return {r.begin(), r.end()};
+               });
   }
 
   /// @brief Strips chars from the beginning and end of a StringView
   /// @param strv The StringView to strip
   /// @param fn The filter function (pops the character if it returns true)
   /// @return Stripped StringView
-  constexpr std::string_view strip(std::string_view strv, bool(*fn)(char) = &clt::isspace) noexcept
+  constexpr std::string_view strip(
+      std::string_view strv, bool (*fn)(char) = &clt::isspace) noexcept
   {
     while (!strv.empty() && fn(strv.front()))
       strv.remove_prefix(1);
@@ -351,6 +351,6 @@ namespace clt
       strv.remove_suffix(1);
     return strv;
   }
-}
+} // namespace clt
 
 #endif //!HG_COLT_ASCII

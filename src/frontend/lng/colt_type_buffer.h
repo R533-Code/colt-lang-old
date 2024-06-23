@@ -1,9 +1,9 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   colt_type_buffer.h
  * @brief  Contains TypeBuffer, responsible for storing types.
  * When compiling, the TypeBuffer is shared by all the files
  * representing the program.
- * 
+ *
  * @author RPC
  * @date   March 2024
  *********************************************************************/
@@ -59,10 +59,7 @@ namespace clt::lng
 
     /// @brief Returns a void type
     /// @return Void Type
-    TypeToken void_type() noexcept
-    {
-      return add_type(make_coltc_type<VoidType>());
-    }
+    TypeToken void_type() noexcept { return add_type(make_coltc_type<VoidType>()); }
 
     /// @brief Saves a built-in type
     /// @param id The type ID
@@ -79,7 +76,7 @@ namespace clt::lng
     {
       return add_type(make_coltc_type<PtrType>(to));
     }
-    
+
     /// @brief Saves a mutable pointer to a type
     /// @param to The type pointed to
     /// @return The TypeToken representing the mutable pointer
@@ -87,7 +84,7 @@ namespace clt::lng
     {
       return add_type(make_coltc_type<MutPtrType>(to));
     }
-    
+
     /// @brief Saves a pointer to a type
     /// @param to The type pointed to
     /// @return The TypeToken representing the pointer
@@ -95,7 +92,7 @@ namespace clt::lng
     {
       return add_type(make_coltc_type<OpaquePtrType>());
     }
-    
+
     /// @brief Saves a mutable pointer to a type
     /// @param to The type pointed to
     /// @return The TypeToken representing the mutable pointer
@@ -109,10 +106,14 @@ namespace clt::lng
     /// @param arguments_type The arguments type of the function
     /// @param is_c_variadic True if the function uses C variadic arguments
     /// @return The TypeToken representing the function
-    TypeToken add_fn(TypeToken return_type, Vector<FnTypeArgument>&& arguments_type, bool is_c_variadic = false) noexcept
+    TypeToken add_fn(
+        TypeToken return_type, Vector<FnTypeArgument>&& arguments_type,
+        bool is_c_variadic = false) noexcept
     {
-      auto [pair, insert] = fn_payloads.insert({ is_c_variadic, return_type, std::move(arguments_type) });
-      assert_true("Integer overflow detected!", pair <= std::numeric_limits<u32>::max());
+      auto [pair, insert] = fn_payloads.insert(
+          {is_c_variadic, return_type, std::move(arguments_type)});
+      assert_true(
+          "Integer overflow detected!", pair <= std::numeric_limits<u32>::max());
       return add_type(make_coltc_type<FnType>(static_cast<u32>(pair)));
     }
 
@@ -125,6 +126,6 @@ namespace clt::lng
       return type_map.internal_list()[tkn.getID()];
     }
   };
-}
+} // namespace clt::lng
 
 #endif // !HG_COLTC_TYPE_BUFFER

@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   meta_maths.h
  * @brief  Contains constexpr equivalent of some mathematical functions.
- * 
+ *
  * @author RPC
  * @date   January 2024
  *********************************************************************/
@@ -51,13 +51,15 @@ namespace clt
     return largest;
   }
 
-  template<meta::Integral Int> requires std::is_signed_v<Int>
+  template<meta::Integral Int>
+    requires std::is_signed_v<Int>
   /// @brief Returns the absolute value (distance from zero) of an integer
   /// @param value The value whose absolute value to compute
   /// @return The absolute value
   constexpr std::make_unsigned_t<Int> abs(Int value) noexcept
   {
-    assert_true("Invalid argument for 'abs'!", value != std::numeric_limits<Int>::min());
+    assert_true(
+        "Invalid argument for 'abs'!", value != std::numeric_limits<Int>::min());
     if (std::is_constant_evaluated())
     {
       if (value < 0)
@@ -132,7 +134,8 @@ namespace clt
     {
       if (x >= (std::numeric_limits<Fp>::radix / std::numeric_limits<Fp>::epsilon()))
         return x;
-      if (x <= -(std::numeric_limits<Fp>::radix / std::numeric_limits<Fp>::epsilon()))
+      if (x
+          <= -(std::numeric_limits<Fp>::radix / std::numeric_limits<Fp>::epsilon()))
         return x;
 
       if (x > 0)
@@ -165,7 +168,8 @@ namespace clt
     {
       if (x >= (std::numeric_limits<Fp>::radix / std::numeric_limits<Fp>::epsilon()))
         return x;
-      if (x <= -(std::numeric_limits<Fp>::radix / std::numeric_limits<Fp>::epsilon()))
+      if (x
+          <= -(std::numeric_limits<Fp>::radix / std::numeric_limits<Fp>::epsilon()))
         return x;
 
       if (x > 0)
@@ -189,7 +193,8 @@ namespace clt
     {
       if (x >= (std::numeric_limits<Fp>::radix / std::numeric_limits<Fp>::epsilon()))
         return x;
-      if (x <= -(std::numeric_limits<Fp>::radix / std::numeric_limits<Fp>::epsilon()))
+      if (x
+          <= -(std::numeric_limits<Fp>::radix / std::numeric_limits<Fp>::epsilon()))
         return x;
 
       if (x > 0)
@@ -215,20 +220,21 @@ namespace clt
       Fp result;
 
       Fp delta, newVal, oldVal = A / n;
-      do {
+      do
+      {
         newVal = oldVal;
         for (int i = 1; i < n - 1; ++i)
           newVal *= oldVal;
 
         newVal = (A / newVal + (n - 1) * oldVal) / n;
-        delta = oldVal - newVal;
+        delta  = oldVal - newVal;
         if (delta < 0)
           delta = -delta;
         result = oldVal = newVal;
       } while (delta > 0.00001);
       return result;
     }
-  }
+  } // namespace details
 
   template<meta::FloatingPoint Fp>
   /// @brief Returns 'base' to the power 'power'
@@ -244,7 +250,7 @@ namespace clt
       if (base == static_cast<Fp>(1.0))
         return static_cast<Fp>(1.0);
       bool is_neg = power < static_cast<Fp>(0.0);
-      power = clt::abs(power);
+      power       = clt::abs(power);
 
       auto result = static_cast<Fp>(1.0);
       while (power >= static_cast<Fp>(1.0))
@@ -329,10 +335,10 @@ namespace clt
       }
       result *= std::numbers::ln2_v<Fp>;
 
-      Fp sum = 0;
-      Fp term = 2 * (x - 1) / (x + 1);
+      Fp sum        = 0;
+      Fp term       = 2 * (x - 1) / (x + 1);
       Fp multiplier = term * term;
-      size_t k = 1;
+      size_t k      = 1;
       while (term > static_cast<Fp>(1e-10))
       {
         sum += term / k;
@@ -395,6 +401,6 @@ namespace clt
   {
     return clt::log2(static_cast<Fp>(x));
   }
-}
+} // namespace clt
 
 #endif //!HG_COLT_MATH

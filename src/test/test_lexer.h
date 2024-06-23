@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   test_lexer.h
  * @brief  Tests for Lexer.
- * 
+ *
  * @author RPC
  * @date   February 2024
  *********************************************************************/
@@ -21,6 +21,6 @@ namespace clt::test
   /// @param file_path The file to use as a test
   /// @param error_count The error count to increment on errors
   void test_lexer(StringView file_path, u32& error_count) noexcept;
-}
+} // namespace clt::test
 
 #endif // !HG_COLT_TEST_LEXER

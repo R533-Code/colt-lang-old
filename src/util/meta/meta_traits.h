@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   meta_traits.h
  * @brief  Contains some meta-programming helpers.
- * 
+ *
  * @author RPC
  * @date   January 2024
  *********************************************************************/
@@ -14,7 +14,9 @@
 namespace clt::meta
 {
   /// @brief Empty struct helper
-  struct Empty {};
+  struct Empty
+  {
+  };
 
   template<typename Of, typename For>
   /// @brief Makes a type match the const-ness of another
@@ -22,7 +24,8 @@ namespace clt::meta
   /// @tparam For The type to which to add const if necessary
   struct match_const
   {
-    using type = std::conditional_t<std::is_const_v<Of>, std::add_const_t<For>, std::remove_const_t<For>>;
+    using type = std::conditional_t<
+        std::is_const_v<Of>, std::add_const_t<For>, std::remove_const_t<For>>;
   };
 
   template<typename Of, typename For>
@@ -37,7 +40,9 @@ namespace clt::meta
   /// @tparam For The type to which to add volatile if necessary
   struct match_volatile
   {
-    using type = std::conditional_t<std::is_volatile_v<Of>, std::add_volatile_t<For>, std::remove_volatile_t<For>>;
+    using type = std::conditional_t<
+        std::is_volatile_v<Of>, std::add_volatile_t<For>,
+        std::remove_volatile_t<For>>;
   };
 
   template<typename Of, typename For>
@@ -63,24 +68,26 @@ namespace clt::meta
 
   namespace details
   {
-    template<typename T> requires (std::is_void_v<T>)
-      /// @brief Helper for sizeof_or_zero
-      /// @tparam T The type to check for
-      /// @return 0
-      consteval size_t sizeof_or_zero() noexcept
+    template<typename T>
+      requires(std::is_void_v<T>)
+    /// @brief Helper for sizeof_or_zero
+    /// @tparam T The type to check for
+    /// @return 0
+    consteval size_t sizeof_or_zero() noexcept
     {
       return 0;
     }
 
-    template<typename T> requires (!std::is_void_v<T>)
-      /// @brief Helper for sizeof_or_zero
-      /// @tparam T The type to check for
-      /// @return sizeof(T)
-      consteval size_t sizeof_or_zero() noexcept
+    template<typename T>
+      requires(!std::is_void_v<T>)
+    /// @brief Helper for sizeof_or_zero
+    /// @tparam T The type to check for
+    /// @return sizeof(T)
+    consteval size_t sizeof_or_zero() noexcept
     {
       return sizeof(T);
     }
-  }
+  } // namespace details
 
   template<typename T>
   /// @brief Returns the sizeof a type or 0 if void
@@ -108,7 +115,8 @@ namespace clt::meta
   /// @brief Shorthand for 'for_debug_for_release<Debug, Release>::type'
   /// @tparam Debug The type on Debug configuration
   /// @tparam Release The type on Release configuration
-  using for_debug_for_release_t = typename for_debug_for_release<Debug, Release>::type;
-}
+  using for_debug_for_release_t =
+      typename for_debug_for_release<Debug, Release>::type;
+} // namespace clt::meta
 
 #endif // !HG_META_TRAITS

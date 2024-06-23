@@ -1,8 +1,8 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   set.h
  * @brief  Contains a StableSet which guarantees iterator validity
  *         through its lifetime.
- * 
+ *
  * @author RPC
  * @date   January 2024
  *********************************************************************/
@@ -15,7 +15,9 @@
 
 namespace clt
 {
-  template<typename T, size_t PER_NODE = 256, auto ALLOCATOR = mem::GlobalAllocatorDescription>
+  template<
+      typename T, size_t PER_NODE = 256,
+      auto ALLOCATOR = mem::GlobalAllocatorDescription>
     requires meta::is_hashable_v<T> && meta::AllocatorScope<ALLOCATOR>
   /// @brief An ordered container without duplicates that guarantees iterator validity for its lifetime.
   /// This StableSet is implemented using an internal hash table and a doubly linked list.
@@ -35,8 +37,7 @@ namespace clt
     using Allocator = mem::allocator_ref<ALLOCATOR>;
 
     /// @brief The allocator used for allocation/deallocation
-    [[no_unique_address]]
-    Allocator allocator;
+    [[no_unique_address]] Allocator allocator;
 
     /// @brief Contains meta-data information about the slots of the map
     Vector<details::KeySentinel> sentinel_metadata = {};
@@ -60,28 +61,26 @@ namespace clt
     /// @brief Constructor
     /// @param load_factor The load factor (> 0.0f && < 1.0f)
     constexpr StableSet(float load_factor = 0.70f) noexcept
-      : sentinel_metadata(16, InPlace, details::EMPTY)
-      , slots_ptr(static_cast<Slot*>(allocator.alloc(16 * sizeof(Slot)).ptr()))
-      , slots_capacity(16)
-      , list(16 / PER_NODE)
-      , load_factor(load_factor)
+        : sentinel_metadata(16, InPlace, details::EMPTY)
+        , slots_ptr(static_cast<Slot*>(allocator.alloc(16 * sizeof(Slot)).ptr()))
+        , slots_capacity(16)
+        , list(16 / PER_NODE)
+        , load_factor(load_factor)
     {
-      assert_true("Invalid load factor!",
-        0.0f < load_factor && load_factor < 1.0f);
+      assert_true("Invalid load factor!", 0.0f < load_factor && load_factor < 1.0f);
     }
 
     /// @brief Constructor, which reserves 'reserve_size' capacity for objects
     /// @param reserve_size The capacity to reserve
     /// @param load_factor The load factor (> 0.0f && < 1.0f)
     constexpr StableSet(size_t reserve_size, float load_factor = 0.70f) noexcept
-      : sentinel_metadata(reserve_size, InPlace, details::EMPTY)
-      , slots_ptr(static_cast<Slot*>(allocator.alloc(reserve_size * sizeof(Slot))))
-      , slots_capacity(reserve_size)
-      , list(reserve_size / PER_NODE)
-      , load_factor(load_factor)
+        : sentinel_metadata(reserve_size, InPlace, details::EMPTY)
+        , slots_ptr(static_cast<Slot*>(allocator.alloc(reserve_size * sizeof(Slot))))
+        , slots_capacity(reserve_size)
+        , list(reserve_size / PER_NODE)
+        , load_factor(load_factor)
     {
-      assert_true("Invalid load factor!",
-        0.0f < load_factor && load_factor < 1.0f);
+      assert_true("Invalid load factor!", 0.0f < load_factor && load_factor < 1.0f);
     }
 
     constexpr StableSet(const StableSet&) = delete;
@@ -89,23 +88,23 @@ namespace clt
     /// @brief Move constructor
     /// @param set The set to move
     constexpr StableSet(StableSet&& set) noexcept
-      : sentinel_metadata(std::move(set.sentinel_metadata))
-      , slots_ptr(std::exchange(set.slots_ptr, nullptr))
-      , slots_capacity(std::exchange(set.slots_capacity, 0))
-      , list(std::move(set.list))
-      , load_factor(set.load_factor)
-    {}
+        : sentinel_metadata(std::move(set.sentinel_metadata))
+        , slots_ptr(std::exchange(set.slots_ptr, nullptr))
+        , slots_capacity(std::exchange(set.slots_capacity, 0))
+        , list(std::move(set.list))
+        , load_factor(set.load_factor)
+    {
+    }
 
     /// @brief Destructor of the StableSet
-    ~StableSet()
-      noexcept(std::is_nothrow_destructible_v<T>)
+    ~StableSet() noexcept(std::is_nothrow_destructible_v<T>)
     {
       for (size_t i = 0; i < sentinel_metadata.size(); i++)
       {
         if (details::is_sentinel_active(sentinel_metadata[i]))
           slots_ptr[i].~Slot(); //destroy active slots
       }
-      allocator.dealloc(mem::MemBlock{ slots_ptr, slots_capacity * sizeof(Slot) });
+      allocator.dealloc(mem::MemBlock{slots_ptr, slots_capacity * sizeof(Slot)});
     }
 
     /// @brief Returns the number of active unique elements in the StableSet
@@ -122,10 +121,16 @@ namespace clt
 
     /// @brief Returns const iterators to the beginning of the StableSet
     /// @return Iterator to the beginning of the set
-    constexpr auto begin() const noexcept -> decltype(list.begin()) { return list.begin(); }
+    constexpr auto begin() const noexcept -> decltype(list.begin())
+    {
+      return list.begin();
+    }
     /// @brief Returns const iterators to the end of the StableSet
     /// @return Iterator to the end of the set
-    constexpr auto end() const noexcept -> decltype(list.begin()) { return list.end(); }
+    constexpr auto end() const noexcept -> decltype(list.begin())
+    {
+      return list.end();
+    }
 
     /// @brief Return the nth value inserted (with n being index)
     /// @param index The insertion number
@@ -151,13 +156,17 @@ namespace clt
     /// @param nload_factor The new load factor
     constexpr void set_load_factor(float nload_factor) noexcept
     {
-      assert_true("Invalid load factor!", nload_factor < 1.0f && nload_factor > 0.0f);
+      assert_true(
+          "Invalid load factor!", nload_factor < 1.0f && nload_factor > 0.0f);
       load_factor = nload_factor;
     }
 
     /// @brief Returns a const reference to the internal list used by the StableSet
     /// @return Const reference to the list
-    constexpr const FlatList<T, PER_NODE>& internal_list() const noexcept { return list; }
+    constexpr const FlatList<T, PER_NODE>& internal_list() const noexcept
+    {
+      return list;
+    }
 
     /// @brief Inserts a new value if it does not already exist.
     /// Returns an InsertionResult SUCCESS (if the insertion was performed) or EXISTS (if the key already exists).
@@ -166,25 +175,27 @@ namespace clt
     /// The returned pointer is never null.
     /// @param key The value to insert
     /// @return Pair of pointer to the inserted slot or the existent one, and SUCESS on insertion or EXISTS if the key already exists
-    constexpr std::pair<T*, InsertionResult> insert(const T& key)
-      noexcept(std::is_nothrow_copy_constructible_v<T>)
+    constexpr std::pair<T*, InsertionResult> insert(const T& key) noexcept(
+        std::is_nothrow_copy_constructible_v<T>)
     {
       if (will_reallocate())
         realloc_map(capacity() + 16);
 
       const size_t key_hash = hash_value(key);
       size_t prob_index;
-      if (find_key(key_hash, key, prob_index, sentinel_metadata, slots_ptr, slots_capacity))
+      if (find_key(
+              key_hash, key, prob_index, sentinel_metadata, slots_ptr,
+              slots_capacity))
       {
         list.push_back(key);
         T* to_ret = &list[list.size() - 1]; // always safe as push_backed the value
-        new(slots_ptr + prob_index) Slot(key_hash, to_ret);
+        new (slots_ptr + prob_index) Slot(key_hash, to_ret);
         //Set the slot to ACTIVE
         sentinel_metadata[prob_index] = details::create_active_sentinel(key_hash);
-        return { to_ret, InsertionResult::SUCCESS };
+        return {to_ret, InsertionResult::SUCCESS};
       }
       else
-        return { slots_ptr[prob_index].second, InsertionResult::EXISTS };
+        return {slots_ptr[prob_index].second, InsertionResult::EXISTS};
     }
 
     /// @brief Inserts a new value if it does not already exist.
@@ -196,25 +207,28 @@ namespace clt
     /// @tparam  SFINAE helper
     /// @param key The value to insert
     /// @return Pair of pointer to the inserted slot or the existent one, and SUCESS on insertion or EXISTS if the key already exists
-    constexpr std::pair<T*, InsertionResult> insert(T&& key)
-      noexcept(std::is_nothrow_move_constructible_v<T>) requires (!std::is_trivial_v<T>)
+    constexpr std::pair<T*, InsertionResult> insert(T&& key) noexcept(
+        std::is_nothrow_move_constructible_v<T>)
+      requires(!std::is_trivial_v<T>)
     {
       if (will_reallocate())
         realloc_map(capacity() + 16);
 
       const size_t key_hash = hash_value(key);
       size_t prob_index;
-      if (find_key(key_hash, key, prob_index, sentinel_metadata, slots_ptr, slots_capacity))
+      if (find_key(
+              key_hash, key, prob_index, sentinel_metadata, slots_ptr,
+              slots_capacity))
       {
         list.push_back(std::move(key));
         T* to_ret = &list[list.size() - 1]; // always safe as push_backed the value
-        new(slots_ptr + prob_index) Slot(key_hash, to_ret);
+        new (slots_ptr + prob_index) Slot(key_hash, to_ret);
         //Set the slot to ACTIVE
         sentinel_metadata[prob_index] = details::create_active_sentinel(key_hash);
-        return { to_ret, InsertionResult::SUCCESS };
+        return {to_ret, InsertionResult::SUCCESS};
       }
       else
-        return { slots_ptr[prob_index].second, InsertionResult::EXISTS };
+        return {slots_ptr[prob_index].second, InsertionResult::EXISTS};
     }
 
     template<typename U>
@@ -236,8 +250,10 @@ namespace clt
     /// @param metadata The Vector of KeySentinel representing the state of 'blk'
     /// @param blk The array of slots
     /// @return True if the slot found is empty/deleted, false if the slot is already occupied
-    static constexpr bool find_key(size_t key_hash, const T& key, size_t& prob,
-      const Vector<details::KeySentinel>& metadata, Slot* ptr, size_t capacity) noexcept
+    static constexpr bool find_key(
+        size_t key_hash, const T& key, size_t& prob,
+        const Vector<details::KeySentinel>& metadata, Slot* ptr,
+        size_t capacity) noexcept
     {
       assert_true("Ensure hash match!", key_hash == hash_value(key));
       assert_true("", metadata.size() == capacity);
@@ -245,13 +261,15 @@ namespace clt
       for (;;)
       {
         if (auto sentinel = metadata[prob_index];
-          details::is_sentinel_empty(sentinel) || details::is_sentinel_deleted(sentinel))
+            details::is_sentinel_empty(sentinel)
+            || details::is_sentinel_deleted(sentinel))
         {
           prob = prob_index;
           return true;
         }
-        else if (details::is_sentinel_equal(sentinel, key_hash)
-          && *(ptr[prob_index].second) == key)
+        else if (
+            details::is_sentinel_equal(sentinel, key_hash)
+            && *(ptr[prob_index].second) == key)
         {
           prob = prob_index;
           return false;
@@ -264,9 +282,11 @@ namespace clt
     /// @param new_capacity The new capacity of the map
     constexpr void realloc_map(size_t new_capacity) noexcept
     {
-      auto new_slot = static_cast<Slot*>(allocator.alloc(new_capacity * sizeof(Slot)).ptr());
+      auto new_slot =
+          static_cast<Slot*>(allocator.alloc(new_capacity * sizeof(Slot)).ptr());
 
-      Vector<details::KeySentinel> new_metadata = { new_capacity, InPlace, details::EMPTY };
+      Vector<details::KeySentinel> new_metadata = {
+          new_capacity, InPlace, details::EMPTY};
       for (size_t i = 0; i < sentinel_metadata.size(); i++)
       {
         auto sentinel = sentinel_metadata[i];
@@ -276,26 +296,28 @@ namespace clt
           Slot* ptr = slots_ptr + i;
           size_t prob_index;
           //Rehash the key to get its new index in the new array
-          if (find_key(ptr->first, *ptr->second, prob_index, new_metadata, new_slot, new_capacity))
+          if (find_key(
+                  ptr->first, *ptr->second, prob_index, new_metadata, new_slot,
+                  new_capacity))
           {
             //Set the slot to ACTIVE
             new_metadata[prob_index] = details::create_active_sentinel(ptr->first);
 
             //Move destruct
-            new(new_slot + prob_index) Slot(std::move(*ptr));
+            new (new_slot + prob_index) Slot(std::move(*ptr));
             ptr->~Slot();
           }
         }
       }
       sentinel_metadata = std::move(new_metadata);
-      allocator.dealloc(mem::MemBlock{ slots_ptr, slots_capacity * sizeof(Slot) });
-      slots_ptr = new_slot;
+      allocator.dealloc(mem::MemBlock{slots_ptr, slots_capacity * sizeof(Slot)});
+      slots_ptr      = new_slot;
       slots_capacity = new_capacity;
     }
   };
 
   template<typename T, auto ALLOCATOR = mem::GlobalAllocatorDescription>
-    requires meta::is_hashable_v<T>&& meta::AllocatorScope<ALLOCATOR>
+    requires meta::is_hashable_v<T> && meta::AllocatorScope<ALLOCATOR>
   /// @brief An ordered container without duplicates that guarantees index validity in between adds.
   /// This IndexedSet is implemented using an internal hash table and a Vector.
   /// @tparam T The type to store
@@ -312,8 +334,7 @@ namespace clt
     using Allocator = mem::allocator_ref<ALLOCATOR>;
 
     /// @brief The allocator used for allocation/deallocation
-    [[no_unique_address]]
-    Allocator allocator;
+    [[no_unique_address]] Allocator allocator;
 
     /// @brief Contains meta-data information about the slots of the map
     Vector<details::KeySentinel> sentinel_metadata = {};
@@ -337,28 +358,26 @@ namespace clt
     /// @brief Constructor
     /// @param load_factor The load factor (> 0.0f && < 1.0f)
     constexpr IndexedSet(float load_factor = 0.70f) noexcept
-      : sentinel_metadata(16, InPlace, details::EMPTY)
-      , slots_ptr(static_cast<Slot*>(allocator.alloc(16 * sizeof(Slot)).ptr()))
-      , slots_capacity(16)
-      , list(16)
-      , load_factor(load_factor)
+        : sentinel_metadata(16, InPlace, details::EMPTY)
+        , slots_ptr(static_cast<Slot*>(allocator.alloc(16 * sizeof(Slot)).ptr()))
+        , slots_capacity(16)
+        , list(16)
+        , load_factor(load_factor)
     {
-      assert_true("Invalid load factor!",
-        0.0f < load_factor && load_factor < 1.0f);
+      assert_true("Invalid load factor!", 0.0f < load_factor && load_factor < 1.0f);
     }
 
     /// @brief Constructor, which reserves 'reserve_size' capacity for objects
     /// @param reserve_size The capacity to reserve
     /// @param load_factor The load factor (> 0.0f && < 1.0f)
     constexpr IndexedSet(size_t reserve_size, float load_factor = 0.70f) noexcept
-      : sentinel_metadata(reserve_size, InPlace, details::EMPTY)
-      , slots_ptr(static_cast<Slot*>(allocator.alloc(reserve_size * sizeof(Slot))))
-      , slots_capacity(reserve_size)
-      , list(reserve_size)
-      , load_factor(load_factor)
+        : sentinel_metadata(reserve_size, InPlace, details::EMPTY)
+        , slots_ptr(static_cast<Slot*>(allocator.alloc(reserve_size * sizeof(Slot))))
+        , slots_capacity(reserve_size)
+        , list(reserve_size)
+        , load_factor(load_factor)
     {
-      assert_true("Invalid load factor!",
-        0.0f < load_factor && load_factor < 1.0f);
+      assert_true("Invalid load factor!", 0.0f < load_factor && load_factor < 1.0f);
     }
 
     constexpr IndexedSet(const IndexedSet&) = delete;
@@ -366,18 +385,18 @@ namespace clt
     /// @brief Move constructor
     /// @param set The set to move
     constexpr IndexedSet(IndexedSet&& set) noexcept
-      : sentinel_metadata(std::move(set.sentinel_metadata))
-      , slots_ptr(std::exchange(set.slots_ptr, nullptr))
-      , slots_capacity(std::exchange(set.slots_capacity, 0))
-      , list(std::move(set.list))
-      , load_factor(set.load_factor)
-    {}
+        : sentinel_metadata(std::move(set.sentinel_metadata))
+        , slots_ptr(std::exchange(set.slots_ptr, nullptr))
+        , slots_capacity(std::exchange(set.slots_capacity, 0))
+        , list(std::move(set.list))
+        , load_factor(set.load_factor)
+    {
+    }
 
     /// @brief Destructor of the StableSet
-    ~IndexedSet()
-      noexcept(std::is_nothrow_destructible_v<T>)
+    ~IndexedSet() noexcept(std::is_nothrow_destructible_v<T>)
     {
-      allocator.dealloc(mem::MemBlock{ slots_ptr, slots_capacity * sizeof(Slot) });
+      allocator.dealloc(mem::MemBlock{slots_ptr, slots_capacity * sizeof(Slot)});
     }
 
     /// @brief Returns the number of active unique elements in the StableSet
@@ -394,10 +413,16 @@ namespace clt
 
     /// @brief Returns const iterators to the beginning of the StableSet
     /// @return Iterator to the beginning of the set
-    constexpr auto begin() const noexcept -> decltype(list.begin()) { return list.begin(); }
+    constexpr auto begin() const noexcept -> decltype(list.begin())
+    {
+      return list.begin();
+    }
     /// @brief Returns const iterators to the end of the StableSet
     /// @return Iterator to the end of the set
-    constexpr auto end() const noexcept -> decltype(list.begin()) { return list.end(); }
+    constexpr auto end() const noexcept -> decltype(list.begin())
+    {
+      return list.end();
+    }
 
     /// @brief Return the nth value inserted (with n being index)
     /// @param index The insertion number
@@ -423,7 +448,8 @@ namespace clt
     /// @param nload_factor The new load factor
     constexpr void set_load_factor(float nload_factor) noexcept
     {
-      assert_true("Invalid load factor!", nload_factor < 1.0f && nload_factor > 0.0f);
+      assert_true(
+          "Invalid load factor!", nload_factor < 1.0f && nload_factor > 0.0f);
       load_factor = nload_factor;
     }
 
@@ -438,25 +464,27 @@ namespace clt
     /// The returned index is always valid.
     /// @param key The value to insert
     /// @return Pair of pointer to the inserted slot or the existent one, and SUCESS on insertion or EXISTS if the key already exists
-    constexpr std::pair<u64, InsertionResult> insert(const T& key)
-      noexcept(std::is_nothrow_copy_constructible_v<T>)
+    constexpr std::pair<u64, InsertionResult> insert(const T& key) noexcept(
+        std::is_nothrow_copy_constructible_v<T>)
     {
       if (will_reallocate())
         realloc_map(capacity() + 16);
 
       const size_t key_hash = hash_value(key);
       size_t prob_index;
-      if (find_key(key_hash, key, prob_index, sentinel_metadata, list, slots_ptr, slots_capacity))
+      if (find_key(
+              key_hash, key, prob_index, sentinel_metadata, list, slots_ptr,
+              slots_capacity))
       {
         size_t to_ret = list.size();
         list.push_back(key);
-        new(slots_ptr + prob_index) Slot(key_hash, to_ret);
+        new (slots_ptr + prob_index) Slot(key_hash, to_ret);
         //Set the slot to ACTIVE
         sentinel_metadata[prob_index] = details::create_active_sentinel(key_hash);
-        return { to_ret, InsertionResult::SUCCESS };
+        return {to_ret, InsertionResult::SUCCESS};
       }
       else
-        return { slots_ptr[prob_index].second, InsertionResult::EXISTS };
+        return {slots_ptr[prob_index].second, InsertionResult::EXISTS};
     }
 
     /// @brief Inserts a new value if it does not already exist.
@@ -468,25 +496,28 @@ namespace clt
     /// @tparam  SFINAE helper
     /// @param key The value to insert
     /// @return Pair of pointer to the inserted slot or the existent one, and SUCESS on insertion or EXISTS if the key already exists
-    constexpr std::pair<u64, InsertionResult> insert(T&& key)
-      noexcept(std::is_nothrow_move_constructible_v<T>) requires (!std::is_trivial_v<T>)
+    constexpr std::pair<u64, InsertionResult> insert(T&& key) noexcept(
+        std::is_nothrow_move_constructible_v<T>)
+      requires(!std::is_trivial_v<T>)
     {
       if (will_reallocate())
         realloc_map(capacity() + 16);
 
       const size_t key_hash = hash_value(key);
       size_t prob_index;
-      if (find_key(key_hash, key, prob_index, sentinel_metadata, list, slots_ptr, slots_capacity))
+      if (find_key(
+              key_hash, key, prob_index, sentinel_metadata, list, slots_ptr,
+              slots_capacity))
       {
         size_t to_ret = list.size();
         list.push_back(std::move(key));
-        new(slots_ptr + prob_index) Slot(key_hash, to_ret);
+        new (slots_ptr + prob_index) Slot(key_hash, to_ret);
         //Set the slot to ACTIVE
         sentinel_metadata[prob_index] = details::create_active_sentinel(key_hash);
-        return { to_ret, InsertionResult::SUCCESS };
+        return {to_ret, InsertionResult::SUCCESS};
       }
       else
-        return { slots_ptr[prob_index].second, InsertionResult::EXISTS };
+        return {slots_ptr[prob_index].second, InsertionResult::EXISTS};
     }
 
     template<typename U>
@@ -508,8 +539,10 @@ namespace clt
     /// @param metadata The Vector of KeySentinel representing the state of 'blk'
     /// @param blk The array of slots
     /// @return True if the slot found is empty/deleted, false if the slot is already occupied
-    static constexpr bool find_key(size_t key_hash, const T& key, size_t& prob,
-      const Vector<details::KeySentinel>& metadata, const Vector<T>& list, Slot* ptr, size_t capacity) noexcept
+    static constexpr bool find_key(
+        size_t key_hash, const T& key, size_t& prob,
+        const Vector<details::KeySentinel>& metadata, const Vector<T>& list,
+        Slot* ptr, size_t capacity) noexcept
     {
       assert_true("Ensure hash match!", key_hash == hash_value(key));
       assert_true("", metadata.size() == capacity);
@@ -517,13 +550,15 @@ namespace clt
       for (;;)
       {
         if (auto sentinel = metadata[prob_index];
-          details::is_sentinel_empty(sentinel) || details::is_sentinel_deleted(sentinel))
+            details::is_sentinel_empty(sentinel)
+            || details::is_sentinel_deleted(sentinel))
         {
           prob = prob_index;
           return true;
         }
-        else if (details::is_sentinel_equal(sentinel, key_hash)
-          && list[ptr[prob_index].second] == key)
+        else if (
+            details::is_sentinel_equal(sentinel, key_hash)
+            && list[ptr[prob_index].second] == key)
         {
           prob = prob_index;
           return false;
@@ -536,9 +571,11 @@ namespace clt
     /// @param new_capacity The new capacity of the map
     constexpr void realloc_map(size_t new_capacity) noexcept
     {
-      auto new_slot = static_cast<Slot*>(allocator.alloc(new_capacity * sizeof(Slot)).ptr());
+      auto new_slot =
+          static_cast<Slot*>(allocator.alloc(new_capacity * sizeof(Slot)).ptr());
 
-      Vector<details::KeySentinel> new_metadata = { new_capacity, InPlace, details::EMPTY };
+      Vector<details::KeySentinel> new_metadata = {
+          new_capacity, InPlace, details::EMPTY};
       for (size_t i = 0; i < sentinel_metadata.size(); i++)
       {
         auto sentinel = sentinel_metadata[i];
@@ -548,33 +585,34 @@ namespace clt
           Slot* ptr = slots_ptr + i;
           size_t prob_index;
           //Rehash the key to get its new index in the new array
-          if (find_key(ptr->first, list[ptr->second], prob_index, new_metadata, list, new_slot, new_capacity))
+          if (find_key(
+                  ptr->first, list[ptr->second], prob_index, new_metadata, list,
+                  new_slot, new_capacity))
           {
             //Set the slot to ACTIVE
             new_metadata[prob_index] = details::create_active_sentinel(ptr->first);
 
             //Move destruct
-            new(new_slot + prob_index) Slot(std::move(*ptr));
+            new (new_slot + prob_index) Slot(std::move(*ptr));
           }
         }
       }
       sentinel_metadata = std::move(new_metadata);
-      allocator.dealloc(mem::MemBlock{ slots_ptr, slots_capacity * sizeof(Slot) });
-      slots_ptr = new_slot;
+      allocator.dealloc(mem::MemBlock{slots_ptr, slots_capacity * sizeof(Slot)});
+      slots_ptr      = new_slot;
       slots_capacity = new_capacity;
     }
   };
-}
+} // namespace clt
 
 template<typename T, size_t PER_NODE, auto ALLOCATOR>
   requires clt::meta::Parsable<T>
-struct scn::scanner<clt::StableSet<T, PER_NODE, ALLOCATOR>>
-  : scn::empty_parser
+struct scn::scanner<clt::StableSet<T, PER_NODE, ALLOCATOR>> : scn::empty_parser
 {
-  template <typename Context>
+  template<typename Context>
   error scan(clt::StableSet<T, PER_NODE, ALLOCATOR>& val, Context& ctx)
   {
-    auto r = scn::scan_list_ex(ctx.range(), val, scn::list_separator(','));
+    auto r      = scn::scan_list_ex(ctx.range(), val, scn::list_separator(','));
     ctx.range() = std::move(r.range());
     return r.error();
   }
@@ -582,13 +620,12 @@ struct scn::scanner<clt::StableSet<T, PER_NODE, ALLOCATOR>>
 
 template<typename T, auto ALLOCATOR>
   requires clt::meta::Parsable<T>
-struct scn::scanner<clt::IndexedSet<T, ALLOCATOR>>
-  : scn::empty_parser
+struct scn::scanner<clt::IndexedSet<T, ALLOCATOR>> : scn::empty_parser
 {
-  template <typename Context>
+  template<typename Context>
   error scan(clt::IndexedSet<T, ALLOCATOR>& val, Context& ctx)
   {
-    auto r = scn::scan_list_ex(ctx.range(), val, scn::list_separator(','));
+    auto r      = scn::scan_list_ex(ctx.range(), val, scn::list_separator(','));
     ctx.range() = std::move(r.range());
     return r.error();
   }
@@ -597,12 +634,13 @@ struct scn::scanner<clt::IndexedSet<T, ALLOCATOR>>
 template<typename T, auto ALLOCATOR>
   requires fmt::is_formattable<T>::value
 struct fmt::formatter<clt::IndexedSet<T, ALLOCATOR>>
-  : fmt::formatter<clt::Vector<T, ALLOCATOR>>
+    : fmt::formatter<clt::Vector<T, ALLOCATOR>>
 {
   template<typename FormatContext>
   auto format(const clt::IndexedSet<T, ALLOCATOR>& vec, FormatContext& ctx)
   {
-    return fmt::formatter<clt::Vector<T, ALLOCATOR>>::format(vec.internal_list(), ctx);
+    return fmt::formatter<clt::Vector<T, ALLOCATOR>>::format(
+        vec.internal_list(), ctx);
   }
 };
 

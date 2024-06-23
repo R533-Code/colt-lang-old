@@ -2,7 +2,8 @@
 
 namespace clt::lng
 {
-  BinarySupport ErrorType::supports(BinaryOp op, const TypeVariant& var) const noexcept
+  BinarySupport ErrorType::supports(
+      BinaryOp op, const TypeVariant& var) const noexcept
   {
     return error_support(op, var);
   }
@@ -11,38 +12,43 @@ namespace clt::lng
   {
     return error_castable(var);
   }
-  
-  BinarySupport VoidType::supports(BinaryOp op, const TypeVariant& var) const noexcept
+
+  BinarySupport VoidType::supports(
+      BinaryOp op, const TypeVariant& var) const noexcept
   {
     return no_support(op, var);
   }
-  
+
   ConversionSupport VoidType::castable_to(const TypeVariant& var) const noexcept
   {
     return not_castable(var);
   }
-  
-  BinarySupport OpaquePtrType::supports(BinaryOp op, const TypeVariant& var) const noexcept
+
+  BinarySupport OpaquePtrType::supports(
+      BinaryOp op, const TypeVariant& var) const noexcept
   {
     return opaque_ptr_support(op, var);
   }
-  
+
   ConversionSupport OpaquePtrType::castable_to(const TypeVariant& var) const noexcept
   {
     return not_castable(var);
   }
 
-  BinarySupport MutOpaquePtrType::supports(BinaryOp op, const TypeVariant& var) const noexcept
+  BinarySupport MutOpaquePtrType::supports(
+      BinaryOp op, const TypeVariant& var) const noexcept
   {
     return opaque_ptr_support(op, var);
   }
 
-  ConversionSupport MutOpaquePtrType::castable_to(const TypeVariant& var) const noexcept
+  ConversionSupport MutOpaquePtrType::castable_to(
+      const TypeVariant& var) const noexcept
   {
     return not_castable(var);
   }
 
-  BinarySupport BuiltinType::supports(BinaryOp op, const TypeVariant& var) const noexcept
+  BinarySupport BuiltinType::supports(
+      BinaryOp op, const TypeVariant& var) const noexcept
   {
     return builtin_support(type_id(), op, var);
   }
@@ -51,13 +57,13 @@ namespace clt::lng
   {
     return builtin_castable(var);
   }
-  
 
-  BinarySupport PointerType::supports(BinaryOp op, const TypeVariant& var) const noexcept
+  BinarySupport PointerType::supports(
+      BinaryOp op, const TypeVariant& var) const noexcept
   {
     return ptr_support(*this, op, var);
   }
-  
+
   ConversionSupport PointerType::castable_to(const TypeVariant& var) const noexcept
   {
     return not_castable(var);
@@ -72,5 +78,4 @@ namespace clt::lng
   {
     return not_castable(var);
   }
-
-}
+} // namespace clt::lng

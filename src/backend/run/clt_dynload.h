@@ -15,20 +15,23 @@ namespace clt::run
     RAIIResource<DLSyms, &dlSymsCleanup> syms;
 
     DynamicLibrary(DLLib* lib, DLSyms* syms) noexcept
-      : lib(lib), syms(syms) {}
-  
+        : lib(lib)
+        , syms(syms)
+    {
+    }
+
   public:
-    DynamicLibrary(const DynamicLibrary&) = delete;
-    DynamicLibrary(DynamicLibrary&& other) noexcept = default;
-    DynamicLibrary& operator=(const DynamicLibrary&) = delete;
-    DynamicLibrary& operator=(DynamicLibrary&&) noexcept = default;      
+    DynamicLibrary(const DynamicLibrary&)                = delete;
+    DynamicLibrary(DynamicLibrary&& other) noexcept      = default;
+    DynamicLibrary& operator=(const DynamicLibrary&)     = delete;
+    DynamicLibrary& operator=(DynamicLibrary&&) noexcept = default;
 
     /// @brief Loads library at path 'path'
     /// @param path The path (or null for current executable)
     /// @return None on errors or handle to the library
     static Option<DynamicLibrary> load(const char* path) noexcept
     {
-      auto lib = dlLoadLibrary(path);
+      auto lib  = dlLoadLibrary(path);
       auto syms = dlSymsInit(path);
       if (lib == nullptr || syms == nullptr)
         return None;
@@ -37,25 +40,16 @@ namespace clt::run
 
     /// @brief Loads the current executable as a library
     /// @return None on errors or handle to the current library
-    static Option<DynamicLibrary> load_current() noexcept
-    {
-      return load(nullptr);
-    }
+    static Option<DynamicLibrary> load_current() noexcept { return load(nullptr); }
 
     /// @brief Searches for symbol of name 'name'
     /// @param name The name of the symbol (must be mangled for C++ symbols)
     /// @return Pointer to the symbol or nullptr
-    void* lookup(const char* name) noexcept
-    {
-      return dlFindSymbol(lib.get(), name);
-    }
+    void* lookup(const char* name) noexcept { return dlFindSymbol(lib.get(), name); }
 
     /// @brief Returns the count of symbols in the current library
     /// @return The count of symbols in the current library
-    u64 count() const noexcept
-    {
-      return (u64)dlSymsCount(syms.get());
-    }
+    u64 count() const noexcept { return (u64)dlSymsCount(syms.get()); }
 
     /// @brief Returns the name of the symbol at address 'symbol'
     /// @param symbol The symbol's address
@@ -93,7 +87,10 @@ namespace clt::run
       /// @param syms The symbols (not null)
       /// @param starting_index The starting index
       iterator(DLSyms* syms, i32 starting_index = 0) noexcept
-        : syms(syms), current(starting_index) {}
+          : syms(syms)
+          , current(starting_index)
+      {
+      }
 
       /// @brief Dereferences the iterator
       /// @return The current symbol name
@@ -105,10 +102,7 @@ namespace clt::run
 
       /// @brief Dereferences the iterator
       /// @return The current symbol name
-      const char* operator->() const noexcept
-      {
-        return **this;
-      }
+      const char* operator->() const noexcept { return **this; }
 
       /// @brief Advances the iterator
       /// @return Self
@@ -117,7 +111,7 @@ namespace clt::run
         current++;
         return *this;
       }
-      
+
       /// @brief Advances the iterator
       /// @return Old iterator value
       iterator operator++(int) noexcept
@@ -126,7 +120,7 @@ namespace clt::run
         ++(*this);
         return tmp;
       }
-      
+
       /// @brief Go to previous value of the iterator
       /// @return Self
       iterator& operator--() noexcept
@@ -144,7 +138,7 @@ namespace clt::run
         --(*this);
         return tmp;
       }
-      
+
       /// @brief Comparison operator
       /// @return true if equal
       friend bool operator==(const iterator&, const iterator&) = default;
@@ -155,8 +149,11 @@ namespace clt::run
     iterator begin() const noexcept { return iterator(syms.get(), 0); }
     /// @brief Iterator over symbols
     /// @return End iterator
-    iterator end() const noexcept { return iterator(syms.get(), dlSymsCount(syms.get())); }
+    iterator end() const noexcept
+    {
+      return iterator(syms.get(), dlSymsCount(syms.get()));
+    }
   };
-}
+} // namespace clt::run
 
 #endif // !HG_CLT_DYNLOAD

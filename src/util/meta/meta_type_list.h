@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   meta_type_list.h
  * @brief  Contains a type list helper, along with useful operations.
- * 
+ *
  * @author RPC
  * @date   January 2024
  *********************************************************************/
@@ -66,49 +66,36 @@ namespace clt::meta
     /// @brief Helper for type_list::get<...>, generates an error out of bound
     /// @tparam ...Ts Types
     struct get_n<index>
-    {};
-  }
+    {
+    };
+  } // namespace details
 
   namespace details
   {
-    template<typename...Ts>
+    template<typename... Ts>
     using tuple_cat_t = decltype(std::tuple_cat(std::declval<Ts>()...));
 
-    template<typename T, typename...Ts>
-    using remove_t = tuple_cat_t<
-      typename std::conditional_t<
-      std::is_same_v<T, Ts>,
-      std::tuple<>,
-      std::tuple<Ts>
-      >...
-    >;
+    template<typename T, typename... Ts>
+    using remove_t = tuple_cat_t<typename std::conditional_t<
+        std::is_same_v<T, Ts>, std::tuple<>, std::tuple<Ts>>...>;
 
-    template<template<typename> typename predicate, typename...Ts>
-    using remove_if_t = tuple_cat_t<
-      typename std::conditional_t<
-      predicate<Ts>::value,
-      std::tuple<>,
-      std::tuple<Ts>
-      >...
-    >;
+    template<template<typename> typename predicate, typename... Ts>
+    using remove_if_t = tuple_cat_t<typename std::conditional_t<
+        predicate<Ts>::value, std::tuple<>, std::tuple<Ts>>...>;
 
-    template<template<typename> typename predicate, typename...Ts>
-    using remove_if_not_t = tuple_cat_t<
-      typename std::conditional_t<
-      !predicate<Ts>::value,
-      std::tuple<>,
-      std::tuple<Ts>
-      >...
-    >;
+    template<template<typename> typename predicate, typename... Ts>
+    using remove_if_not_t = tuple_cat_t<typename std::conditional_t<
+        !predicate<Ts>::value, std::tuple<>, std::tuple<Ts>>...>;
 
     template<typename... Ts>
     type_list<Ts...> from_tuple_to_type_list(std::tuple<Ts...>) noexcept;
-  }
+  } // namespace details
 
   template<typename T>
   /// @brief Converts a tuple to a type list
   /// @tparam T The tuple type
-  using tuple_to_type_list_t = decltype(details::from_tuple_to_type_list(std::declval<T>()));
+  using tuple_to_type_list_t =
+      decltype(details::from_tuple_to_type_list(std::declval<T>()));
 
   template<typename... Ts>
   /// @brief List of types
@@ -120,9 +107,10 @@ namespace clt::meta
     /// @brief The type of the current list (not very useful)
     using this_list = type_list<Ts...>;
 
-    template<uint64_t index> requires (index < sizeof...(Ts))
-      /// @brief Returns the type at index 'index'
-      using get = typename details::get_n<index, Ts...>::type;
+    template<uint64_t index>
+      requires(index < sizeof...(Ts))
+    /// @brief Returns the type at index 'index'
+    using get = typename details::get_n<index, Ts...>::type;
 
     template<typename T>
     /// @brief Pushes a new type at the back of the list
@@ -145,12 +133,14 @@ namespace clt::meta
     template<typename T, template<typename> typename predicate>
     /// @brief Pushes a type to the front of the list if 'condition<T>::value' is true
     /// @tparam T The type to push
-    using push_front_if = std::conditional_t<predicate<T>::value, push_front<T>, this_list>;
+    using push_front_if =
+        std::conditional_t<predicate<T>::value, push_front<T>, this_list>;
 
     template<typename T, template<typename> typename predicate>
     /// @brief Pushes a type to the back of the list if 'condition<T>::value' is true
     /// @tparam T The type to push
-    using push_back_if = std::conditional_t<predicate<T>::value, push_back<T>, this_list>;
+    using push_back_if =
+        std::conditional_t<predicate<T>::value, push_back<T>, this_list>;
 
     template<typename What>
     /// @brief Remove all types that are the same as 'What'
@@ -161,7 +151,8 @@ namespace clt::meta
     using remove_if = tuple_to_type_list_t<details::remove_if_t<predicate, Ts...>>;
 
     template<template<typename> typename predicate>
-    using remove_if_not = tuple_to_type_list_t<details::remove_if_not_t<predicate, Ts...>>;
+    using remove_if_not =
+        tuple_to_type_list_t<details::remove_if_not_t<predicate, Ts...>>;
 
     /// @brief Removes all void types from the type list
     using remove_void = remove_all<void>;
@@ -170,31 +161,45 @@ namespace clt::meta
   template<typename T>
   concept TypeList = T::is_type_list;
 
-  template<template<typename> typename predicate, typename NOT_FOUND, typename T, typename... Ts>
+  template<
+      template<typename> typename predicate, typename NOT_FOUND, typename T,
+      typename... Ts>
   /// @brief Non-specialized helper
-  struct find_first_match {};
+  struct find_first_match
+  {
+  };
 
-  template<template<typename> typename predicate, typename NOT_FOUND, typename T, typename... Ts> requires (meta::type_list<T, Ts...>::template remove_if_not<predicate>::size == 0)
-    /// @brief Finds the first type for which the predicate returned true, or NOT_FOUND if none exist
-    struct find_first_match<predicate, NOT_FOUND, T, Ts...>
+  template<
+      template<typename> typename predicate, typename NOT_FOUND, typename T,
+      typename... Ts>
+    requires(meta::type_list<T, Ts...>::template remove_if_not<predicate>::size == 0)
+  /// @brief Finds the first type for which the predicate returned true, or NOT_FOUND if none exist
+  struct find_first_match<predicate, NOT_FOUND, T, Ts...>
   {
     using type = NOT_FOUND;
   };
 
-  template<template<typename> typename predicate, typename NOT_FOUND, typename T, typename... Ts> requires (meta::type_list<T, Ts...>::template remove_if_not<predicate>::size != 0)
-    /// @brief Finds the first type for which the predicate returned true, or NOT_FOUND if none exist
-    struct find_first_match<predicate, NOT_FOUND, T, Ts...>
+  template<
+      template<typename> typename predicate, typename NOT_FOUND, typename T,
+      typename... Ts>
+    requires(meta::type_list<T, Ts...>::template remove_if_not<predicate>::size != 0)
+  /// @brief Finds the first type for which the predicate returned true, or NOT_FOUND if none exist
+  struct find_first_match<predicate, NOT_FOUND, T, Ts...>
   {
-    using type = typename meta::type_list<T, Ts...>::template remove_if_not<predicate>::template get<0>;
+    using type = typename meta::type_list<T, Ts...>::template remove_if_not<
+        predicate>::template get<0>;
   };
 
-  template<template<typename> typename predicate, typename NOT_FOUND, typename T, typename... Ts>
+  template<
+      template<typename> typename predicate, typename NOT_FOUND, typename T,
+      typename... Ts>
   /// @brief Finds the first type for which the predicate returned true, or NOT_FOUND if none exist
-  using find_first_match_t = typename find_first_match<predicate, NOT_FOUND, T, Ts...>::type;
+  using find_first_match_t =
+      typename find_first_match<predicate, NOT_FOUND, T, Ts...>::type;
 
-  template <typename T, typename... U>
+  template<typename T, typename... U>
   /// @brief Check if a type is any of a list
   concept is_any_of = (std::same_as<T, U> || ...);
-}
+} // namespace clt::meta
 
 #endif //!HG_META_TYPE_LIST

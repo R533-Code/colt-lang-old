@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   colt_module_name.h
  * @brief  Contains ModuleName, which represents a colt module name.
- * 
+ *
  * @author RPC
  * @date   March 2024
  *********************************************************************/
@@ -30,9 +30,9 @@ namespace clt::lng
     constexpr ModuleName() noexcept = default;
 
   public:
-    constexpr ModuleName(ModuleName&&) noexcept = default;
-    constexpr ModuleName(const ModuleName&) noexcept = default;
-    constexpr ModuleName& operator=(ModuleName&&) noexcept = default;
+    constexpr ModuleName(ModuleName&&) noexcept                 = default;
+    constexpr ModuleName(const ModuleName&) noexcept            = default;
+    constexpr ModuleName& operator=(ModuleName&&) noexcept      = default;
     constexpr ModuleName& operator=(const ModuleName&) noexcept = default;
 
     template<std::forward_iterator It>
@@ -72,7 +72,10 @@ namespace clt::lng
 
     /// @brief Returns a view over the name
     /// @return View over the name
-    constexpr View<StringView> to_view() const noexcept { return { name.data(), name_size }; }
+    constexpr View<StringView> to_view() const noexcept
+    {
+      return {name.data(), name_size};
+    }
 
     /// @brief Compares two module names
     /// @param other The other module name
@@ -88,11 +91,8 @@ namespace clt::lng
     /// @brief Returns the global module name.
     /// The global module is the only name whose size is zero.
     /// @return The global module name
-    constexpr static ModuleName global_module() noexcept
-    {
-      return ModuleName{};
-    }
+    constexpr static ModuleName global_module() noexcept { return ModuleName{}; }
   };
-}
+} // namespace clt::lng
 
 #endif // !HG_COLT_MODULE_NAME

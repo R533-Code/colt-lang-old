@@ -3,12 +3,8 @@
 
 #include "lng/union_macro.h"
 
-DECLARE_ENUM_WITH_TYPE(u8, clt::lng, GlobalID,
-  GLOBAL_FN,
-  GLOBAL_VAR,
-  GLOBAL_TYPE,
-  GLOBAL_ALIAS
-);
+DECLARE_ENUM_WITH_TYPE(
+    u8, clt::lng, GlobalID, GLOBAL_FN, GLOBAL_VAR, GLOBAL_TYPE, GLOBAL_ALIAS);
 
 /// @brief Macro Type List (with same index as GlobalID declaration!)
 #define COLTC_GLOBAL_LIST FnGlobal, VarGlobal, TypeGlobal, AliasGlobal
@@ -27,8 +23,9 @@ namespace clt::lng
   public:
     static constexpr u64 BITS_FOR_ID = 7;
 
-    static_assert(clt::reflect<GlobalID>::max() < (2 << BITS_FOR_ID),
-      "Not enough bits to represent GlobalID!");
+    static_assert(
+        clt::reflect<GlobalID>::max() < (2 << BITS_FOR_ID),
+        "Not enough bits to represent GlobalID!");
 
   private:
     /// @brief The ID of the type (used for down-casts)
@@ -42,7 +39,10 @@ namespace clt::lng
     /// @brief Constructs a GlobalBase
     /// @param id The Global ID
     constexpr GlobalBase(GlobalID id, bool is_private) noexcept
-      : global_id(static_cast<u8>(id)), isprivate(is_private) {}
+        : global_id(static_cast<u8>(id))
+        , isprivate(is_private)
+    {
+    }
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(GlobalBase);
 
     /// @brief Check if the current global is private
@@ -54,71 +54,90 @@ namespace clt::lng
 
     /// @brief Returns the ID of the type (used for down-casts)
     /// @return The GlobalID of the current type
-    constexpr GlobalID classof() const noexcept { return static_cast<GlobalID>(global_id); }
+    constexpr GlobalID classof() const noexcept
+    {
+      return static_cast<GlobalID>(global_id);
+    }
 
     /// @brief Check if the Global is a function
     /// @return True if function
-    constexpr bool is_fn() const noexcept { return classof() == GlobalID::GLOBAL_FN; }
+    constexpr bool is_fn() const noexcept
+    {
+      return classof() == GlobalID::GLOBAL_FN;
+    }
     /// @brief Check if the Global is a global variable
     /// @return True if variable
-    constexpr bool is_var() const noexcept { return classof() == GlobalID::GLOBAL_VAR; }
+    constexpr bool is_var() const noexcept
+    {
+      return classof() == GlobalID::GLOBAL_VAR;
+    }
     /// @brief Check if the Global is a type
     /// @return True if type
-    constexpr bool is_type() const noexcept { return classof() == GlobalID::GLOBAL_TYPE; }
+    constexpr bool is_type() const noexcept
+    {
+      return classof() == GlobalID::GLOBAL_TYPE;
+    }
     /// @brief Check if the Global is an alias
     /// @return True if an alias
-    constexpr bool is_alias() const noexcept { return classof() == GlobalID::GLOBAL_ALIAS; }
+    constexpr bool is_alias() const noexcept
+    {
+      return classof() == GlobalID::GLOBAL_ALIAS;
+    }
   };
 
   template<typename T>
   /// @brief A ColtType provides its ID and is equality comparable
-  concept ColtGlobal = std::equality_comparable<T> && std::convertible_to<T, GlobalBase>&& requires (T a)
-  {
-    { a.classof() } -> std::same_as<GlobalID>;
-  };
+  concept ColtGlobal = std::equality_comparable<T>
+                       && std::convertible_to<T, GlobalBase> && requires(T a) {
+                            {
+                              a.classof()
+                            } -> std::same_as<GlobalID>;
+                          };
 
   /// @brief Represents a function
-  class FnGlobal
-    final : public GlobalBase
+  class FnGlobal final : public GlobalBase
   {
   public:
     /// @brief Constructs a global variable
     /// @param is_private True if private
     constexpr FnGlobal(bool is_private) noexcept
-      : GlobalBase(TypeToGlobalID<FnGlobal>(), is_private) {}
+        : GlobalBase(TypeToGlobalID<FnGlobal>(), is_private)
+    {
+    }
 
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(FnGlobal);
   };
 
   /// @brief Represents a global variable
-  class VarGlobal
-    final : public GlobalBase
+  class VarGlobal final : public GlobalBase
   {
   public:
     /// @brief Constructs a global variable
     /// @param is_private True if private
     constexpr VarGlobal(bool is_private) noexcept
-      : GlobalBase(TypeToGlobalID<VarGlobal>(), is_private) {}
-    
+        : GlobalBase(TypeToGlobalID<VarGlobal>(), is_private)
+    {
+    }
+
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(VarGlobal);
   };
 
   /// @brief Represents a custom type
-  class TypeGlobal
-    final : public GlobalBase
+  class TypeGlobal final : public GlobalBase
   {
   public:
     /// @brief Constructs a global type
     /// @param is_private True if private
     constexpr TypeGlobal(bool is_private) noexcept
-      : GlobalBase(TypeToGlobalID<TypeGlobal>(), is_private) {}
+        : GlobalBase(TypeToGlobalID<TypeGlobal>(), is_private)
+    {
+    }
 
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(TypeGlobal);
   };
 
   /// @brief Represents an alias to another global
-  class AliasGlobal
-    final : public GlobalBase
+  class AliasGlobal final : public GlobalBase
   {
     /// @brief The aliased global
     GlobalVariant* _alias_to;
@@ -128,7 +147,10 @@ namespace clt::lng
     /// @param alias_to The aliased global
     /// @param is_private True if private
     constexpr AliasGlobal(GlobalVariant& alias_to, bool is_private) noexcept
-      : GlobalBase(TypeToGlobalID<AliasGlobal>(), is_private), _alias_to(&alias_to) {}
+        : GlobalBase(TypeToGlobalID<AliasGlobal>(), is_private)
+        , _alias_to(&alias_to)
+    {
+    }
 
     MAKE_DEFAULT_COPY_AND_MOVE_FOR(AliasGlobal);
 
@@ -147,15 +169,15 @@ namespace clt::lng
     template<ColtGlobal Type, typename... Args>
     /// @brief Constructor
     /// @param args... The arguments to forward to the constructor
-    constexpr GlobalVariant(std::type_identity<Type>, Args&&... args)
-      noexcept(std::is_nothrow_constructible_v<Type, Args...>)
+    constexpr GlobalVariant(std::type_identity<Type>, Args&&... args) noexcept(
+        std::is_nothrow_constructible_v<Type, Args...>)
     {
       construct<Type>(&getUnionMember<Type>(), std::forward<Args>(args)...);
     }
 
-    constexpr GlobalVariant(GlobalVariant&&) noexcept = default;
-    constexpr GlobalVariant(const GlobalVariant&) noexcept = default;
-    constexpr GlobalVariant& operator=(GlobalVariant&&) noexcept = default;
+    constexpr GlobalVariant(GlobalVariant&&) noexcept                 = default;
+    constexpr GlobalVariant(const GlobalVariant&) noexcept            = default;
+    constexpr GlobalVariant& operator=(GlobalVariant&&) noexcept      = default;
     constexpr GlobalVariant& operator=(const GlobalVariant&) noexcept = default;
 
     /// @brief Returns the global ID of the current type
@@ -187,7 +209,7 @@ namespace clt::lng
         return nullptr;
       return &getUnionMember<T>();
     }
-    
+
     template<ColtGlobal T>
     /// @brief Casts the current type to 'T'
     /// @tparam T The type to cast to
@@ -201,17 +223,29 @@ namespace clt::lng
 
     /// @brief Check if the Global is a function
     /// @return True if function
-    constexpr bool is_fn() const noexcept { return global_id() == GlobalID::GLOBAL_FN; }
+    constexpr bool is_fn() const noexcept
+    {
+      return global_id() == GlobalID::GLOBAL_FN;
+    }
     /// @brief Check if the Global is a global variable
     /// @return True if variable
-    constexpr bool is_var() const noexcept { return global_id() == GlobalID::GLOBAL_VAR; }
+    constexpr bool is_var() const noexcept
+    {
+      return global_id() == GlobalID::GLOBAL_VAR;
+    }
     /// @brief Check if the Global is a type
     /// @return True if type
-    constexpr bool is_type() const noexcept { return global_id() == GlobalID::GLOBAL_TYPE; }
+    constexpr bool is_type() const noexcept
+    {
+      return global_id() == GlobalID::GLOBAL_TYPE;
+    }
     /// @brief Check if the Global is an alias
     /// @return True if an alias
-    constexpr bool is_alias() const noexcept { return global_id() == GlobalID::GLOBAL_ALIAS; }
+    constexpr bool is_alias() const noexcept
+    {
+      return global_id() == GlobalID::GLOBAL_ALIAS;
+    }
   };
-}
+} // namespace clt::lng
 
 #endif // !HG_COLT_GLOBAL

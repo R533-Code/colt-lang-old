@@ -5,8 +5,8 @@ namespace clt::lng
   StringView getBuiltinName(BuiltinID ID) noexcept
   {
     using enum clt::lng::BuiltinID;
-    
-    switch_no_default (ID)
+
+    switch_no_default(ID)
     {
     case BOOL:
       return "bool";
@@ -46,7 +46,7 @@ namespace clt::lng
   StringView TypeBuffer::type_name(const TypeVariant& var) const noexcept
   {
     using enum TypeID;
-    switch_no_default (var.classof())
+    switch_no_default(var.classof())
     {
     case TYPE_ERROR:
       return "<ERROR>";
@@ -57,13 +57,17 @@ namespace clt::lng
     case TYPE_PTR:
     {
       type_names.push_back({});
-      fmt::format_to(std::back_inserter(type_names.back()), "ptr.{}", type_name(var.as<PtrType>()->pointing_to()));
+      fmt::format_to(
+          std::back_inserter(type_names.back()), "ptr.{}",
+          type_name(var.as<PtrType>()->pointing_to()));
       return type_names.back();
     }
     case TYPE_MUT_PTR:
     {
       type_names.push_back({});
-      fmt::format_to(std::back_inserter(type_names.back()), "mutptr.{}", type_name(var.as<MutPtrType>()->pointing_to()));
+      fmt::format_to(
+          std::back_inserter(type_names.back()), "mutptr.{}",
+          type_name(var.as<MutPtrType>()->pointing_to()));
       return type_names.back();
     }
     case TYPE_OPTR:
@@ -73,9 +77,9 @@ namespace clt::lng
       //TODO: add support for fn
     }
   }
-  
+
   StringView TypeBuffer::type_name(TypeToken variant) const noexcept
   {
     return type_name(type(variant));
   }
-}
+} // namespace clt::lng

@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   list.h
  * @brief  Contains a FlatList implementation.
- * 
+ *
  * @author RPC
  * @date   January 2024
  *********************************************************************/
@@ -12,7 +12,9 @@
 
 namespace clt
 {
-  template<typename T, size_t PER_NODE = 16, auto ALLOCATOR = mem::GlobalAllocatorDescription>
+  template<
+      typename T, size_t PER_NODE = 16,
+      auto ALLOCATOR = mem::GlobalAllocatorDescription>
     requires meta::AllocatorScope<ALLOCATOR>
   /// @brief A linked list with multiple elements in each nodes
   class FlatList
@@ -33,8 +35,8 @@ namespace clt
     constexpr Node* create_node() noexcept
     {
       auto ptr = static_cast<Node*>(allocator.alloc(sizeof(Node)).ptr());
-      return new(ptr) Node();
-    }    
+      return new (ptr) Node();
+    }
 
     /// @brief True if the allocator is global
     static constexpr bool is_global = meta::GlobalAllocator<ALLOCATOR>;
@@ -45,8 +47,7 @@ namespace clt
     using Allocator = mem::allocator_ref<ALLOCATOR>;
 
     /// @brief The allocator used for allocation/deallocation
-    [[no_unique_address]]
-    Allocator allocator;
+    [[no_unique_address]] Allocator allocator;
 
     /// @brief Owning pointer to the head of the list, never null
     Node* head = create_node();
@@ -60,10 +61,10 @@ namespace clt
     /// @brief Creates and appends a node to the end of the list
     constexpr void create_and_append_node() noexcept
     {
-      auto before = tail; //copy pointer
-      tail = create_node(); //set the tail to the new Node
-      tail->before = before; //set the tail before to the old tail
-      before->after = tail; //set the old tail's after to the new node
+      auto before   = tail;          //copy pointer
+      tail          = create_node(); //set the tail to the new Node
+      tail->before  = before;        //set the tail before to the old tail
+      before->after = tail;          //set the old tail's after to the new node
     }
 
     /// @brief Advances the last_active_node to the next node, appending a new node if needed
@@ -90,29 +91,36 @@ namespace clt
 
     /// @brief Constructs an empty FlatList.
     /// This will always preallocate one Node.
-    constexpr FlatList() noexcept requires is_global = default;
+    constexpr FlatList() noexcept
+      requires is_global
+    = default;
 
-    template<meta::Allocator AllocT> requires is_local
+    template<meta::Allocator AllocT>
+      requires is_local
     /// @brief Default constructor (when allocator is local)
     /// @param alloc Reference to the allocator to use
     constexpr FlatList(AllocT& alloc) noexcept
-      : allocator(alloc) {}
+        : allocator(alloc)
+    {
+    }
 
     /// @brief Constructs an empty FlatList, reserving max('node_reserve_count', 1).
     /// Each Node can contain up to 'PER_NODE'.
     /// @param node_reserve_count The count of nodes to preallocate
-    constexpr FlatList(size_t node_reserve_count) noexcept requires is_global
+    constexpr FlatList(size_t node_reserve_count) noexcept
+      requires is_global
     {
       for (size_t i = 1; i < node_reserve_count; i++)
         create_and_append_node();
     }
 
-    template<meta::Allocator AllocT> requires is_local
+    template<meta::Allocator AllocT>
+      requires is_local
     /// @brief Constructs an empty FlatList, reserving max('node_reserve_count', 1).
     /// Each Node can contain up to 'PER_NODE'.
     /// @param node_reserve_count The count of nodes to preallocate
     constexpr FlatList(AllocT& alloc, size_t node_reserve_count) noexcept
-      : allocator(alloc)
+        : allocator(alloc)
     {
       for (size_t i = 1; i < node_reserve_count; i++)
         create_and_append_node();
@@ -121,12 +129,13 @@ namespace clt
     /// @brief Move constructor
     /// @param list The list whose content to steal
     constexpr FlatList(FlatList&& list) noexcept
-      : allocator(list.allocator)
-      , head(std::exchange(list.head, list.create_node()))
-      , tail(std::exchange(list.tail, list.head))
-      , last_active_node(std::exchange(list.last_active_node, list.head))
-      , count(std::exchange(list.count, 0))
-    {}
+        : allocator(list.allocator)
+        , head(std::exchange(list.head, list.create_node()))
+        , tail(std::exchange(list.tail, list.head))
+        , last_active_node(std::exchange(list.last_active_node, list.head))
+        , count(std::exchange(list.count, 0))
+    {
+    }
 
     /// @brief Clears the content of the list, without modifying capacity
     constexpr void clear() noexcept(std::is_nothrow_destructible_v<T>)
@@ -139,7 +148,7 @@ namespace clt
         cpy = head->after;
       }
       last_active_node = head;
-      count = 0;
+      count            = 0;
     }
 
     /// @brief Destructor
@@ -149,12 +158,12 @@ namespace clt
       {
         auto before = tail->before; //store the tail's preceding
         tail->~Node();
-        allocator.dealloc(mem::MemBlock{ tail, sizeof(Node) });
+        allocator.dealloc(mem::MemBlock{tail, sizeof(Node)});
         tail = before;
       }
       //Free the head node, which is always allocated
       head->~Node();
-      allocator.dealloc(mem::MemBlock{ head, sizeof(Node) });
+      allocator.dealloc(mem::MemBlock{head, sizeof(Node)});
     }
 
     /// @brief Returns the count of the FlatListf
@@ -205,7 +214,7 @@ namespace clt
       assert_true("FlatList was empty!", !this->is_empty());
       return head->data.front();
     }
-    
+
     /// @brief Returns the first item in the FlatList.
     /// @return The first item in the FlatList.
     constexpr T& front() noexcept
@@ -221,7 +230,7 @@ namespace clt
       assert_true("FlatList was empty!", !this->is_empty());
       return last_active_node->data.back();
     }
-    
+
     /// @brief Returns the last item in the FlatList.
     /// @return The last item in the FlatList.
     constexpr T& back() noexcept
@@ -241,8 +250,7 @@ namespace clt
     }
 
     /// @brief Pops an item from the back of the FlatList.
-    constexpr void pop_back()
-      noexcept(std::is_nothrow_destructible_v<T>)
+    constexpr void pop_back() noexcept(std::is_nothrow_destructible_v<T>)
     {
       assert_true("FlatList was empty!", !this->is_empty());
       --count;
@@ -252,7 +260,6 @@ namespace clt
     }
 
   private:
-    
     template<typename Node_t>
     class Iterator
     {
@@ -261,7 +268,9 @@ namespace clt
 
     public:
       constexpr Iterator(Node_t* node, size_t index = 0) noexcept
-        : node_index(index), current_node(node) {
+          : node_index(index)
+          , current_node(node)
+      {
         assert_true("Invalid index!", index < PER_NODE);
       }
 
@@ -270,7 +279,7 @@ namespace clt
         if (node_index + 1 == PER_NODE)
         {
           current_node = current_node->after;
-          node_index = 0;
+          node_index   = 0;
         }
         else
           ++node_index;
@@ -289,7 +298,7 @@ namespace clt
         if (node_index - 1 == 0)
         {
           current_node = current_node->before;
-          node_index = PER_NODE - 1;
+          node_index   = PER_NODE - 1;
         }
         else
           --node_index;
@@ -303,47 +312,54 @@ namespace clt
         return copy;
       }
 
-      constexpr T* operator->() noexcept { return current_node->data.data() + node_index; }
-      constexpr const T& operator*() noexcept { return current_node->data[node_index]; }
+      constexpr T* operator->() noexcept
+      {
+        return current_node->data.data() + node_index;
+      }
+      constexpr const T& operator*() noexcept
+      {
+        return current_node->data[node_index];
+      }
 
-      friend constexpr bool operator==(const Iterator& i1, const Iterator& i2) noexcept = default;
+      friend constexpr bool operator==(
+          const Iterator& i1, const Iterator& i2) noexcept = default;
     };
 
   public:
     /// @brief Returns an iterator to the beginning of the list
     /// @return Iterator to the beginning of the list
-    constexpr Iterator<Node> begin() noexcept { return { head, 0 }; }
+    constexpr Iterator<Node> begin() noexcept { return {head, 0}; }
     /// @brief Returns an iterator to the beginning of the list
     /// @return Iterator to the beginning of the list
-    constexpr Iterator<const Node> begin() const noexcept { return { head, 0 }; }
+    constexpr Iterator<const Node> begin() const noexcept { return {head, 0}; }
 
     /// @brief Returns an iterator to the end of the list
     /// @return Iterator to the end of the list
     constexpr Iterator<Node> end() noexcept
     {
       if (last_active_node->data.is_full())
-        return { last_active_node->after, 0 };
-      return { last_active_node, last_active_node->data.size() };
+        return {last_active_node->after, 0};
+      return {last_active_node, last_active_node->data.size()};
     }
     /// @brief Returns an iterator to the end of the list
     /// @return Iterator to the end of the list
     constexpr Iterator<const Node> end() const noexcept
     {
       if (last_active_node->data.is_full())
-        return { last_active_node->after, 0 };
-      return { last_active_node, last_active_node->data.size() };
+        return {last_active_node->after, 0};
+      return {last_active_node, last_active_node->data.size()};
     }
   };
-}
+} // namespace clt
 
-template<typename T, size_t PER_NODE, auto ALLOCATOR> requires clt::meta::Parsable<T>
-struct scn::scanner<clt::FlatList<T, PER_NODE, ALLOCATOR>>
-  : scn::empty_parser
+template<typename T, size_t PER_NODE, auto ALLOCATOR>
+  requires clt::meta::Parsable<T>
+struct scn::scanner<clt::FlatList<T, PER_NODE, ALLOCATOR>> : scn::empty_parser
 {
-  template <typename Context>
+  template<typename Context>
   error scan(clt::FlatList<T, PER_NODE, ALLOCATOR>& val, Context& ctx)
   {
-    auto r = scn::scan_list_ex(ctx.range(), val, scn::list_separator(','));
+    auto r      = scn::scan_list_ex(ctx.range(), val, scn::list_separator(','));
     ctx.range() = std::move(r.range());
     return r.error();
   }
@@ -358,7 +374,7 @@ struct fmt::formatter<clt::FlatList<T, PER_NODE, ALLOCATOR>>
   template<typename ParseContext>
   constexpr auto parse(ParseContext& ctx)
   {
-    auto it = ctx.begin();
+    auto it  = ctx.begin();
     auto end = ctx.end();
     if (it == end)
       return it;
@@ -375,9 +391,9 @@ struct fmt::formatter<clt::FlatList<T, PER_NODE, ALLOCATOR>>
   auto format(const clt::FlatList<T, PER_NODE, ALLOCATOR>& vec, FormatContext& ctx)
   {
     auto fmt_to = ctx.out();
-    
-    auto begin = vec.begin();    
-    auto end = vec.end();
+
+    auto begin = vec.begin();
+    auto end   = vec.end();
     if (human_readable)
     {
       if (begin != end)

@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   simple_alloc.h
  * @brief  Contains simple allocators, building blocks for more advanced ones.
- * 
+ *
  * @author RPC
  * @date   January 2024
  *********************************************************************/
@@ -23,10 +23,7 @@ namespace clt::mem
     /// @brief Always returns a 'nullblk'
     /// @param  The size to allocate
     /// @return nullblk
-    constexpr MemBlock alloc(ByteSize<Byte>) const noexcept
-    {
-      return nullblk;
-    }
+    constexpr MemBlock alloc(ByteSize<Byte>) const noexcept { return nullblk; }
 
     /// @brief Asserts that 'blk' is a 'nullblk'
     /// @param blk The block to deallocate
@@ -39,10 +36,7 @@ namespace clt::mem
     /// @brief Check if the block is owned by this allocator
     /// @param blk The block to check for
     /// @return True if the block is null
-    constexpr bool owns(MemBlock blk) const noexcept
-    {
-      return blk.is_null();
-    }
+    constexpr bool owns(MemBlock blk) const noexcept { return blk.is_null(); }
 
     /// @brief Returns false
     /// @param blk The block to check for
@@ -76,17 +70,14 @@ namespace clt::mem
     /// @param size The size to allocate
     /// @return nullblk
     MemBlock alloc(ByteSize<Byte> size) const noexcept
-    {     
+    {
       assert_true("Mallocator must not allocate block of size '0'!", size != 0_B);
-      return { std::malloc(size.to_bytes()), size.to_bytes() };
+      return {std::malloc(size.to_bytes()), size.to_bytes()};
     }
 
     /// @brief Deallocates a block
     /// @param blk The block to deallocate
-    void dealloc(MemBlock blk) const noexcept
-    {
-      std::free(blk.ptr());
-    }
+    void dealloc(MemBlock blk) const noexcept { std::free(blk.ptr()); }
 
     /// @brief Reallocates a MemBlock
     /// @param blk The block to reallocate
@@ -97,7 +88,7 @@ namespace clt::mem
       auto ptr = std::realloc(blk.ptr(), sz.to_bytes());
       if (ptr == nullptr)
         return false;
-      blk = MemBlock{ ptr, sz.to_bytes() };
+      blk = MemBlock{ptr, sz.to_bytes()};
       return true;
     }
   };
@@ -121,15 +112,12 @@ namespace clt::mem
 
     /// @brief Check if the stack is empty
     /// @return True if empty
-    constexpr bool is_empty() noexcept
-    {
-      return top == buffer;
-    }
+    constexpr bool is_empty() noexcept { return top == buffer; }
 
   public:
-    constexpr StackAllocator() noexcept     = default;
-    StackAllocator(const StackAllocator&)   = delete;
-    StackAllocator(StackAllocator&&)        = delete;
+    constexpr StackAllocator() noexcept   = default;
+    StackAllocator(const StackAllocator&) = delete;
+    StackAllocator(StackAllocator&&)      = delete;
 
     /// @brief Alignment of returned MemBlock
     static constexpr u64 alignment = ALIGN;
@@ -152,7 +140,7 @@ namespace clt::mem
         return nullblk;
       auto ptr = top;
       top += aligned_size;
-      return { ptr, sze.to_bytes() };
+      return {ptr, sze.to_bytes()};
     }
 
     /// @brief Deallocates a MemBlock that was allocated using the current allocator
@@ -160,8 +148,9 @@ namespace clt::mem
     constexpr void dealloc(MemBlock to_free) noexcept
     {
       assert_true("StackAllocator must own the block to free!", this->owns(to_free));
-      assert_true("StackAllocator cannot free a block if it did not event allocate one!",
-        to_free == nullblk || !this->is_empty());
+      assert_true(
+          "StackAllocator cannot free a block if it did not event allocate one!",
+          to_free == nullblk || !this->is_empty());
 
       //This also works for 'nullblk'
       size_t aligned_size = round_to_alignment<ALIGN>(to_free.size().to_bytes());
@@ -195,12 +184,12 @@ namespace clt::mem
         if (can_allocate(n.to_bytes() - blk.size().to_bytes()))
         {
           top += round_to_alignment<ALIGN>(n.to_bytes() - blk.size().to_bytes());
-          blk = MemBlock{ blk.ptr(), n.to_bytes()};
+          blk = MemBlock{blk.ptr(), n.to_bytes()};
           return true;
         }
         return false; //not enough memory
       }
-      
+
       auto nblk = alloc(n);
       if (nblk.is_null())
         return false;
@@ -228,19 +217,21 @@ namespace clt::mem
       }
       if (static_cast<u8*>(blk.ptr()) + blk.size().to_bytes() != top)
         return false; //not the top
-      
+
       if (can_allocate(delta.to_bytes() - blk.size().to_bytes()))
       {
         top += round_to_alignment<ALIGN>(delta.to_bytes() - blk.size().to_bytes());
-        blk = MemBlock{ blk.ptr(), delta.to_bytes() };
+        blk = MemBlock{blk.ptr(), delta.to_bytes()};
         return true;
       }
       return false; //not enough memory
     }
   };
 
-  template<meta::Allocator allocator, ByteSize<Byte> LOWER, ByteSize<Byte> UPPER, size_t MAX_SAVED = 16>
-    requires (LOWER >= 16_B) && (UPPER >= LOWER) && (MAX_SAVED != 0)
+  template<
+      meta::Allocator allocator, ByteSize<Byte> LOWER, ByteSize<Byte> UPPER,
+      size_t MAX_SAVED = 16>
+    requires(LOWER >= 16_B) && (UPPER >= LOWER) && (MAX_SAVED != 0)
   /// @brief Allocator that reuses memory that is about to be freed.
   /// A FreeList is an amazing tool for allocations:
   /// When a block is about to be freed, the free list will check if
@@ -250,8 +241,7 @@ namespace clt::mem
   /// [UPPER, LOWER], the linked list will search in the linked list
   /// and return a saved block if its size matches.
   /// 'MAX_SAVED' fixes a limit of maximum items in the linked list.
-  class FreeList
-    : private allocator
+  class FreeList : private allocator
   {
     /// @brief A Node contains a pointer to the next Node
     struct Node
@@ -268,7 +258,10 @@ namespace clt::mem
     /// @brief Check if a size is in range
     /// @param n The size to check
     /// @return True if LOWER <= n && n <= UPPER
-    constexpr bool is_in_range(size_t n) noexcept { return LOWER.to_bytes() <= n && n <= UPPER.to_bytes(); }
+    constexpr bool is_in_range(size_t n) noexcept
+    {
+      return LOWER.to_bytes() <= n && n <= UPPER.to_bytes();
+    }
 
     /// @brief Extracts a block from the linked list, of size 'size'
     /// @param size The size of the block to search for
@@ -281,14 +274,14 @@ namespace clt::mem
       if (pre->size == size)
       {
         auto ptr = root;
-        root = root->next;
+        root     = root->next;
         return ptr;
       }
       while (nxt != nullptr)
       {
         if (nxt->size == size)
         {
-          auto ptr = nxt;
+          auto ptr  = nxt;
           pre->next = nxt->next;
           return ptr;
         }
@@ -312,9 +305,9 @@ namespace clt::mem
     constexpr MemBlock alloc(ByteSize<Byte> n) noexcept
     {
       if (root != nullptr && is_in_range(n.to_bytes()))
-      {        
+      {
         if (auto find = get_node_of_size(n.to_bytes()); find)
-          return { find, n.to_bytes() };
+          return {find, n.to_bytes()};
       }
       return allocator::alloc(n);
     }
@@ -331,7 +324,7 @@ namespace clt::mem
       }
 
       //Add to memory to the free list
-      root = new(blk.ptr()) Node{ blk.size().to_bytes(), root };
+      root = new (blk.ptr()) Node{blk.size().to_bytes(), root};
       //Add to save count
       ++saved_count;
     }
@@ -371,11 +364,11 @@ namespace clt::mem
       while (root != nullptr)
       {
         auto next = root->next;
-        allocator::dealloc({ static_cast<void*>(root), root->size });
+        allocator::dealloc({static_cast<void*>(root), root->size});
         root = next;
       }
     }
   };
-}
+} // namespace clt::mem
 
 #endif //!HG_COLT_SIMPLE_ALLOC

@@ -1,7 +1,7 @@
-/*****************************************************************//**
+/*****************************************************************/ /**
  * @file   print.h
  * @brief  Contains utilities to write characters to the console.
- * 
+ *
  * @author RPC
  * @date   January 2024
  *********************************************************************/
@@ -27,14 +27,17 @@ namespace clt::io
   /// @param file The file where to write the output
   /// @param fmt The format string
   /// @param ...args The arguments to format
-  constexpr void print(std::FILE* file, fmt_str<Args...> fmt, Args&&... args) noexcept
+  constexpr void print(
+      std::FILE* file, fmt_str<Args...> fmt, Args&&... args) noexcept
   {
     if constexpr (endl.size() != 0)
     {
       fmt::basic_memory_buffer<char, 4096> buffer;
       fmt::format_to(std::back_inserter(buffer), fmt, std::forward<Args>(args)...);
-      fmt::format_to(std::back_inserter(buffer), "{}", fmt::string_view{ endl.value, endl.size() });
-      fmt::print(file, "{}", fmt::string_view{ buffer.data(), buffer.size() });
+      fmt::format_to(
+          std::back_inserter(buffer), "{}",
+          fmt::string_view{endl.value, endl.size()});
+      fmt::print(file, "{}", fmt::string_view{buffer.data(), buffer.size()});
     }
     else
       fmt::print(file, fmt, std::forward<Args>(args)...);
@@ -46,14 +49,17 @@ namespace clt::io
   /// @param file The file where to write the output
   /// @param fmt The format string
   /// @param ...args The arguments to format
-  constexpr void print_error(std::FILE* file, fmt_str<Args...> fmt, Args&&... args) noexcept
+  constexpr void print_error(
+      std::FILE* file, fmt_str<Args...> fmt, Args&&... args) noexcept
   {
     fmt::basic_memory_buffer<char, 4096> buffer;
     fmt::format_to(std::back_inserter(buffer), "{}Error:{} ", BrightRedF, Reset);
     fmt::format_to(std::back_inserter(buffer), fmt, std::forward<Args>(args)...);
     if constexpr (endl.size() != 0)
-      fmt::format_to(std::back_inserter(buffer), "{}", fmt::string_view{ endl.value, endl.size() });
-    fmt::print(file, "{}", fmt::string_view{ buffer.data(), buffer.size() });
+      fmt::format_to(
+          std::back_inserter(buffer), "{}",
+          fmt::string_view{endl.value, endl.size()});
+    fmt::print(file, "{}", fmt::string_view{buffer.data(), buffer.size()});
   }
 
   template<meta::StringLiteral endl = "\n", typename... Args>
@@ -62,14 +68,18 @@ namespace clt::io
   /// @param file The file where to write the output
   /// @param fmt The format string
   /// @param ...args The arguments to format
-  constexpr void print_warn(std::FILE* file, fmt_str<Args...> fmt, Args&&... args) noexcept
+  constexpr void print_warn(
+      std::FILE* file, fmt_str<Args...> fmt, Args&&... args) noexcept
   {
     fmt::basic_memory_buffer<char, 4096> buffer;
-    fmt::format_to(std::back_inserter(buffer), "{}Warning:{} ", BrightYellowF, Reset);
+    fmt::format_to(
+        std::back_inserter(buffer), "{}Warning:{} ", BrightYellowF, Reset);
     fmt::format_to(std::back_inserter(buffer), fmt, std::forward<Args>(args)...);
     if constexpr (endl.size() != 0)
-      fmt::format_to(std::back_inserter(buffer), "{}", fmt::string_view{ endl.value, endl.size() });
-    fmt::print(file, "{}", fmt::string_view{ buffer.data(), buffer.size() });
+      fmt::format_to(
+          std::back_inserter(buffer), "{}",
+          fmt::string_view{endl.value, endl.size()});
+    fmt::print(file, "{}", fmt::string_view{buffer.data(), buffer.size()});
   }
 
   template<meta::StringLiteral endl = "\n", typename... Args>
@@ -78,14 +88,17 @@ namespace clt::io
   /// @param file The file where to write the output
   /// @param fmt The format string
   /// @param ...args The arguments to format
-  constexpr void print_message(std::FILE* file, fmt_str<Args...> fmt, Args&&... args) noexcept
+  constexpr void print_message(
+      std::FILE* file, fmt_str<Args...> fmt, Args&&... args) noexcept
   {
     fmt::basic_memory_buffer<char, 4096> buffer;
     fmt::format_to(std::back_inserter(buffer), "{}Message:{} ", BrightBlueF, Reset);
     fmt::format_to(std::back_inserter(buffer), fmt, std::forward<Args>(args)...);
     if constexpr (endl.size() != 0)
-      fmt::format_to(std::back_inserter(buffer), "{}", fmt::string_view{ endl.value, endl.size() });
-    fmt::print(file, "{}", fmt::string_view{ buffer.data(), buffer.size() });
+      fmt::format_to(
+          std::back_inserter(buffer), "{}",
+          fmt::string_view{endl.value, endl.size()});
+    fmt::print(file, "{}", fmt::string_view{buffer.data(), buffer.size()});
   }
 
   template<meta::StringLiteral endl = "\n", typename... Args>
@@ -94,14 +107,19 @@ namespace clt::io
   /// @param file The file where to write the output
   /// @param fmt The format string
   /// @param ...args The arguments to format
-  constexpr void print_fatal(std::FILE* file, fmt::format_string<Args...> fmt, Args && ...args)
+  constexpr void print_fatal(
+      std::FILE* file, fmt::format_string<Args...> fmt, Args&&... args)
   {
     fmt::basic_memory_buffer<char, 4096> buffer;
-    fmt::format_to(std::back_inserter(buffer), "{}FATAL:{} {}", RedB, Reset, BrightRedF);
+    fmt::format_to(
+        std::back_inserter(buffer), "{}FATAL:{} {}", RedB, Reset, BrightRedF);
     fmt::format_to(std::back_inserter(buffer), fmt, std::forward<Args>(args)...);
     if constexpr (endl.size() != 0)
-      fmt::format_to(std::back_inserter(buffer), "{}", fmt::string_view{ endl.value, endl.size() });
-    fmt::print(file, "{}{}", fmt::string_view{ buffer.data(), buffer.size() }, io::Reset);
+      fmt::format_to(
+          std::back_inserter(buffer), "{}",
+          fmt::string_view{endl.value, endl.size()});
+    fmt::print(
+        file, "{}{}", fmt::string_view{buffer.data(), buffer.size()}, io::Reset);
   }
 
   template<meta::StringLiteral endl = "\n", typename... Args>
@@ -153,6 +171,6 @@ namespace clt::io
   {
     print_fatal<endl>(stderr, fmt, std::forward<Args>(args)...);
   }
-}
+} // namespace clt::io
 
 #endif //!HG_COLT_PRINT
