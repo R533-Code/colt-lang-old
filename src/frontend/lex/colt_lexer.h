@@ -487,7 +487,6 @@ namespace clt::lng
 
     switch (clt::tolower(lexer._next))
     {
-      break;
     case 'u':
       switch (lexer.peek_next())
       {
