@@ -85,7 +85,7 @@ namespace clt::lng
 
 #else
     constexpr Token(Lexeme lexeme, u32 info_index, u32 literal = 0) noexcept
-        : _lexeme(static_cast<u8>(_lexeme))
+        : _lexeme(static_cast<u8>(lexeme))
         , literal_index(literal)
         , info_index(info_index)
     {
