@@ -39,6 +39,7 @@ target_precompile_headers(${COLT_EXECUTABLE_NAME} PUBLIC
 target_compile_definitions(
   ${COLT_EXECUTABLE_NAME} PRIVATE $<$<CONFIG:Debug>:COLT_DEBUG> $<$<CONFIG:Debug>:COLT_DEBUG_BUILD> _CRT_SECURE_NO_WARNINGS
 )
+set(CMAKE_ENABLE_EXPORTS True)
 
 if (MSVC)
   # The executable is the startup project in Visual Studio
@@ -59,15 +60,15 @@ if (MSVC)
   #target_link_options(${COLT_EXECUTABLE_NAME} PRIVATE "$<$<CONFIG:Release>:/OPT:REF>")
   #target_link_options(${COLT_EXECUTABLE_NAME} PRIVATE "$<$<CONFIG:Release>:/OPT:ICF>")
 else()
-  target_compile_options(
-    ${COLT_EXECUTABLE_NAME} PUBLIC
-      "-rdynamic" "-fvisibility=hidden"
-      "-export-dynamic"
-      )
-  target_link_options(
-    ${COLT_EXECUTABLE_NAME} PUBLIC
-    "-export-dynamic"
-  )
+  #target_compile_options(
+  #  ${COLT_EXECUTABLE_NAME} PUBLIC
+  #    "-rdynamic" "-fvisibility=hidden"
+  #    "-export-dynamic"
+  #    )
+  #target_link_options(
+  #  ${COLT_EXECUTABLE_NAME} PUBLIC
+  #  "-export-dynamic"
+  #)
 endif()
 
 #########################################
