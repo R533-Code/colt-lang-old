@@ -23,7 +23,7 @@ namespace clt::mem
         FreeList<Mallocator, 1_KiB, 4_KiB, 32>>
         >
     >*/
-          GlobalAllocator;
+      GlobalAllocator;
 
   /// @brief Allocate a block of memory through the global allocator
   /// @param sz The size of the block

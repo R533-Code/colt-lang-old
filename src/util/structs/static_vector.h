@@ -92,10 +92,8 @@ namespace clt
     /// @return Self
     template<size_t OTHER_SIZE>
       requires(OTHER_SIZE <= MAX_SIZE)
-    constexpr StaticVector&
-        operator=(const StaticVector<T, OTHER_SIZE>& to_copy) noexcept(
-            std::is_nothrow_copy_constructible_v<T>
-            && std::is_nothrow_destructible_v<T>)
+    constexpr StaticVector& operator=(const StaticVector<T, OTHER_SIZE>& to_copy) noexcept(
+        std::is_nothrow_copy_constructible_v<T> && std::is_nothrow_destructible_v<T>)
     {
       assert_true("Self assignment is prohibited!", &to_copy != this);
       details::contiguous_destruct(ptr(), blk_size);

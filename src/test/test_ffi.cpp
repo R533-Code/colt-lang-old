@@ -21,8 +21,7 @@
 // FUNCTIONS IF NO FUNCTIONS ARE EXPORTED.
 // DO NOT REMOVE CLT_EXPORT
 
-extern "C" CLT_EXPORT void __CLT_NOP()
-{
+extern "C" CLT_EXPORT void __CLT_NOP(){
     // This method doesn't do anything except provide an address for 'test_ffi'.
 };
 

@@ -323,14 +323,12 @@ namespace clt
     /// @param key The key of the value 'value'
     /// @param value The value to insert
     /// @return Pair of pointer to the inserted slot or the existent one, and SUCESS on insertion or EXISTS if the key already exists
-    constexpr std::pair<Slot*, InsertionResult>
-        insert(const Key& key, const Value& value) noexcept(
-            std::is_nothrow_destructible_v<Key>
-            && std::is_nothrow_destructible_v<Value>
-            && std::is_nothrow_move_constructible_v<Key>
-            && std::is_nothrow_move_constructible_v<Value>
-            && std::is_nothrow_copy_constructible_v<Key>
-            && std::is_nothrow_copy_constructible_v<Value>)
+    constexpr std::pair<Slot*, InsertionResult> insert(const Key& key, const Value& value) noexcept(
+        std::is_nothrow_destructible_v<Key> && std::is_nothrow_destructible_v<Value>
+        && std::is_nothrow_move_constructible_v<Key>
+        && std::is_nothrow_move_constructible_v<Value>
+        && std::is_nothrow_copy_constructible_v<Key>
+        && std::is_nothrow_copy_constructible_v<Value>)
     {
       if (will_reallocate())
         realloc_map(capacity() + 16);
@@ -358,14 +356,12 @@ namespace clt
     /// @param key The key of the value 'value'
     /// @param value The value to insert
     /// @return Pair of pointer to the inserted slot or the existent one, and SUCESS on insertion or EXISTS if the key already exists
-    constexpr std::pair<Slot*, InsertionResult>
-        insert(const Key& key, Value&& value) noexcept(
-            std::is_nothrow_destructible_v<Key>
-            && std::is_nothrow_destructible_v<Value>
-            && std::is_nothrow_move_constructible_v<Key>
-            && std::is_nothrow_move_constructible_v<Value>
-            && std::is_nothrow_copy_constructible_v<Key>
-            && std::is_nothrow_copy_constructible_v<Value>)
+    constexpr std::pair<Slot*, InsertionResult> insert(const Key& key, Value&& value) noexcept(
+        std::is_nothrow_destructible_v<Key> && std::is_nothrow_destructible_v<Value>
+        && std::is_nothrow_move_constructible_v<Key>
+        && std::is_nothrow_move_constructible_v<Value>
+        && std::is_nothrow_copy_constructible_v<Key>
+        && std::is_nothrow_copy_constructible_v<Value>)
     {
       if (will_reallocate())
         realloc_map(capacity() + 16);
@@ -393,15 +389,13 @@ namespace clt
     /// @param key The key of the value 'value'
     /// @param value The value to insert or assign
     /// @return Pair of pointer to the inserted/assigned slot, and SUCESS on insertion or ASSIGN on assignment
-    constexpr std::pair<Slot*, InsertionResult>
-        insert_or_assign(const Key& key, const Value& value) noexcept(
-            std::is_nothrow_destructible_v<Key>
-            && std::is_nothrow_destructible_v<Value>
-            && std::is_nothrow_move_constructible_v<Key>
-            && std::is_nothrow_move_constructible_v<Value>
-            && std::is_nothrow_copy_constructible_v<Key>
-            && std::is_nothrow_copy_constructible_v<Value>
-            && std::is_nothrow_copy_assignable_v<Value>)
+    constexpr std::pair<Slot*, InsertionResult> insert_or_assign(const Key& key, const Value& value) noexcept(
+        std::is_nothrow_destructible_v<Key> && std::is_nothrow_destructible_v<Value>
+        && std::is_nothrow_move_constructible_v<Key>
+        && std::is_nothrow_move_constructible_v<Value>
+        && std::is_nothrow_copy_constructible_v<Key>
+        && std::is_nothrow_copy_constructible_v<Value>
+        && std::is_nothrow_copy_assignable_v<Value>)
     {
       if (will_reallocate())
         realloc_map(capacity() + 16);

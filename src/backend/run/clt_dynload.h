@@ -29,11 +29,11 @@ namespace clt::run
     /// @brief Loads library at path 'path'
     /// @param path The path (not null)
     /// @return None on errors or handle to the library
-    static Option<DynamicLibrary> load(const char* path) noexcept;    
+    static Option<DynamicLibrary> load(const char* path) noexcept;
 
     /// @brief Loads the current executable as a library
     /// @return None on errors or handle to the current library
-    static Option<DynamicLibrary> load_current() noexcept;    
+    static Option<DynamicLibrary> load_current() noexcept;
 
     /// @brief Searches for symbol of name 'name'
     /// @param name The name of the symbol (must be mangled for C++ symbols)

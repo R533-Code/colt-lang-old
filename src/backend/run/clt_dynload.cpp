@@ -16,7 +16,7 @@ namespace clt::run
       return None;
     return DynamicLibrary(lib, syms);
   }
-  
+
   Option<DynamicLibrary> DynamicLibrary::load_current() noexcept
   {
 #ifdef _WIN32
@@ -27,7 +27,7 @@ namespace clt::run
     return DynamicLibrary(lib, syms);
 #else
     char result[PATH_MAX] = {0};
-    ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+    ssize_t count         = readlink("/proc/self/exe", result, PATH_MAX);
     if (count < 0)
       return None;
     auto lib  = dlLoadLibrary(nullptr);
@@ -37,5 +37,4 @@ namespace clt::run
     return DynamicLibrary(lib, syms);
 #endif
   }
-}
-
+} // namespace clt::run
