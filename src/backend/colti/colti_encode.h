@@ -6,24 +6,43 @@
 
 namespace clt::run
 {
+  /// @brief Represents an instruction pointer of the ColtVM.
+  /// As the ColtVM is not striving for performance but
+  /// rather safety and detection of errors, all operation
+  /// done on the instruction pointer are checked.
   class InstructionPtr
   {
+    /// @brief The current instruction being executed
     const u8* current_inst;
-    const u8* end;
+    /// @brief The start of the code section
+    const u8* const begin;
+    /// @brief The end of the code section
+    const u8* const end;
 
   public:
-    constexpr InstructionPtr(const u8* start, const u8* end) noexcept
-        : current_inst(start)
+    /// @brief Constructor
+    /// @param current The current instruction to execute
+    /// @param begin The start of the code section
+    /// @param end The end of the code section
+    constexpr InstructionPtr(
+        const u8* current, const u8* const begin, const u8* const end) noexcept
+        : current_inst(current)
+        , begin(begin)
         , end(end)
     {
     }
 
+    /// @brief Returns the next instruction
+    /// @return The next instruction or None if no more instructions exists
     Option<u8> next() noexcept
     {
       if (current_inst == end)
         return None;
       return *current_inst++;
     }
+
+    /// @brief Returns the current instruction
+    /// @return The current instruction of None if no more instructions exists
     Option<u8> current() const noexcept
     {
       if (current_inst == end)
@@ -127,15 +146,53 @@ namespace clt::run
 
   /// @brief Class responsible of executing instructions.
   /// The instructions are decoded and executed in place.
-  struct VMExecutor
+  class VMExecutor
   {
+    /// @brief The dispatch table of arithmetic operations.
+    /// @warning Matches with OpCodeArithmetic
+    static constexpr std::array ArithmeticOperation = {
+        &add, &sub, &mul, &div, &mod, nullbinary, &eq, &neq, &le, &ge, &leq, &geq};
+
+    /// @brief Executes an arithmetic instruction
+    /// @param ip The instruction pointer
+    /// @param stack The stack from which to pop operands
+    /// @return The result of executing the instruction
+    static ExecutionResult execute_arithmetic(
+        InstructionPtr& ip, VMStack& stack) noexcept;
+    
+    /// @brief Executes a load immediate instruction
+    /// @param ip The instruction pointer
+    /// @param stack The stack to which to add the immediate
+    /// @return The result of executing the instruction 
+    static ExecutionResult execute_immediate(
+        InstructionPtr& ip, VMStack& stack) noexcept;         
+
+    /// @brief Executes a conversion instruction
+    /// @param ip The instruction pointer
+    /// @param stack The stack from which to pop operands
+    /// @return The result of executing the instruction
+    static ExecutionResult execute_conversion(
+        InstructionPtr& ip, VMStack& stack) noexcept;
+
+    /// @brief Returns invalid instruction
+    /// @param ip The instruction pointer
+    /// @param stack 
+    /// @return 
+    static ExecutionResult execute_invalid(
+        InstructionPtr& ip, VMStack& stack) noexcept;
+
+  public:
     static ExecutionResult execute(InstructionPtr& ip, VMStack& stack) noexcept
     {
+      // Matches OpCodeFamily
+      static constexpr std::array DispatchTable = {
+          &execute_arithmetic, &execute_invalid, &execute_immediate, &execute_conversion
+      };
+
       auto value = ip.current();
       if (value.is_none())
         return ExecutionResult::end_instruction();
-      const auto family =
-          static_cast<OpCodeFamily>((value.value() & 0b11100000) >> 5);
+      const auto family = static_cast<OpCodeFamily>(value.value() >> 5);
       switch_no_default(family)
       {
       case OpCodeFamily::ARITHMETIC:
@@ -147,84 +204,8 @@ namespace clt::run
       case OpCodeFamily::IMMEDIATE:
         return execute_immediate(ip, stack);
       case OpCodeFamily::FII:
+        break;
       }
-    }
-
-  private:
-    static constexpr std::array ArithmeticOperation = {
-        &add, &sub, &mul, &div, &mod, nullbinary, &eq, &neq, &le, &ge, &leq, &geq};
-
-    /// [3b:FAMILY = BINARY] [4b:TypeOp] [0]
-    /// [0000] [4b:OpCodeBinary]
-    static ExecutionResult execute_arithmetic(
-        InstructionPtr& ip, VMStack& stack) noexcept
-    {
-      using enum OpCodeArithmetic;
-
-      const auto operation =
-          static_cast<OpCodeArithmetic>((ip.current().value() >> 1) & 0b1111);
-      // Go to next byte
-      auto value = ip.next();
-      if (value.is_none())
-        return ExecutionResult::invalid_instruction();
-      const auto type = static_cast<TypeOp>(value.value() & 0b1111);
-
-      // Negate is the only arithmetic operation that is unary,
-      // so we handle this case alone
-      if (operation == _neg)
-      {
-        auto op1 = stack.pop();
-        if (op1.is_none())
-          return ExecutionResult::missing_operands();
-        auto [result, warn] = neg(*op1, type);
-        if (warn == INVALID_OP)
-          return ExecutionResult::invalid_instruction();
-        stack.push(result);
-        return ExecutionResult::success(warn);
-      }
-
-      // Handles the binary arithmetic operations.
-      auto op1 = stack.pop();
-      auto op2 = stack.pop();
-      if (op1.is_none() || op2.is_none())
-        return ExecutionResult::missing_operands();
-
-      ResultQWORD op;
-      if ((u8)operation < ArithmeticOperation.size())
-        op = ArithmeticOperation[(u8)operation](*op1, *op2, type);
-      else
-        return ExecutionResult::invalid_instruction();
-
-      if (op.second == INVALID_OP)
-        return ExecutionResult::invalid_instruction();
-      // Push the result on the stack
-      stack.push(op.first);
-      return ExecutionResult::success(op.second);
-    }
-    /// [3b: FAMILY = IMMEDIATE] [3b: Number of Bytes Following] [00]
-    /// [8b]{Number of Bytes Following}
-    static ExecutionResult execute_immediate(
-        InstructionPtr& ip, VMStack& stack) noexcept
-    {
-      u64 count     = static_cast<u64>((ip.current().value() >> 2) & 0b111) + 1;
-      u64 immediate = 0;
-
-      while (count-- != 0)
-      {
-        // Go to next byte
-        auto value = ip.next();
-        if (value.is_none())
-          return ExecutionResult::invalid_instruction();
-        immediate |= *value;
-        immediate <<= 8;
-      }
-      stack.push(immediate);
-    }
-
-    /// {[3b:FAMILY=BINARY][4b:TypeOp][0]}{[4b:0][4b:OpCodeBinary]}
-    static ExecutionResult execute_conversion(
-        InstructionPtr& ip, VMStack& stack) noexcept
-    {
     }
   };
 } // namespace clt::run
