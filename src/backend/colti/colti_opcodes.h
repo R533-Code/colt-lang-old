@@ -13,16 +13,13 @@ DECLARE_ENUM_WITH_TYPE(
     // [8b]{Number of Bytes Following}
     IMMEDIATE,
     // [3b: FAMILY = CONVERSION] [0 0000]
-    // [4b: TypeOp] [4b: TypeOp]
+    // [4b: From TypeOp] [4b: To TypeOp]
     CONVERSION, BRANCH, FII);
 
-/// @brief Operations that take 2 operands and output a single value.
-/// These are encoded as:
-/// {[3b:FAMILY=BINARY][4b:TypeOp][0]}{[4b:0][4b:OpCodeBinary]}
+/// @brief The arithmetic operations.
 DECLARE_ENUM_WITH_TYPE(
-    u8, clt::run, OpCodeArithmetic, _add, _sub, _mul, _div, _mod, _neg,
-
-    _eq, _neq, _le, _ge, _leq, _geq);
+    u8, clt::run, OpCodeArithmetic, _add, _sub, _mul, _div, _mod, _neg, _eq, _neq,
+    _le, _ge, _leq, _geq);
 
 DECLARE_ENUM_WITH_TYPE(
     u8, clt::run, OpCodeBitwise, _and, _or, _xor, _lsr, _lsl, _asr, _not);
