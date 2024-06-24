@@ -23,6 +23,7 @@
 
 #include <cstdint>
 #include <type_traits>
+#include <bit>
 #include <memory>
 #include <exception>
 
@@ -776,6 +777,85 @@ namespace clt
     if (a == std::numeric_limits<T>::max())
       throw ExitRecursionExcept{};
     ++a;
+  }
+
+  /// @brief Swaps the bytes of an integer (opposite endianness).
+  /// @tparam T The unsigned integer type
+  /// @param a The value whose bytes to swap
+  /// @return The integer in the opposite endianness
+  template<meta::UnsignedIntegral T>
+  constexpr T byteswap(T a) noexcept
+  {
+    if constexpr (sizeof(T) == 1)
+      return a;
+#ifdef COLT_MSVC
+    if constexpr (sizeof(T) == 2)
+      return _byteswap_ushort(a);
+    if constexpr (sizeof(T) == 4)
+      return _byteswap_ulong(a);
+    if constexpr (sizeof(T) == 8)
+      return _byteswap_uint64(a);
+#elif defined(COLT_GNU) || defined(COLT_CLANG)
+    if constexpr (sizeof(T) == 2)
+      return __builtin_bswap16(a);
+    if constexpr (sizeof(T) == 4)
+      return __builtin_bswap32(a);
+    if constexpr (sizeof(T) == 8)
+      return __builtin_bswap64(a);
+#else
+    union
+    {
+      T u;
+      u8 buffer[sizeof(T)];
+    } source, dest;
+
+    source.u = u;
+
+    for (size_t k = 0; k < sizeof(T); k++)
+      dest.u8[k] = source.buffer[sizeof(T) - k - 1];
+
+    return dest.u;
+#endif // COLT_MSVC
+  }
+
+  /// @brief Converts an unsigned integer from host endianness to little endian.
+  /// This function is a no-op if the current host is little endian.
+  /// @tparam T The unsigned integer type
+  /// @param a The value to convert
+  /// @return The integer encoded as little endian
+  template<meta::UnsignedIntegral T>
+  constexpr T htol(T a) noexcept
+  {
+    static_assert(
+        std::endian::native == std::endian::little
+            || std::endian::native == std::endian::big,
+        "Unknown endianness!");
+    static_assert(sizeof(T) <= 8, "Invalid integer size!");
+
+    if constexpr (sizeof(T) == 1 || std::endian::native == std::endian::little)
+      return a;
+    else
+      return byteswap(a);
+  }
+
+  /// @brief Converts an unsigned integer from host endianness to big endian.
+  /// This function is a no-op if the current host is big endian.
+  /// @tparam T The unsigned integer type
+  /// @param a The value to convert
+  /// @return The integer encoded as big endian
+  template<meta::UnsignedIntegral T>
+  constexpr T htob(T a) noexcept
+  {
+    static_assert(
+        std::endian::native == std::endian::little
+            || std::endian::native == std::endian::big,
+        "Unknown endianness!");
+    static_assert(sizeof(T) <= 8, "Invalid integer size!");
+
+    if constexpr (sizeof(T) == 1 || std::endian::native == std::endian::big)
+      return a;
+    else
+      return byteswap(a);
   }
 } // namespace clt
 
