@@ -5,7 +5,7 @@
 
 namespace clt::run
 {
-  class ColtIAssembler
+  class ColtiAssembler
   {
   };
 } // namespace clt::run
