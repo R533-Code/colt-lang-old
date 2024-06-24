@@ -9,6 +9,7 @@
 #include "args.h"
 #include "test/run_tests.h"
 #include "ast/parsed_program.h"
+#include "colti/colti_exe.h"
 
 using namespace clt;
 
