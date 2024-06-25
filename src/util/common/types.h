@@ -875,6 +875,46 @@ namespace clt
     else
       return byteswap(a);
   }
+
+  /// @brief Converts an unsigned integer from little endian host endianness.
+  /// This function is a no-op if the current host is little endian.
+  /// @tparam T The unsigned integer type
+  /// @param a The value to convert
+  /// @return The integer encoded as host endianness
+  template<meta::UnsignedIntegral T>
+  constexpr T ltoh(T a) noexcept
+  {
+    static_assert(
+        std::endian::native == std::endian::little
+            || std::endian::native == std::endian::big,
+        "Unknown endianness!");
+    static_assert(sizeof(T) <= 8, "Invalid integer size!");
+
+    if constexpr (sizeof(T) == 1 || std::endian::native == std::endian::little)
+      return a;
+    else
+      return byteswap(a);
+  }
+
+  /// @brief Converts an unsigned integer from big endian to host endianness.
+  /// This function is a no-op if the current host is big endian.
+  /// @tparam T The unsigned integer type
+  /// @param a The value to convert
+  /// @return The integer encoded as host endianness
+  template<meta::UnsignedIntegral T>
+  constexpr T btoh(T a) noexcept
+  {
+    static_assert(
+        std::endian::native == std::endian::little
+            || std::endian::native == std::endian::big,
+        "Unknown endianness!");
+    static_assert(sizeof(T) <= 8, "Invalid integer size!");
+
+    if constexpr (sizeof(T) == 1 || std::endian::native == std::endian::big)
+      return a;
+    else
+      return byteswap(a);
+  }
 } // namespace clt
 
 namespace clt::details
