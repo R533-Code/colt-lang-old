@@ -55,6 +55,24 @@ using f64 = double;
 
 namespace clt
 {
+  /// @brief Represents a version number of Colt
+  struct ColtVersion
+  {
+    /// @brief The major version of the language
+    u8 major;
+    /// @brief The minor version of the language
+    u8 minor;
+    /// @brief The tweak version of the language
+    u8 patch;
+
+    /// @brief Returns the current version number of Colt
+    /// @return The current version of Colt
+    static constexpr ColtVersion current() noexcept
+    {
+      return {COLT_VERSION_MAJOR, COLT_VERSION_MINOR, COLT_VERSION_PATCH};
+    }
+  };
+
   template<typename To, typename From>
   /// @brief Helper to converts a pointer to a type to a pointer to another type
   /// @tparam To The type to convert
