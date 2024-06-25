@@ -11,68 +11,25 @@ namespace clt::run
     if (bytes.size() < sizeof(ColtiHeader))
       return None;
     // We now need to check that this is a valid header
-    if (reinterpret_cast<const ColtiHeader*>(bytes.data())->magic_number
+    if (reinterpret_cast<const ColtiHeader*>(bytes.data())->signature()
         != ColtiHeader::MAGIC_NUMBER)
       return None;
     return ColtiExecutable(bytes);
   }
 
-  Option<std::chrono::years> ColtiExecutable::year() const noexcept
+  Option<time_point> ColtiExecutable::compilation_time() const noexcept
   {
-    const i32 value = (u8)header()->compilation_date_year;
-    if (value == 0)
-      return None;
-    return std::chrono::years(value + 2024);
-  }
-
-  Option<std::chrono::months> ColtiExecutable::month() const noexcept
-  {
-    const u8 value = (u8)header()->compilation_date_month;
-    if (value == 0 || value > 12)
-      return None;
-    return std::chrono::months(value);
-  }
-
-  Option<std::chrono::days> ColtiExecutable::day() const noexcept
-  {
-    const u8 value = (u8)header()->compilation_date_day;
-    if (value == 0)
-      return None;
-    return std::chrono::days(value);
-  }
-
-  Option<std::chrono::minutes> ColtiExecutable::minute() const noexcept
-  {
-    // compilation_date_min == 1 -> hour == 0
-    // compilation_date_min == 60 -> hour == 59
-    u32 min = (u32)header()->compilation_date_min;
-    if (min == 0 || min > 60)
-      return None;
-    return std::chrono::minutes{min};
-  }
-
-  Option<std::chrono::hours> ColtiExecutable::hour() const noexcept
-  {
-    u32 hour = (u32)header()->compilation_date_hour;
-    // compilation_date_hour == 1 -> hour == 0
-    // compilation_date_hour == 12 -> hour == 11
-    if (hour == 0 || hour > 12)
-      return None;
-    hour--;
-    hour += 12 * (u8)(!header()->compilation_date_am);
-    return std::chrono::hours{hour};
+    return header()->compilation_time();
   }
 
   ColtVersion ColtiExecutable::version() const noexcept
   {
-    return {
-        (u8)header()->colt_version_major, (u8)header()->colt_version_minor,
-        (u8)header()->colt_version_patch};
+    return header()->version();
   }
 
   u16 ColtiExecutable::section_count() const noexcept
   {
-    return header()->section_count;
+    return header()->sections();
   }
 
   ExecutableSection ColtiExecutable::section(u16 index) const noexcept
@@ -120,5 +77,5 @@ namespace clt::run
     return {
         reinterpret_cast<const u64*>(bytes.data() + sizeof(ColtiHeader)),
         section_count()};
-  }
+  }  
 } // namespace clt::run
