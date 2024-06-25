@@ -17,28 +17,28 @@ namespace clt::run
     return ColtiExecutable(bytes);
   }
 
-  Option<std::chrono::year> ColtiExecutable::year() const noexcept
+  Option<std::chrono::years> ColtiExecutable::year() const noexcept
   {
     const i32 value = (u8)header()->compilation_date_year;
     if (value == 0)
       return None;
-    return std::chrono::year(value + 2024);
+    return std::chrono::years(value + 2024);
   }
 
-  Option<std::chrono::month> ColtiExecutable::month() const noexcept
+  Option<std::chrono::months> ColtiExecutable::month() const noexcept
   {
     const u8 value = (u8)header()->compilation_date_month;
     if (value == 0 || value > 12)
       return None;
-    return std::chrono::month(value);
+    return std::chrono::months(value);
   }
 
-  Option<std::chrono::day> ColtiExecutable::day() const noexcept
+  Option<std::chrono::days> ColtiExecutable::day() const noexcept
   {
     const u8 value = (u8)header()->compilation_date_day;
     if (value == 0)
       return None;
-    return std::chrono::day(value);
+    return std::chrono::days(value);
   }
 
   Option<std::chrono::minutes> ColtiExecutable::minute() const noexcept

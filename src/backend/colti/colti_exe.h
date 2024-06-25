@@ -89,13 +89,13 @@ namespace clt::run
 
     /// @brief Returns the compilation year of the executable
     /// @return Year or None if the info is unavailable
-    Option<std::chrono::year> year() const noexcept;
+    Option<std::chrono::years> year() const noexcept;
     /// @brief Returns the compilation month of the executable
     /// @return Month that is always ok() or None if the info is unavailable
-    Option<std::chrono::month> month() const noexcept;
+    Option<std::chrono::months> month() const noexcept;
     /// @brief Returns the compilation year of the executable
     /// @return Year or None if the info is unavailable
-    Option<std::chrono::day> day() const noexcept;
+    Option<std::chrono::days> day() const noexcept;
     /// @brief Returns the compilation minute of the executable.
     /// If a value is return, it will be in range [0, 59].
     /// @return Minute or None if the info is unavailable
