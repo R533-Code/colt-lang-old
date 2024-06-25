@@ -267,12 +267,12 @@ namespace clt::run
     
     compilation_date_year_day = ltoh(compilation_date_year_day);
 
-    auto hour   = compilation_date_hour_month >> 4;
-    auto month  = compilation_date_hour_month & 0b1111;
-    auto minute = compilation_date_minute_am >> 1;
-    auto is_am  = compilation_date_minute_am & 0b1;
-    auto year   = compilation_date_year_day >> 5;
-    auto day    = compilation_date_year_day & 0b1'11'11;
+    auto hour   = static_cast<u8>(compilation_date_hour_month >> 4);
+    auto month  = static_cast<u8>(compilation_date_hour_month & 0b1111);
+    auto minute = static_cast<u8>(compilation_date_minute_am >> 1);
+    auto is_am  = static_cast<u8>(compilation_date_minute_am & 0b1);
+    auto year   = static_cast<u16>(compilation_date_year_day >> 5);
+    auto day    = static_cast<u8>(compilation_date_year_day & 0b1'11'11);
 
     // If any information is missing discar all the other
     if (hour == 0 || month == 0 || minute == 0 || year == 0 || day == 0)

@@ -66,7 +66,7 @@ namespace clt::run
   Option<ExecutableSection> ColtiExecutable::find_section(
       StringView name) const noexcept
   {
-    for (size_t i = 0; i < section_count(); i++)
+    for (u16 i = 0; i < section_count(); i++)
       if (auto section_ = section(i); section_.name == name)
         return section_;
     return None;
