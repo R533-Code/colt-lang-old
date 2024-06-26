@@ -7,3 +7,6 @@
 [submodule "libraries/dyncall"]
 	path = libraries/dyncall
 	url = https://github.com/LWJGL-CI/dyncall.git
+[submodule "libraries/date"]
+	path = libraries/date
+	url = https://github.com/HowardHinnant/date.git
