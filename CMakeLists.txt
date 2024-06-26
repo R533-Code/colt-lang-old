@@ -137,6 +137,7 @@ target_include_directories(${COLT_EXECUTABLE_NAME} PUBLIC
   "${CMAKE_SOURCE_DIR}/libraries/fmt/include"
   "${CMAKE_SOURCE_DIR}/libraries/scnlib/include"
   "${CMAKE_SOURCE_DIR}/libraries/dyncall/"
+  "${CMAKE_SOURCE_DIR}/libraries/date/include/"
   #"${CMAKE_SOURCE_DIR}/libraries/llvm-project/llvm/include"
   #"${CMAKE_BINARY_DIR}/libraries/llvm-project/llvm/include"
 )
