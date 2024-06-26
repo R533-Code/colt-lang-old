@@ -234,11 +234,11 @@ namespace clt::run
       time_point tm, u8& compilation_date_hour_month, u8& compilation_date_minute_am,
       u16& compilation_date_year_day) noexcept
   {
-    using namespace std::chrono;
+    using namespace date;
 
     auto dp = floor<days>(tm);
     year_month_day ymd{dp};
-    hh_mm_ss time{floor<minutes>(tm - dp)};
+    hh_mm_ss time{floor<std::chrono::minutes>(tm - dp)};
     auto y = ymd.year();
     auto m = ymd.month();
     auto d = ymd.day();
@@ -263,7 +263,7 @@ namespace clt::run
       u8 compilation_date_hour_month, u8 compilation_date_minute_am,
       u16 compilation_date_year_day) noexcept
   {
-    namespace tm = std::chrono;
+    namespace tm = date;
     
     compilation_date_year_day = ltoh(compilation_date_year_day);
 
@@ -285,7 +285,7 @@ namespace clt::run
     
     // Reconstruct the time point
     return time_point(tm::sys_days{tm::year{year} / tm::month{month} / tm::day{day}})
-           + tm::hours{hour} + tm::minutes{minute};
+           + std::chrono::hours{hour} + std::chrono::minutes{minute};
   }
 
   constexpr ColtiHeader::ColtiHeader(

@@ -10,6 +10,7 @@
 
 #include <fmt/format.h>
 #include <scn/scn.h>
+#include <date/date.h>
 
 #include <thread>
 #include <mutex>
