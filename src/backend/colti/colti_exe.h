@@ -12,7 +12,7 @@ namespace clt::run
   class ColtiHeader
   {
   public:
-    /// @brief This magic number is COLT in ASCII
+    /// @brief This magic number is TLOC (for COLT) in ASCII
     static constexpr u32 MAGIC_NUMBER = htol(static_cast<u32>(0x434F4C54));
 
   private:
@@ -270,18 +270,19 @@ namespace clt::run
     auto hour   = static_cast<u8>(compilation_date_hour_month >> 4);
     auto month  = static_cast<u8>(compilation_date_hour_month & 0b1111);
     auto minute = static_cast<u8>(compilation_date_minute_am >> 1);
-    auto is_am  = static_cast<u8>(compilation_date_minute_am & 0b1);
+    auto is_am  = !static_cast<bool>(compilation_date_minute_am & 0b1);
     auto year   = static_cast<u16>(compilation_date_year_day >> 5);
     auto day    = static_cast<u8>(compilation_date_year_day & 0b1'11'11);
 
-    // If any information is missing discar all the other
+    // If any information is missing discard all the other
     if (hour == 0 || month == 0 || minute == 0 || year == 0 || day == 0)
       return None;
-    hour = 1 + (is_am * 12);
-    month += 1;
-    minute += 1;
-    year += 2024;
-    day += 1;
+    hour--;
+    hour += ((u8)is_am * 12);
+    month--;
+    minute--;
+    year += 2023;
+    day--;
     
     // Reconstruct the time point
     return time_point(tm::sys_days{tm::year{year} / tm::month{month} / tm::day{day}})
