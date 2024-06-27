@@ -61,7 +61,7 @@ namespace clt
     }
 
     /// @brief Prints the current version of Colt and exits
-    [[noreturn]] void print_version() noexcept
+    [[noreturn]] inline void print_version() noexcept
     {
       io::print(
           "COLT v{} on {} ({}).", COLT_VERSION_STRING, COLT_OS_STRING,
