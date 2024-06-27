@@ -20,11 +20,11 @@ namespace clt
     }
 
     auto& exe = *exe_o;
-    io::print("Disassembly of '{}': ", file);
+    io::print("Disassembly of '{}': \n", file);
     if (auto date = exe.compilation_time(); date.is_value())
     {
       io::print(
-          "Compiled on {} with Colt version '{}.{}.{}'.", *date, exe.version().major,
+          "Compiled on {:%Y-%m-%d %H:%M} with Colt version '{}.{}.{}'.", *date, exe.version().major,
           exe.version().minor, exe.version().patch);
     }
     else
