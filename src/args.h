@@ -28,6 +28,8 @@ namespace clt
   inline std::string_view OutputFile = {};
   /// @brief The input file name
   inline std::string_view InputFile = {};
+  /// @brief The file whose info to print
+  inline std::string_view DisasmFile = {};
 
   /// @brief Lexer test file name
   inline std::string_view LexerTestFile = {};
@@ -57,6 +59,15 @@ namespace clt
       io::print_warn("'{}' is not a valid value for flag '{}'!", to_validate, flag);
       to_validate = init;
     }
+
+    /// @brief Prints the current version of Colt and exits
+    [[noreturn]] void print_version() noexcept
+    {
+      io::print(
+          "COLT v{} on {} ({}).", COLT_VERSION_STRING, COLT_OS_STRING,
+          COLT_CONFIG_STRING);
+      std::exit(0);
+    }
   } // namespace details
 
   /// @brief The meta type used to generated command line argument handling function
@@ -71,13 +82,7 @@ namespace clt
 
       cl::Opt<
           "v", cl::desc<"Prints the version of the compiler">,
-          cl::callback<[]
-                       {
-                         io::print(
-                             "COLT v{} on {} ({}).", COLT_VERSION_STRING,
-                             COLT_OS_STRING, COLT_CONFIG_STRING);
-                         std::exit(0);
-                       }>>,
+          cl::callback<&details::print_version>>,
 
       cl::Opt<
           "space", cl::desc<"Chooses the number of spaces when transpiling">,
@@ -109,12 +114,17 @@ namespace clt
       cl::OptPos<"input_file", cl::desc<"The input file">, cl::location<InputFile>>,
 
       cl::Opt<
+          "disasm", cl::desc<"Disassembles a colti executable.">,
+          cl::value_desc<"file_path">, cl::location<DisasmFile>>,
+
+      cl::Opt<
           "run-tests", cl::desc<"Run unit tests on Debug configuration">,
           cl::callback<[] { clt::RunTests = true; }>>,
 
       cl::Opt<
           "test-lexer", cl::desc<"Lexer test file name (if -run-tests)">,
           cl::location<LexerTestFile>, cl::value_desc<"file_path">>,
+
       cl::Opt<"test-ffi", cl::desc<"Test FFI (if -run-tests)">, cl::callback<[] {
                 clt::FFITest = true;
               }>>,
