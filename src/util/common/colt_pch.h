@@ -9,6 +9,7 @@
 #define HG_COLT_PCH
 
 #include <fmt/format.h>
+#include <fmt/chrono.h>
 #include <scn/scn.h>
 #include <date/date.h>
 
