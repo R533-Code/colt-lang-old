@@ -9,7 +9,7 @@
 #include "args.h"
 #include "test/run_tests.h"
 #include "ast/parsed_program.h"
-#include "colti/colti_exe.h"
+#include "colti/colti_disassembler.h"
 
 using namespace clt;
 
@@ -41,6 +41,9 @@ int main(int argc, const char** argv)
       { io::print_fatal("Compiler could not allocate enough memory!"); });
   // Parse command line arguments
   cl::parse_command_line_options<CMDs>(argc, argv);
+
+  if (DisasmFile)
+    clt::disassemble_file(DisasmFile);
 
   // On debug configuration, runs tests
   if (RunTests)
