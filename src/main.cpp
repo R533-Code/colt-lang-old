@@ -43,7 +43,10 @@ int main(int argc, const char** argv)
   cl::parse_command_line_options<CMDs>(argc, argv);
 
   if (!DisasmFile.empty())
+  {
     clt::disassemble_file(DisasmFile);
+    return 0;
+  }
 
   // On debug configuration, runs tests
   if (RunTests)
