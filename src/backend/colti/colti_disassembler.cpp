@@ -30,7 +30,7 @@ namespace clt
     else
     {
       io::print(
-          "Compiled with Colt version '{}.{}.{}'.", *date, exe.version().major,
+          "Compiled with Colt version '{}.{}.{}'.", exe.version().major,
           exe.version().minor, exe.version().patch);
     }
 
