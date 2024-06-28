@@ -45,7 +45,7 @@ int main(int argc, const char** argv)
   if (!DisasmFile.empty())
   {
     clt::disassemble_file(DisasmFile);
-    return 0;
+    io::print("\n");
   }
 
   // On debug configuration, runs tests
