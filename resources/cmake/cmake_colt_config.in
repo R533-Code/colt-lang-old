@@ -1,6 +1,14 @@
 #ifndef COLT_CONFIG
 #define COLT_CONFIG
 
+#if ${IMPL_COLT_IS_BIG_ENDIAN}
+  /// @brief If defined, the target architecture is big endian
+  #define COLT_BIG_ENDIAN
+#else
+  /// @brief If defined, the target architecture is little endian
+  #define COLT_LITTLE_ENDIAN
+#endif
+
 /// @brief Major version of Colt
 #define COLT_VERSION_MAJOR 		${PROJECT_VERSION_MAJOR}
 /// @brief Minor version of Colt
