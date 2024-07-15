@@ -138,6 +138,7 @@ target_include_directories(${COLT_EXECUTABLE_NAME} PUBLIC
   "${CMAKE_SOURCE_DIR}/libraries/scnlib/include"
   "${CMAKE_SOURCE_DIR}/libraries/dyncall/"
   "${CMAKE_SOURCE_DIR}/libraries/date/include/"
+  "${CMAKE_SOURCE_DIR}/libraries/PortableBitfields/src/"
   #"${CMAKE_SOURCE_DIR}/libraries/llvm-project/llvm/include"
   #"${CMAKE_BINARY_DIR}/libraries/llvm-project/llvm/include"
 )
@@ -294,6 +295,8 @@ set(IMPL_COLT_CLANG 0)
 set(IMPL_COLT_GNU 0)
 set(IMPL_COLT_INTEL 0)
 set(IMPL_COLT_MSVC 0)
+
+test_big_endian(IMPL_COLT_IS_BIG_ENDIAN)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang") # AppleClang or Clang
   set(IMPL_COLT_CLANG 1)
