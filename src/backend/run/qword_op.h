@@ -45,23 +45,13 @@
     return table[static_cast<u8>(type)](a);                     \
   }
 
+DECLARE_ENUM_WITH_TYPE(
+    u8, clt::run, TypeOp, i8_t, i16_t, i32_t, i64_t, u8_t, u16_t, u32_t, u64_t,
+    f32_t, f64_t);
+
 /// @brief Helpers for interpreting code
 namespace clt::run
 {
-  enum class TypeOp : u8
-  {
-    i8_t,
-    i16_t,
-    i32_t,
-    i64_t,
-    u8_t,
-    u16_t,
-    u32_t,
-    u64_t,
-    f32_t,
-    f64_t
-  };
-
   /// @brief Represents the outcome of an operation
   enum OpError : u8
   {
