@@ -200,6 +200,10 @@ namespace clt::meta
   template<typename T, typename... U>
   /// @brief Check if a type is any of a list
   concept is_any_of = (std::same_as<T, U> || ...);
+
+  template<typename T, typename... U>
+  /// @brief Check if all the type are the same
+  concept are_all_same = (std::same_as<T, U> || ...);
 } // namespace clt::meta
 
 #endif //!HG_META_TYPE_LIST
