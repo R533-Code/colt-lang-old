@@ -278,18 +278,7 @@ namespace clt::run
     {
       return Inst(std::type_identity<Type>{}, std::forward<Args>(args)...);
     }
-
-    constexpr bool operator==(const Inst& inst) const noexcept {}
   };
-
-  static constexpr meta::ConstexprMap inst = std::array{std::pair{
-      StringView{"add"},
-      Inst::make<BinaryTypeInst>(BinaryTypeInst::Op::add, 0, 0, 0, TypeOp::i8_t)}};
-
-  constexpr Option<Inst> find_instruction(StringView name)
-  {    
-    return inst.find(name);
-  }
 } // namespace clt::run
 
 #endif // !HG_COLTI_OPCODES
