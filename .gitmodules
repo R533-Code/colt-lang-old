@@ -10,6 +10,3 @@
 [submodule "libraries/date"]
 	path = libraries/date
 	url = https://github.com/HowardHinnant/date.git
-[submodule "libraries/PortableBitfields"]
-	path = libraries/PortableBitfields
-	url = https://github.com/KKoovalsky/PortableBitfields.git
