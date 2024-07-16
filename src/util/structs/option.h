@@ -27,18 +27,7 @@ namespace clt
   } // namespace meta
 
   /// @brief Tag object for construting an object in place
-  inline constexpr meta::InPlaceT InPlace;
-
-  namespace details
-  {
-    /// @brief Tag type for constructing an empty Option
-    struct NoneT
-    {
-    };
-  } // namespace details
-
-  /// @brief Tag object for constructing an empty Option
-  static constexpr details::NoneT None;
+  inline constexpr meta::InPlaceT InPlace;  
 
   template<typename T>
   /// @brief Manages an optionally contained value.

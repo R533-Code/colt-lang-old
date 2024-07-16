@@ -205,8 +205,6 @@ namespace clt::details
 
 namespace clt
 {
-  using StringView = std::string_view;
-
   /// @brief Possible String encoding provided by the library
   enum class StringEncoding
   {

@@ -27,8 +27,11 @@
 #include <memory>
 #include <exception>
 
+#include <jungles/bitfields.hpp>
 #include "meta/meta_traits.h"
 #include "assertions.h"
+
+namespace bits = jungles;
 
 /// @brief 8-bit signed integer
 using u8 = uint8_t;
@@ -55,6 +58,9 @@ using f64 = double;
 
 namespace clt
 {
+  /// @brief Typedef over string_view
+  using StringView = std::string_view;
+
   /// @brief Represents a version number of Colt
   struct ColtVersion
   {
@@ -914,6 +920,24 @@ namespace clt
       return a;
     else
       return byteswap(a);
+  }
+  
+  /// @brief Sign extends a number represented by 'n' bits
+  /// @tparam T The underlying type to sign extend
+  /// @param value The value (represented by 'n' bits)
+  /// @param n The number of bit from which to sign extend
+  /// @return The sign extended integer
+  template<meta::UnsignedIntegral T>
+  constexpr std::make_signed_t<T> sign_extend(T value, u8 n)
+  {
+    assert_true("Invalid bit count!", n > 0 && n < sizeof(T) * 8);
+    T sign = (1 << (n - 1)) & value;
+    T mask = ((~0U) >> (n - 1)) << (n - 1);
+    if (sign != 0)
+      value |= mask;
+    else
+      value &= ~mask;
+    return static_cast<std::make_signed_t<T>>(value);
   }
 } // namespace clt
 
