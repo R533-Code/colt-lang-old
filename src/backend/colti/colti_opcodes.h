@@ -55,11 +55,11 @@ namespace clt::run
       Padding
     };
 
-    using _type = bits::Bitfields<
-        u64, bits::Field<Field::OpCode, 4>, bits::Field<Field::Operation, 4>,
-        bits::Field<Field::Dest, 8>, bits::Field<Field::A, 8>,
-        bits::Field<Field::B, 8>, bits::Field<Field::Type, 4>,
-        bits::Field<Field::Padding, 28>>;
+    using _type = Bitfields<
+        u64, Bitfield<Field::OpCode, 4>, Bitfield<Field::Operation, 4>,
+        Bitfield<Field::Dest, 8>, Bitfield<Field::A, 8>,
+        Bitfield<Field::B, 8>, Bitfield<Field::Type, 4>,
+        Bitfield<Field::Padding, 28>>;
 
     _type storage{};
 
@@ -91,31 +91,31 @@ namespace clt::run
     {
       using enum BinaryTypeInst::Field;
 
-      storage.at<OpCode>()    = (u64)InstEncoding::BINARY_TYPE;
-      storage.at<Operation>() = (u64)operation;
-      storage.at<Dest>()      = (u64)dest;
-      storage.at<A>()         = (u64)op1;
-      storage.at<B>()         = (u64)op2;
-      storage.at<Type>()      = (u64)type;
+      storage.set<OpCode>((u64)InstEncoding::BINARY_TYPE);
+      storage.set<Operation>((u64)operation);
+      storage.set<Dest>((u64)dest);
+      storage.set<A>((u64)op1);
+      storage.set<B>((u64)op2);
+      storage.set<Type>((u64)type);
     }
 
     /// @brief Returns the operation of the instruction
     /// @return The operation
-    constexpr Op op() const noexcept { return (Op)storage.at<Field::Operation>(); }
+    constexpr Op op() const noexcept { return (Op)storage.get<Field::Operation>(); }
     /// @brief Returns the destination register index
     /// @return The destination register
-    constexpr u8 dest() const noexcept { return (u8)storage.at<Field::Dest>(); }
+    constexpr u8 dest() const noexcept { return (u8)storage.get<Field::Dest>(); }
     /// @brief Returns the first operand register index
     /// @return The first operand register
-    constexpr u8 op1() const noexcept { return (u8)storage.at<Field::A>(); }
+    constexpr u8 op1() const noexcept { return (u8)storage.get<Field::A>(); }
     /// @brief Returns the second operand register index
     /// @return The second operand register
-    constexpr u8 op2() const noexcept { return (u8)storage.at<Field::B>(); }
+    constexpr u8 op2() const noexcept { return (u8)storage.get<Field::B>(); }
     /// @brief Returns the type on which to apply the operation
     /// @return The type on which to apply the operation
     constexpr TypeOp type() const noexcept
     {
-      return (TypeOp)storage.at<Field::Type>();
+      return (TypeOp)storage.get<Field::Type>();
     }
   };
 
@@ -140,11 +140,11 @@ namespace clt::run
       Padding
     };
 
-    using _type = bits::Bitfields<
-        u64, bits::Field<Field::OpCode, 4>, bits::Field<Field::Operation, 4>,
-        bits::Field<Field::Dest, 8>, bits::Field<Field::A, 8>,
-        bits::Field<Field::B, 8>, bits::Field<Field::N, 6>,
-        bits::Field<Field::Padding, 26>>;
+    using _type = Bitfields<
+        u64, Bitfield<Field::OpCode, 4>, Bitfield<Field::Operation, 4>,
+        Bitfield<Field::Dest, 8>, Bitfield<Field::A, 8>,
+        Bitfield<Field::B, 8>, Bitfield<Field::N, 6>,
+        Bitfield<Field::Padding, 26>>;
 
     _type storage{};
 
@@ -171,29 +171,29 @@ namespace clt::run
       using enum BinaryBitsInst::Field;
 
       assert_true("n must be between < 64", n < 64);
-      storage.at<OpCode>()    = (u64)InstEncoding::BINARY_BITS;
-      storage.at<Operation>() = (u64)operation;
-      storage.at<Dest>()      = (u64)dest;
-      storage.at<A>()         = (u64)op1;
-      storage.at<B>()         = (u64)op2;
-      storage.at<N>()         = (u64)n;
+      storage.set<OpCode>(    (u64)InstEncoding::BINARY_BITS);
+      storage.set<Operation>( (u64)operation);
+      storage.set<Dest>(      (u64)dest);
+      storage.set<A>(         (u64)op1);
+      storage.set<B>(         (u64)op2);
+      storage.set<N>(         (u64)n);
     }
 
     /// @brief Returns the operation of the instruction
     /// @return The operation
-    constexpr Op op() const noexcept { return (Op)storage.at<Field::OpCode>(); }
+    constexpr Op op() const noexcept { return (Op)storage.get<Field::OpCode>(); }
     /// @brief Returns the destination register index
     /// @return The destination register
-    constexpr u8 dest() const noexcept { return (u8)storage.at<Field::Dest>(); }
+    constexpr u8 dest() const noexcept { return (u8)storage.get<Field::Dest>(); }
     /// @brief Returns the first operand register index
     /// @return The first operand register
-    constexpr u8 op1() const noexcept { return (u8)storage.at<Field::A>(); }
+    constexpr u8 op1() const noexcept { return (u8)storage.get<Field::A>(); }
     /// @brief Returns the second operand register index
     /// @return The second operand register
-    constexpr u8 op2() const noexcept { return (u8)storage.at<Field::B>(); }
+    constexpr u8 op2() const noexcept { return (u8)storage.get<Field::B>(); }
     /// @brief Returns the number of bits to keep after the operation
     /// @return The number of bits to keep after the operation
-    constexpr u8 n() const noexcept { return (u8)storage.at<Field::N>(); }
+    constexpr u8 n() const noexcept { return (u8)storage.get<Field::N>(); }
   };
 
   /// @brief Represents a branch instruction
@@ -209,9 +209,9 @@ namespace clt::run
       Offset,
     };
 
-    using _type = bits::Bitfields<
-        u64, bits::Field<Field::OpCode, 4>, bits::Field<Field::Operation, 4>,
-        bits::Field<Field::Offset, 56>>;
+    using _type = Bitfields<
+        u64, Bitfield<Field::OpCode, 4>, Bitfield<Field::Operation, 4>,
+        Bitfield<Field::Offset, 56>>;
 
     _type storage{};
 
@@ -239,19 +239,19 @@ namespace clt::run
       assert_true(
           "Offset too great!", offset >= -36'028'797'018'963'968,
           offset < 36'028'797'018'963'968);
-      storage.at<OpCode>()    = (u64)InstEncoding::BRANCH;
-      storage.at<Operation>() = (u64)operation;
-      storage.at<Offset>()    = htol((u64)offset);
+      storage.set<OpCode>(    (u64)InstEncoding::BRANCH);
+      storage.set<Operation>( (u64)operation);
+      storage.set<Offset>(    htol((u64)offset));
     }
 
     /// @brief Returns the operation of the instruction
     /// @return The operation
-    constexpr Op op() const noexcept { return (Op)storage.at<Field::OpCode>(); }
+    constexpr Op op() const noexcept { return (Op)storage.get<Field::OpCode>(); }
     /// @brief Returns the signed offset to add to the program counter
     /// @return The signed offset
     constexpr i64 offset() const noexcept
     {
-      return sign_extend(ltoh(storage.at<Field::Offset>()), 56);
+      return sign_extend(ltoh(storage.get<Field::Offset>()), 56);
     }
   };
 
