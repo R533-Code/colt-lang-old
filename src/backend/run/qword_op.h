@@ -579,34 +579,26 @@ namespace clt::run
 
   /***************** BITWISE *****************/
 
-  namespace details
-  {
-    constexpr u64 generate_n_bits_1(u8 bits) noexcept
-    {
-      return ((u64)2 << (u64)bits) - 1;
-    }
-  } // namespace details
-
   inline ResultQWORD bit_and(QWORD_t a, QWORD_t b, u8 bits) noexcept
   {
-    return {(a & b) & details::generate_n_bits_1(bits), NO_ERROR};
+    return {(a & b) & bitmask<u64>(bits), NO_ERROR};
   }
 
   inline ResultQWORD bit_or(QWORD_t a, QWORD_t b, u8 bits) noexcept
   {
-    return {(a | b) & details::generate_n_bits_1(bits), NO_ERROR};
+    return {(a | b) & bitmask<u64>(bits), NO_ERROR};
   }
 
   inline ResultQWORD bit_xor(QWORD_t a, QWORD_t b, u8 bits) noexcept
   {
-    return {(a ^ b) & details::generate_n_bits_1(bits), NO_ERROR};
+    return {(a ^ b) & bitmask<u64>(bits), NO_ERROR};
   }
 
   inline ResultQWORD lsr(QWORD_t a, QWORD_t b, u8 bits) noexcept
   {
     QWORD_t result;
     result.bit_assign(
-        (a.as<u64>() >> b.as<u64>()) & details::generate_n_bits_1(bits));
+        (a.as<u64>() >> b.as<u64>()) & bitmask<u64>(bits));
     return {result, b.as<u64>() < bits ? NO_ERROR : SHIFT_BY_GRE_SIZEOF};
   }
 
@@ -614,30 +606,31 @@ namespace clt::run
   {
     QWORD_t result;
     result.bit_assign(
-        (a.as<u64>() << b.as<u64>()) & details::generate_n_bits_1(bits));
+        (a.as<u64>() << b.as<u64>()) & bitmask<u64>(bits));
     return {result, b.as<u64>() < bits ? NO_ERROR : SHIFT_BY_GRE_SIZEOF};
   }
 
   inline ResultQWORD asr(QWORD_t a, QWORD_t b, u8 bits) noexcept
   {
+    //TODO: check implementation
     QWORD_t result    = 0;
-    const u64 bitmask = details::generate_n_bits_1(bits);
-    a &= bitmask;
+    const u64 mask = bitmask<u64>(bits);
+    a &= mask;
     if (a.is_set(bits))
     {
       result = ~result;
-      result &= a.as<u64>() >> (b.as<u64>() | (bitmask << b.as<u64>()));
+      result &= a.as<u64>() >> (b.as<u64>() | (mask << b.as<u64>()));
     }
     else
       result.bit_assign(a.as<u64>() >> b.as<u64>());
-    return {result & bitmask, b.as<u64>() < bits ? NO_ERROR : SHIFT_BY_GRE_SIZEOF};
+    return {result & mask, b.as<u64>() < bits ? NO_ERROR : SHIFT_BY_GRE_SIZEOF};
   }
 
   inline ResultQWORD bit_not(QWORD_t a, u8 bits) noexcept
   {
     a = ~a;
     // We turn off the bits that shouldn't be on
-    a &= details::generate_n_bits_1(bits);
+    a &= bitmask<u64>(bits);
     return {a, NO_ERROR};
   }
 
