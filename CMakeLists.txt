@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.4)
+
 # C++20 is required
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -138,7 +139,6 @@ target_include_directories(${COLT_EXECUTABLE_NAME} PUBLIC
   "${CMAKE_SOURCE_DIR}/libraries/scnlib/include"
   "${CMAKE_SOURCE_DIR}/libraries/dyncall/"
   "${CMAKE_SOURCE_DIR}/libraries/date/include/"
-  "${CMAKE_SOURCE_DIR}/libraries/PortableBitfields/src/"
   #"${CMAKE_SOURCE_DIR}/libraries/llvm-project/llvm/include"
   #"${CMAKE_BINARY_DIR}/libraries/llvm-project/llvm/include"
 )
@@ -290,13 +290,14 @@ endif (DOXYGEN_FOUND)
 
 message(STATUS "Configuring 'colt_config.h'...")
 
+include(TestBigEndian)
+test_big_endian(IMPL_COLT_IS_BIG_ENDIAN)
+
 # Useful macros for knowing which compiler is going to compile the code
 set(IMPL_COLT_CLANG 0)
 set(IMPL_COLT_GNU 0)
 set(IMPL_COLT_INTEL 0)
 set(IMPL_COLT_MSVC 0)
-
-test_big_endian(IMPL_COLT_IS_BIG_ENDIAN)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang") # AppleClang or Clang
   set(IMPL_COLT_CLANG 1)
