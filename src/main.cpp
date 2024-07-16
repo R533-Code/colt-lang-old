@@ -10,6 +10,7 @@
 #include "test/run_tests.h"
 #include "ast/parsed_program.h"
 #include "colti/colti_disassembler.h"
+#include "colti/colti_opcodes.h"
 
 using namespace clt;
 
