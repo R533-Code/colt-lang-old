@@ -9,7 +9,6 @@
 #ifndef HG_COLT_LEXEME
 #define HG_COLT_LEXEME
 
-#include "common/assertions.h"
 #include "common/types.h"
 #include "lng/colt_builtin_id.h"
 

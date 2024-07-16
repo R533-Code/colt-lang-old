@@ -337,27 +337,6 @@ namespace clt::details
   }
 } // namespace clt::details
 
-namespace clt
-{
-  [[noreturn]]
-  /// @brief Marks a branch as unreachable, printing an error on Debug build
-  /// @param error The error message
-  /// @param src The source code information
-  inline void
-      unreachable(
-          const char* error,
-          std::source_location src = std::source_location::current())
-  {
-    if constexpr (is_debug_build())
-    {
-      io::print_fatal(
-          "Unreachable branch hit in function '{}' (line {}) in file:\n'{}'\n{}",
-          src.function_name(), src.line(), src.file_name(), error);
-    }
-    debug_break();
-  }
-} // namespace clt
-
 /// @brief Helper for transforming assertions into strings and their evaluated value
 #define __DETAILS__COLT_TO_ASSERTION(expr) \
   , clt::details::Assertion                \
@@ -380,6 +359,26 @@ namespace clt
       clt::unreachable("Invalid value for 'switch_no_default'."); \
     }                                                             \
     else
+
+namespace clt::meta
+{
+  /// @brief Let fmt::formatter specialization inherit from this type if
+  /// they only accept an empty format specification.
+  struct DefaultParserFMT
+  {
+    template<typename ParseContext>
+    constexpr auto parse(ParseContext& ctx)
+    {
+      if constexpr (is_debug_build())
+      {
+        assert_true(
+            "Only accepted format is {}!",
+            ctx.begin() == ctx.end() || *ctx.begin() == '}');
+      }
+      return ctx.begin();
+    }
+  };
+} // namespace clt::meta
 
 namespace clt
 {

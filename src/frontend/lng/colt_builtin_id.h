@@ -10,7 +10,7 @@
 #define HG_COLTC_BUILTIN_ID
 
 #include "meta/meta_enum.h"
-#include "common/assertions.h"
+#include "common/types.h"
 
 DECLARE_ENUM_WITH_TYPE(
     u8, clt::lng, BuiltinID, BOOL, CHAR, U8, U16, U32, U64, I8, I16, I32, I64, F32,

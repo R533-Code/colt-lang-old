@@ -15,7 +15,6 @@
 #include <numbers>
 
 #include "common/types.h"
-#include "common/assertions.h"
 
 namespace clt
 {

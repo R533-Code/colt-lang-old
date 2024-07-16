@@ -2,7 +2,6 @@
 #define HG_CLT_DYNLOAD
 
 #include <dynload/dynload.h>
-#include <common/assertions.h>
 #include <common/types.h>
 #include <structs/option.h>
 

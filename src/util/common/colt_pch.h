@@ -22,9 +22,9 @@
 #include "io/input.h"
 
 #include "types.h"
+#include "bits.h"
 #include "colt_config.h"
 #include "macros.h"
-#include "assertions.h"
 
 #include "meta/meta_enum.h"
 #include "structs/unique_ptr.h"

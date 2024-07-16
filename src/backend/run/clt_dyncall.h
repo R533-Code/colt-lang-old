@@ -15,7 +15,6 @@
 #define HG_CLT_DYNCALL
 
 #include <dyncall/dyncall.h>
-#include <common/assertions.h>
 #include <common/types.h>
 #include <run/qword_op.h>
 

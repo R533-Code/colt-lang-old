@@ -15,7 +15,6 @@
 
 #include "meta/meta_traits.h"
 #include "meta/meta_maths.h"
-#include "common/assertions.h"
 #include "common/types.h"
 #include "io/parse.h"
 #include "lex/ascii.h"

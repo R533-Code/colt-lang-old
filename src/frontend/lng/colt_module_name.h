@@ -12,7 +12,6 @@
 
 #include "structs/vector.h"
 #include "common/types.h"
-#include "common/assertions.h"
 
 namespace clt::lng
 {

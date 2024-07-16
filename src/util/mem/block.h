@@ -10,7 +10,6 @@
 
 #include "sizes.h"
 #include "common/hash.h"
-#include "common/assertions.h"
 
 namespace clt::mem
 {
