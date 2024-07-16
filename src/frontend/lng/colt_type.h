@@ -15,7 +15,6 @@
 #include "common/hash.h"
 #include "colt_type_token.h"
 #include "colt_support_op.h"
-#include "union_macro.h"
 
 DECLARE_ENUM_WITH_TYPE(
     u8, clt::lng, TypeID, TYPE_ERROR, TYPE_BUILTIN, TYPE_VOID, TYPE_PTR,
