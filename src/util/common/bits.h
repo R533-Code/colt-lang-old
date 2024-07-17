@@ -248,7 +248,7 @@ namespace clt
       requires std::same_as<index_t, decltype(index)>
     constexpr Ty get() const noexcept
     {
-      static constexpr auto pair = field_info<index>();
+      const auto pair = field_info<index>();
       return (storage >> pair.first) & bitmask<Ty>(pair.second);
     }
 
@@ -262,8 +262,8 @@ namespace clt
       requires std::same_as<index_t, decltype(index)>
     constexpr void set(Ty value) noexcept
     {
-      static constexpr auto info = field_info<index>();
-      // Set the bit whose value to modify to 0
+      const auto info = field_info<index>();
+      // Set the bits whose value to modify to 0
       storage &= ~(bitmask<Ty>(info.second) << info.first);
       // OR the new bits
       storage |= ((value & bitmask<Ty>(info.second)) << info.first);
