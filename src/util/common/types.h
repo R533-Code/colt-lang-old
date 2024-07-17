@@ -29,6 +29,7 @@
 #include <source_location>
 
 #include "meta/meta_traits.h"
+#include "macros.h"
 
 /// @brief 8-bit signed integer
 using u8 = uint8_t;
